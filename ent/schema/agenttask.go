@@ -31,6 +31,7 @@ func (AgentTask) Fields() []ent.Field {
 			"CHANGEPERMS",
 			"APPENDFILE",
 			"ANSIBLE",
+			"REPLAYPCAP",
 		),
 		field.String("args"),
 		field.Int("number"),

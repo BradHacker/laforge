@@ -44,7 +44,8 @@ var (
 )
 
 // Program structures.
-//  Define Start and Stop methods.
+//
+//	Define Start and Stop methods.
 type program struct {
 	exit chan struct{}
 }
@@ -274,6 +275,11 @@ func RequestTask(c pb.LaforgeClient) {
 			content := strings.ReplaceAll(taskArgs[1], "🔥", "\n")
 			taskerr := AppendFile(path, content)
 			RequestTaskStatusRequest("", taskerr, r.Id, c)
+		case pb.TaskReply_REPLAYPCAP:
+			taskArgs := strings.Split(r.GetArgs(), "💔")
+			url := taskArgs[0]
+			taskerr := ReplayPcap(url) // - pending implementation
+			RequestTaskStatusRequest("", taskerr, r.Id, c)
 		default:
 			logger.Infof("Response Message: %v", r)
 			RequestTaskStatusRequest("", nil, r.Id, c)
@@ -452,11 +458,12 @@ func (p *program) Stop(s service.Service) error {
 }
 
 // Service setup.
-//   Define service config.
-//   Create the service.
-//   Setup the logger.
-//   Handle service controls (optional).
-//   Run the service.
+//
+//	Define service config.
+//	Create the service.
+//	Setup the logger.
+//	Handle service controls (optional).
+//	Run the service.
 func main() {
 	svcFlag := flag.String("service", "", "Control the system service.")
 	flag.Parse()

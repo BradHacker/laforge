@@ -15,7 +15,8 @@ export enum AgentCommand {
   CREATEUSERPASS,
   ADDTOGROUP,
   EXECUTE,
-  VALIDATE
+  VALIDATE,
+  REPLAYPCAP
 }
 export interface AgentStatus {
   clientId: string;
