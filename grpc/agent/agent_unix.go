@@ -304,7 +304,10 @@ func HostServiceState(service_name string, service_status string) (bool, error) 
 	if err != nil {
 		return false, err
 	}
-	return string(out) == service_status, nil
+	if string(bytes.TrimSpace(out)) == service_status {
+		return true, nil
+	}
+	return false, fmt.Errorf("service status expected \"%s\" but got \"%s\"", service_status, string(bytes.TrimSpace(out)))
 }
 
 func LinuxAPTInstalled(package_name string) (bool, error) { // installed
