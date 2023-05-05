@@ -4,20 +4,13 @@
 package main
 
 import (
-	"crypto/md5"
 	"fmt"
 	"io"
-	"io/ioutil"
-	"log"
-	"net"
 	"net/http"
 	"os"
 	"os/exec"
-	"os/user"
-	"regexp"
 
 	"path/filepath"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -140,7 +133,7 @@ func GetSystemDependencies() []string {
 // Validation Functions
 
 func HostProcessRunning(process_name string) (bool, error) { // running (boolean)
-	cmd := exec.Command("tasklist", "/NH", "/FO", "CSV", "/FI", "IMAGENAME eq "+processName)
+	cmd := exec.Command("tasklist", "/NH", "/FO", "CSV", "/FI", "IMAGENAME eq "+process_name)
 	output, err := cmd.Output()
 	if err != nil {
 		return false, fmt.Errorf("failure detecting if process \"%s\" is running; encountered error: \"%s\"", process_name, err)
