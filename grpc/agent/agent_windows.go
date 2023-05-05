@@ -132,7 +132,7 @@ func GetSystemDependencies() []string {
 
 // Validation Functions
 
-func HostProcessRunning(process_name string) (bool, error) { // running (boolean)
+func HostProcessRunning(process_name string) (bool, error) {
 	cmd := exec.Command("tasklist", "/NH", "/FO", "CSV", "/FI", "IMAGENAME eq "+process_name)
 	output, err := cmd.Output()
 	if err != nil {

@@ -608,7 +608,7 @@ func main() {
 
 // Validation functions
 
-func NetHttpContentRegex(url string, pattern string) (bool, error) { // content hash (string)
+func NetHttpContentRegex(url string, pattern string) (bool, error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		return false, fmt.Errorf("filaure to request url: \"%s\"; encountered error: \"%s\"", url, err)
@@ -632,7 +632,7 @@ func NetHttpContentRegex(url string, pattern string) (bool, error) { // content 
 	}
 }
 
-func FileExists(file_location string) (bool, error) { // exists (boolean)
+func FileExists(file_location string) (bool, error) {
 	stat_info, read_err := os.Stat(file_location)
 	if read_err != nil {
 		return false, read_err
@@ -640,7 +640,7 @@ func FileExists(file_location string) (bool, error) { // exists (boolean)
 	return !stat_info.IsDir(), nil
 }
 
-func FileHash(file_location string, expected_hash string) (bool, error) { // hash of the file (string)
+func FileHash(file_location string, expected_hash string) (bool, error) {
 	content, err := ioutil.ReadFile(file_location)
 	if err != nil {
 		return false, fmt.Errorf("failure to open file: \"%s\"; encountered error: %s", file_location, err)
@@ -661,7 +661,7 @@ func FileHash(file_location string, expected_hash string) (bool, error) { // has
 	}
 }
 
-func FileContentRegex(file_location string, pattern string) (bool, error) { // page content to be returned and checked serverside (string)
+func FileContentRegex(file_location string, pattern string) (bool, error) {
 	content, err := ioutil.ReadFile(file_location)
 	if err != nil {
 		return false, fmt.Errorf("failure to read file \"%s\"; encountered error %s", file_location, err)
@@ -679,7 +679,7 @@ func FileContentRegex(file_location string, pattern string) (bool, error) { // p
 	}
 }
 
-func DirectoryExists(path string) (bool, error) { // exists (boolean)
+func DirectoryExists(path string) (bool, error) {
 	info, err := os.Stat(path)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -694,7 +694,7 @@ func DirectoryExists(path string) (bool, error) { // exists (boolean)
 	}
 }
 
-func UserExists(user_name string) (bool, error) { // exists (boolean)
+func UserExists(user_name string) (bool, error) {
 	_, err := user.Lookup(user_name)
 	if err != nil {
 		return false, fmt.Errorf("failure to detect user \"%s\"; encountered error \"%s\"", user_name, err)
@@ -702,7 +702,7 @@ func UserExists(user_name string) (bool, error) { // exists (boolean)
 	return true, nil
 }
 
-func UserGroupMember(user_name string, group_name string) (bool, error) { // is in the group or not (boolean)
+func UserGroupMember(user_name string, group_name string) (bool, error) {
 	usr, err := user.Lookup(user_name)
 	if err != nil {
 		return false, fmt.Errorf("failure to detect user \"%s\"; encountered error: \"%s\"", user_name, err)
@@ -727,7 +727,7 @@ func UserGroupMember(user_name string, group_name string) (bool, error) { // is 
 	return false, fmt.Errorf("failure to detect user \"%s\" in group \"%s\"", user_name, group_name)
 }
 
-func NetTCPOpen(ip string, port int) (bool, error) { // exists (boolean)
+func NetTCPOpen(ip string, port int) (bool, error) {
 	conn, err := net.DialTimeout("tcp", net.JoinHostPort(ip, strconv.Itoa(port)), 10*time.Second)
 	if err != nil {
 		return false, fmt.Errorf("failure to establish TCP connection to \"%s:%d\"; encountered error: \"%s\" ", ip, port, err)
@@ -741,7 +741,7 @@ func NetTCPOpen(ip string, port int) (bool, error) { // exists (boolean)
 	}
 }
 
-func NetUDPOpen(ip string, port int) (bool, error) { // exists (boolean)
+func NetUDPOpen(ip string, port int) (bool, error) {
 	timeout := time.Second * 10
 
 	addr := net.JoinHostPort(ip, strconv.Itoa(port))
@@ -775,7 +775,7 @@ func NetUDPOpen(ip string, port int) (bool, error) { // exists (boolean)
 	return true, nil
 }
 
-func NetICMP(ip string) (bool, error) { // responded (boolean)
+func NetICMP(ip string) (bool, error) {
 	var cmd *exec.Cmd
 
 	if runtime.GOOS == "windows" {
@@ -792,7 +792,7 @@ func NetICMP(ip string) (bool, error) { // responded (boolean)
 	return true, nil
 }
 
-func FileContentString(filepath string, text string) (bool, error) { // matches
+func FileContentString(filepath string, text string) (bool, error) {
 	file, err := os.Open(filepath)
 	if err != nil {
 		return false, fmt.Errorf("failure to open file \"%s\"; encountered error: \"%s\"", filepath, err)
