@@ -826,14 +826,3 @@ func FilePermission(filepath string, permissions string) (bool, error) {
 		return false, fmt.Errorf("failuring matching permission of file \"%s\"; expected: \"%s\", detected: \"%s\"", filepath, permissions, filePermissions)
 	}
 }
-
-func HostPortOpen(port int) (bool, error) {
-	addr := net.JoinHostPort("localhost", strconv.Itoa(port))
-	listener, err := net.Listen("tcp", addr)
-	if err != nil {
-		return false, fmt.Errorf("failure detecting if port \"%d\" is open; encountered error: \"%s\"", port, err)
-	}
-	defer listener.Close()
-
-	return true, nil
-}

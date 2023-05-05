@@ -158,3 +158,20 @@ func LinuxAPTInstalled(package_name string) (bool, error) {
 func LinuxYumInstalled(package_name string) (bool, error) {
 	return false, fmt.Errorf("failure: this validation is not available for Windows")
 }
+
+func HostPortOpen(port int) (bool, error) {
+	cmd := exec.Command("netstat", "-na")
+	output, err := cmd.Output()
+	if err != nil {
+		return false, fmt.Errorf("failure to list open ports; encountered error: \"%s\"", err)
+	}
+
+	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+	for _, line := range lines {
+		if strings.Contains(line, "TCP") && strings.Contains(line, fmt.Sprintf("127.0.0.1:%d", port)) && strings.Contains(line, "LISTENING") {
+			return true, nil
+		}
+	}
+
+	return false, fmt.Errorf("failure to detect port \"%d\" being open", port)
+}

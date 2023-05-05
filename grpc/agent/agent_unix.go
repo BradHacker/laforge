@@ -233,3 +233,18 @@ func LinuxYumInstalled(package_name string) (bool, error) {
 		return false, fmt.Errorf("yum package \"%s\" is not installed", package_name)
 	}
 }
+
+func HostPortOpen(port int) (bool, error) {
+	cmd := exec.Command("lsof", "-i", fmt.Sprintf(":%d", port))
+	output, err := cmd.Output()
+	if err != nil {
+		return false, fmt.Errorf("failure to list open ports; encountered error: \"%s\"", err)
+	}
+
+	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+	if len(lines) > 1 {
+		return true, nil
+	}
+
+	return false, fmt.Errorf("failure to detect port \"%d\" being open", port)
+}
