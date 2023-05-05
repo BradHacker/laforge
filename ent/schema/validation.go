@@ -42,6 +42,7 @@ func (Validation) Fields() []ent.Field {
 		field.String("hash").StructTag(`hcl:"hash,optional"`),
 		field.String("regex").StructTag(`hcl:"regex,optional"`),
 		field.String("ip").StructTag(`hcl:"ip,optional"`),
+		field.String("url").StructTag(`hcl:"url,optional"`),
 		field.Int("port").StructTag(`hcl:"port,optional"`),
 		field.String("hostname").StructTag(`hcl:"hostname,optional"`),
 		field.JSON("nameservers", []string{}).StructTag(`hcl:"nameservers,optional"`),
@@ -51,6 +52,7 @@ func (Validation) Fields() []ent.Field {
 		field.String("file_path").StructTag(`hcl:"file_path,optional"`),
 		field.String("search_string").StructTag(`hcl:"search_string,optional"`),
 		field.String("service_name").StructTag(`hcl:"service_name,optional"`),
+		field.String("file_permission").StructTag(`hcl:"file_permission,optional"`),
 		field.Enum("service_status").
 			Values(
 				"active",

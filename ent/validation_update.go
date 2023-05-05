@@ -60,6 +60,12 @@ func (vu *ValidationUpdate) SetIP(s string) *ValidationUpdate {
 	return vu
 }
 
+// SetURL sets the "url" field.
+func (vu *ValidationUpdate) SetURL(s string) *ValidationUpdate {
+	vu.mutation.SetURL(s)
+	return vu
+}
+
 // SetPort sets the "port" field.
 func (vu *ValidationUpdate) SetPort(i int) *ValidationUpdate {
 	vu.mutation.ResetPort()
@@ -118,6 +124,12 @@ func (vu *ValidationUpdate) SetSearchString(s string) *ValidationUpdate {
 // SetServiceName sets the "service_name" field.
 func (vu *ValidationUpdate) SetServiceName(s string) *ValidationUpdate {
 	vu.mutation.SetServiceName(s)
+	return vu
+}
+
+// SetFilePermission sets the "file_permission" field.
+func (vu *ValidationUpdate) SetFilePermission(s string) *ValidationUpdate {
+	vu.mutation.SetFilePermission(s)
 	return vu
 }
 
@@ -335,6 +347,13 @@ func (vu *ValidationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: validation.FieldIP,
 		})
 	}
+	if value, ok := vu.mutation.URL(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: validation.FieldURL,
+		})
+	}
 	if value, ok := vu.mutation.Port(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt,
@@ -403,6 +422,13 @@ func (vu *ValidationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Type:   field.TypeString,
 			Value:  value,
 			Column: validation.FieldServiceName,
+		})
+	}
+	if value, ok := vu.mutation.FilePermission(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: validation.FieldFilePermission,
 		})
 	}
 	if value, ok := vu.mutation.ServiceStatus(); ok {
@@ -557,6 +583,12 @@ func (vuo *ValidationUpdateOne) SetIP(s string) *ValidationUpdateOne {
 	return vuo
 }
 
+// SetURL sets the "url" field.
+func (vuo *ValidationUpdateOne) SetURL(s string) *ValidationUpdateOne {
+	vuo.mutation.SetURL(s)
+	return vuo
+}
+
 // SetPort sets the "port" field.
 func (vuo *ValidationUpdateOne) SetPort(i int) *ValidationUpdateOne {
 	vuo.mutation.ResetPort()
@@ -615,6 +647,12 @@ func (vuo *ValidationUpdateOne) SetSearchString(s string) *ValidationUpdateOne {
 // SetServiceName sets the "service_name" field.
 func (vuo *ValidationUpdateOne) SetServiceName(s string) *ValidationUpdateOne {
 	vuo.mutation.SetServiceName(s)
+	return vuo
+}
+
+// SetFilePermission sets the "file_permission" field.
+func (vuo *ValidationUpdateOne) SetFilePermission(s string) *ValidationUpdateOne {
+	vuo.mutation.SetFilePermission(s)
 	return vuo
 }
 
@@ -862,6 +900,13 @@ func (vuo *ValidationUpdateOne) sqlSave(ctx context.Context) (_node *Validation,
 			Column: validation.FieldIP,
 		})
 	}
+	if value, ok := vuo.mutation.URL(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: validation.FieldURL,
+		})
+	}
 	if value, ok := vuo.mutation.Port(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt,
@@ -930,6 +975,13 @@ func (vuo *ValidationUpdateOne) sqlSave(ctx context.Context) (_node *Validation,
 			Type:   field.TypeString,
 			Value:  value,
 			Column: validation.FieldServiceName,
+		})
+	}
+	if value, ok := vuo.mutation.FilePermission(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: validation.FieldFilePermission,
 		})
 	}
 	if value, ok := vuo.mutation.ServiceStatus(); ok {

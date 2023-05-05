@@ -25,6 +25,8 @@ const (
 	FieldRegex = "regex"
 	// FieldIP holds the string denoting the ip field in the database.
 	FieldIP = "ip"
+	// FieldURL holds the string denoting the url field in the database.
+	FieldURL = "url"
 	// FieldPort holds the string denoting the port field in the database.
 	FieldPort = "port"
 	// FieldHostname holds the string denoting the hostname field in the database.
@@ -43,6 +45,8 @@ const (
 	FieldSearchString = "search_string"
 	// FieldServiceName holds the string denoting the service_name field in the database.
 	FieldServiceName = "service_name"
+	// FieldFilePermission holds the string denoting the file_permission field in the database.
+	FieldFilePermission = "file_permission"
 	// FieldServiceStatus holds the string denoting the service_status field in the database.
 	FieldServiceStatus = "service_status"
 	// FieldProcessName holds the string denoting the process_name field in the database.
@@ -77,6 +81,7 @@ var Columns = []string{
 	FieldHash,
 	FieldRegex,
 	FieldIP,
+	FieldURL,
 	FieldPort,
 	FieldHostname,
 	FieldNameservers,
@@ -86,6 +91,7 @@ var Columns = []string{
 	FieldFilePath,
 	FieldSearchString,
 	FieldServiceName,
+	FieldFilePermission,
 	FieldServiceStatus,
 	FieldProcessName,
 }

@@ -52,6 +52,12 @@ func (vc *ValidationCreate) SetIP(s string) *ValidationCreate {
 	return vc
 }
 
+// SetURL sets the "url" field.
+func (vc *ValidationCreate) SetURL(s string) *ValidationCreate {
+	vc.mutation.SetURL(s)
+	return vc
+}
+
 // SetPort sets the "port" field.
 func (vc *ValidationCreate) SetPort(i int) *ValidationCreate {
 	vc.mutation.SetPort(i)
@@ -103,6 +109,12 @@ func (vc *ValidationCreate) SetSearchString(s string) *ValidationCreate {
 // SetServiceName sets the "service_name" field.
 func (vc *ValidationCreate) SetServiceName(s string) *ValidationCreate {
 	vc.mutation.SetServiceName(s)
+	return vc
+}
+
+// SetFilePermission sets the "file_permission" field.
+func (vc *ValidationCreate) SetFilePermission(s string) *ValidationCreate {
+	vc.mutation.SetFilePermission(s)
 	return vc
 }
 
@@ -283,6 +295,9 @@ func (vc *ValidationCreate) check() error {
 	if _, ok := vc.mutation.IP(); !ok {
 		return &ValidationError{Name: "ip", err: errors.New(`ent: missing required field "Validation.ip"`)}
 	}
+	if _, ok := vc.mutation.URL(); !ok {
+		return &ValidationError{Name: "url", err: errors.New(`ent: missing required field "Validation.url"`)}
+	}
 	if _, ok := vc.mutation.Port(); !ok {
 		return &ValidationError{Name: "port", err: errors.New(`ent: missing required field "Validation.port"`)}
 	}
@@ -309,6 +324,9 @@ func (vc *ValidationCreate) check() error {
 	}
 	if _, ok := vc.mutation.ServiceName(); !ok {
 		return &ValidationError{Name: "service_name", err: errors.New(`ent: missing required field "Validation.service_name"`)}
+	}
+	if _, ok := vc.mutation.FilePermission(); !ok {
+		return &ValidationError{Name: "file_permission", err: errors.New(`ent: missing required field "Validation.file_permission"`)}
 	}
 	if _, ok := vc.mutation.ServiceStatus(); !ok {
 		return &ValidationError{Name: "service_status", err: errors.New(`ent: missing required field "Validation.service_status"`)}
@@ -397,6 +415,14 @@ func (vc *ValidationCreate) createSpec() (*Validation, *sqlgraph.CreateSpec) {
 		})
 		_node.IP = value
 	}
+	if value, ok := vc.mutation.URL(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: validation.FieldURL,
+		})
+		_node.URL = value
+	}
 	if value, ok := vc.mutation.Port(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt,
@@ -468,6 +494,14 @@ func (vc *ValidationCreate) createSpec() (*Validation, *sqlgraph.CreateSpec) {
 			Column: validation.FieldServiceName,
 		})
 		_node.ServiceName = value
+	}
+	if value, ok := vc.mutation.FilePermission(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: validation.FieldFilePermission,
+		})
+		_node.FilePermission = value
 	}
 	if value, ok := vc.mutation.ServiceStatus(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{

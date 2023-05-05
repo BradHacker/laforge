@@ -1370,6 +1370,7 @@ var (
 		{Name: "hash", Type: field.TypeString},
 		{Name: "regex", Type: field.TypeString},
 		{Name: "ip", Type: field.TypeString},
+		{Name: "url", Type: field.TypeString},
 		{Name: "port", Type: field.TypeInt},
 		{Name: "hostname", Type: field.TypeString},
 		{Name: "nameservers", Type: field.TypeJSON},
@@ -1379,6 +1380,7 @@ var (
 		{Name: "file_path", Type: field.TypeString},
 		{Name: "search_string", Type: field.TypeString},
 		{Name: "service_name", Type: field.TypeString},
+		{Name: "file_permission", Type: field.TypeString},
 		{Name: "service_status", Type: field.TypeEnum, Enums: []string{"active", "inactive", "enabled", "disabled", "static", "masked", "alias", "linked"}, Default: "active"},
 		{Name: "process_name", Type: field.TypeString},
 		{Name: "environment_validations", Type: field.TypeUUID, Nullable: true},
@@ -1391,7 +1393,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "validations_environments_Validations",
-				Columns:    []*schema.Column{ValidationsColumns[17]},
+				Columns:    []*schema.Column{ValidationsColumns[19]},
 				RefColumns: []*schema.Column{EnvironmentsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},

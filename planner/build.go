@@ -1241,7 +1241,7 @@ func createValidation(client *ent.Client, logger *logging.Logger, ctx context.Co
 	case "net-http-content-regex":
 		_, err = client.AgentTask.Create().
 			SetCommand(agenttask.CommandVALIDATOR).
-			SetArgs("net-http-content-regex" + "💔" + entValidation.IP).
+			SetArgs("net-http-content-regex" + "💔" + entValidation.IP + "💔" + entValidation.Regex).
 			SetNumber(taskCount).
 			SetState(agenttask.StateAWAITING).
 			SetProvisionedHost(entProvisionedHost).
@@ -1251,7 +1251,7 @@ func createValidation(client *ent.Client, logger *logging.Logger, ctx context.Co
 	case "file-exists":
 		_, err = client.AgentTask.Create().
 			SetCommand(agenttask.CommandVALIDATOR).
-			SetArgs("file-exists" + "💔" + entValidation.FilePath).
+			SetArgs("file-exists" + "💔" + entValidation.FilePath + "💔" + entValidation.Hash).
 			SetNumber(taskCount).
 			SetState(agenttask.StateAWAITING).
 			SetProvisionedHost(entProvisionedHost).
@@ -1371,7 +1371,7 @@ func createValidation(client *ent.Client, logger *logging.Logger, ctx context.Co
 	case "file-permission":
 		_, err = client.AgentTask.Create().
 			SetCommand(agenttask.CommandVALIDATOR).
-			SetArgs("file-permission" + "💔" + entValidation.FilePath).
+			SetArgs("file-permission" + "💔" + entValidation.FilePath + "💔" + entValidation.FilePermission).
 			SetNumber(taskCount).
 			SetState(agenttask.StateAWAITING).
 			SetProvisionedHost(entProvisionedHost).

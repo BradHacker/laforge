@@ -1295,6 +1295,8 @@ func createValidations(txClient *ent.Tx, ctx context.Context, log *logging.Logge
 					SetHostname(cValidation.Hostname).
 					SetNameservers(cValidation.Nameservers).
 					SetPackageName(cValidation.PackageName).
+					SetURL(cValidation.URL).
+					SetFilePermission(cValidation.FilePermission).
 					SetUsername(cValidation.Username).
 					SetGroupName(cValidation.GroupName).
 					SetFilePath(cValidation.FilePath).
@@ -1318,6 +1320,8 @@ func createValidations(txClient *ent.Tx, ctx context.Context, log *logging.Logge
 			SetHostname(cValidation.Hostname).
 			SetNameservers(cValidation.Nameservers).
 			SetPackageName(cValidation.PackageName).
+			SetURL(cValidation.URL).
+			SetFilePermission(cValidation.FilePermission).
 			SetUsername(cValidation.Username).
 			SetGroupName(cValidation.GroupName).
 			SetFilePath(cValidation.FilePath).

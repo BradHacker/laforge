@@ -36359,6 +36359,7 @@ type ValidationMutation struct {
 	hash                *string
 	regex               *string
 	ip                  *string
+	url                 *string
 	port                *int
 	addport             *int
 	hostname            *string
@@ -36369,6 +36370,7 @@ type ValidationMutation struct {
 	file_path           *string
 	search_string       *string
 	service_name        *string
+	file_permission     *string
 	service_status      *validation.ServiceStatus
 	process_name        *string
 	clearedFields       map[string]struct{}
@@ -36664,6 +36666,42 @@ func (m *ValidationMutation) OldIP(ctx context.Context) (v string, err error) {
 // ResetIP resets all changes to the "ip" field.
 func (m *ValidationMutation) ResetIP() {
 	m.ip = nil
+}
+
+// SetURL sets the "url" field.
+func (m *ValidationMutation) SetURL(s string) {
+	m.url = &s
+}
+
+// URL returns the value of the "url" field in the mutation.
+func (m *ValidationMutation) URL() (r string, exists bool) {
+	v := m.url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldURL returns the old "url" field's value of the Validation entity.
+// If the Validation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ValidationMutation) OldURL(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldURL: %w", err)
+	}
+	return oldValue.URL, nil
+}
+
+// ResetURL resets all changes to the "url" field.
+func (m *ValidationMutation) ResetURL() {
+	m.url = nil
 }
 
 // SetPort sets the "port" field.
@@ -37010,6 +37048,42 @@ func (m *ValidationMutation) ResetServiceName() {
 	m.service_name = nil
 }
 
+// SetFilePermission sets the "file_permission" field.
+func (m *ValidationMutation) SetFilePermission(s string) {
+	m.file_permission = &s
+}
+
+// FilePermission returns the value of the "file_permission" field in the mutation.
+func (m *ValidationMutation) FilePermission() (r string, exists bool) {
+	v := m.file_permission
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFilePermission returns the old "file_permission" field's value of the Validation entity.
+// If the Validation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ValidationMutation) OldFilePermission(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFilePermission is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFilePermission requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFilePermission: %w", err)
+	}
+	return oldValue.FilePermission, nil
+}
+
+// ResetFilePermission resets all changes to the "file_permission" field.
+func (m *ValidationMutation) ResetFilePermission() {
+	m.file_permission = nil
+}
+
 // SetServiceStatus sets the "service_status" field.
 func (m *ValidationMutation) SetServiceStatus(vs validation.ServiceStatus) {
 	m.service_status = &vs
@@ -37194,7 +37268,7 @@ func (m *ValidationMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ValidationMutation) Fields() []string {
-	fields := make([]string, 0, 16)
+	fields := make([]string, 0, 18)
 	if m.hcl_id != nil {
 		fields = append(fields, validation.FieldHclID)
 	}
@@ -37209,6 +37283,9 @@ func (m *ValidationMutation) Fields() []string {
 	}
 	if m.ip != nil {
 		fields = append(fields, validation.FieldIP)
+	}
+	if m.url != nil {
+		fields = append(fields, validation.FieldURL)
 	}
 	if m.port != nil {
 		fields = append(fields, validation.FieldPort)
@@ -37237,6 +37314,9 @@ func (m *ValidationMutation) Fields() []string {
 	if m.service_name != nil {
 		fields = append(fields, validation.FieldServiceName)
 	}
+	if m.file_permission != nil {
+		fields = append(fields, validation.FieldFilePermission)
+	}
 	if m.service_status != nil {
 		fields = append(fields, validation.FieldServiceStatus)
 	}
@@ -37261,6 +37341,8 @@ func (m *ValidationMutation) Field(name string) (ent.Value, bool) {
 		return m.Regex()
 	case validation.FieldIP:
 		return m.IP()
+	case validation.FieldURL:
+		return m.URL()
 	case validation.FieldPort:
 		return m.Port()
 	case validation.FieldHostname:
@@ -37279,6 +37361,8 @@ func (m *ValidationMutation) Field(name string) (ent.Value, bool) {
 		return m.SearchString()
 	case validation.FieldServiceName:
 		return m.ServiceName()
+	case validation.FieldFilePermission:
+		return m.FilePermission()
 	case validation.FieldServiceStatus:
 		return m.ServiceStatus()
 	case validation.FieldProcessName:
@@ -37302,6 +37386,8 @@ func (m *ValidationMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldRegex(ctx)
 	case validation.FieldIP:
 		return m.OldIP(ctx)
+	case validation.FieldURL:
+		return m.OldURL(ctx)
 	case validation.FieldPort:
 		return m.OldPort(ctx)
 	case validation.FieldHostname:
@@ -37320,6 +37406,8 @@ func (m *ValidationMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldSearchString(ctx)
 	case validation.FieldServiceName:
 		return m.OldServiceName(ctx)
+	case validation.FieldFilePermission:
+		return m.OldFilePermission(ctx)
 	case validation.FieldServiceStatus:
 		return m.OldServiceStatus(ctx)
 	case validation.FieldProcessName:
@@ -37367,6 +37455,13 @@ func (m *ValidationMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetIP(v)
+		return nil
+	case validation.FieldURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetURL(v)
 		return nil
 	case validation.FieldPort:
 		v, ok := value.(int)
@@ -37430,6 +37525,13 @@ func (m *ValidationMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetServiceName(v)
+		return nil
+	case validation.FieldFilePermission:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFilePermission(v)
 		return nil
 	case validation.FieldServiceStatus:
 		v, ok := value.(validation.ServiceStatus)
@@ -37524,6 +37626,9 @@ func (m *ValidationMutation) ResetField(name string) error {
 	case validation.FieldIP:
 		m.ResetIP()
 		return nil
+	case validation.FieldURL:
+		m.ResetURL()
+		return nil
 	case validation.FieldPort:
 		m.ResetPort()
 		return nil
@@ -37550,6 +37655,9 @@ func (m *ValidationMutation) ResetField(name string) error {
 		return nil
 	case validation.FieldServiceName:
 		m.ResetServiceName()
+		return nil
+	case validation.FieldFilePermission:
+		m.ResetFilePermission()
 		return nil
 	case validation.FieldServiceStatus:
 		m.ResetServiceStatus()

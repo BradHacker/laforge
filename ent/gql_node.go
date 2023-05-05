@@ -4074,7 +4074,7 @@ func (v *Validation) Node(ctx context.Context) (node *Node, err error) {
 	node = &Node{
 		ID:     v.ID,
 		Type:   "Validation",
-		Fields: make([]*Field, 16),
+		Fields: make([]*Field, 18),
 		Edges:  make([]*Edge, 2),
 	}
 	var buf []byte
@@ -4118,10 +4118,18 @@ func (v *Validation) Node(ctx context.Context) (node *Node, err error) {
 		Name:  "ip",
 		Value: string(buf),
 	}
-	if buf, err = json.Marshal(v.Port); err != nil {
+	if buf, err = json.Marshal(v.URL); err != nil {
 		return nil, err
 	}
 	node.Fields[5] = &Field{
+		Type:  "string",
+		Name:  "url",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(v.Port); err != nil {
+		return nil, err
+	}
+	node.Fields[6] = &Field{
 		Type:  "int",
 		Name:  "port",
 		Value: string(buf),
@@ -4129,7 +4137,7 @@ func (v *Validation) Node(ctx context.Context) (node *Node, err error) {
 	if buf, err = json.Marshal(v.Hostname); err != nil {
 		return nil, err
 	}
-	node.Fields[6] = &Field{
+	node.Fields[7] = &Field{
 		Type:  "string",
 		Name:  "hostname",
 		Value: string(buf),
@@ -4137,7 +4145,7 @@ func (v *Validation) Node(ctx context.Context) (node *Node, err error) {
 	if buf, err = json.Marshal(v.Nameservers); err != nil {
 		return nil, err
 	}
-	node.Fields[7] = &Field{
+	node.Fields[8] = &Field{
 		Type:  "[]string",
 		Name:  "nameservers",
 		Value: string(buf),
@@ -4145,7 +4153,7 @@ func (v *Validation) Node(ctx context.Context) (node *Node, err error) {
 	if buf, err = json.Marshal(v.PackageName); err != nil {
 		return nil, err
 	}
-	node.Fields[8] = &Field{
+	node.Fields[9] = &Field{
 		Type:  "string",
 		Name:  "package_name",
 		Value: string(buf),
@@ -4153,7 +4161,7 @@ func (v *Validation) Node(ctx context.Context) (node *Node, err error) {
 	if buf, err = json.Marshal(v.Username); err != nil {
 		return nil, err
 	}
-	node.Fields[9] = &Field{
+	node.Fields[10] = &Field{
 		Type:  "string",
 		Name:  "username",
 		Value: string(buf),
@@ -4161,7 +4169,7 @@ func (v *Validation) Node(ctx context.Context) (node *Node, err error) {
 	if buf, err = json.Marshal(v.GroupName); err != nil {
 		return nil, err
 	}
-	node.Fields[10] = &Field{
+	node.Fields[11] = &Field{
 		Type:  "string",
 		Name:  "group_name",
 		Value: string(buf),
@@ -4169,7 +4177,7 @@ func (v *Validation) Node(ctx context.Context) (node *Node, err error) {
 	if buf, err = json.Marshal(v.FilePath); err != nil {
 		return nil, err
 	}
-	node.Fields[11] = &Field{
+	node.Fields[12] = &Field{
 		Type:  "string",
 		Name:  "file_path",
 		Value: string(buf),
@@ -4177,7 +4185,7 @@ func (v *Validation) Node(ctx context.Context) (node *Node, err error) {
 	if buf, err = json.Marshal(v.SearchString); err != nil {
 		return nil, err
 	}
-	node.Fields[12] = &Field{
+	node.Fields[13] = &Field{
 		Type:  "string",
 		Name:  "search_string",
 		Value: string(buf),
@@ -4185,15 +4193,23 @@ func (v *Validation) Node(ctx context.Context) (node *Node, err error) {
 	if buf, err = json.Marshal(v.ServiceName); err != nil {
 		return nil, err
 	}
-	node.Fields[13] = &Field{
+	node.Fields[14] = &Field{
 		Type:  "string",
 		Name:  "service_name",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(v.FilePermission); err != nil {
+		return nil, err
+	}
+	node.Fields[15] = &Field{
+		Type:  "string",
+		Name:  "file_permission",
 		Value: string(buf),
 	}
 	if buf, err = json.Marshal(v.ServiceStatus); err != nil {
 		return nil, err
 	}
-	node.Fields[14] = &Field{
+	node.Fields[16] = &Field{
 		Type:  "validation.ServiceStatus",
 		Name:  "service_status",
 		Value: string(buf),
@@ -4201,7 +4217,7 @@ func (v *Validation) Node(ctx context.Context) (node *Node, err error) {
 	if buf, err = json.Marshal(v.ProcessName); err != nil {
 		return nil, err
 	}
-	node.Fields[15] = &Field{
+	node.Fields[17] = &Field{
 		Type:  "string",
 		Name:  "process_name",
 		Value: string(buf),

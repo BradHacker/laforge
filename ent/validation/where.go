@@ -108,6 +108,13 @@ func IP(v string) predicate.Validation {
 	})
 }
 
+// URL applies equality check predicate on the "url" field. It's identical to URLEQ.
+func URL(v string) predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldURL), v))
+	})
+}
+
 // Port applies equality check predicate on the "port" field. It's identical to PortEQ.
 func Port(v int) predicate.Validation {
 	return predicate.Validation(func(s *sql.Selector) {
@@ -161,6 +168,13 @@ func SearchString(v string) predicate.Validation {
 func ServiceName(v string) predicate.Validation {
 	return predicate.Validation(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldServiceName), v))
+	})
+}
+
+// FilePermission applies equality check predicate on the "file_permission" field. It's identical to FilePermissionEQ.
+func FilePermission(v string) predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldFilePermission), v))
 	})
 }
 
@@ -600,6 +614,105 @@ func IPEqualFold(v string) predicate.Validation {
 func IPContainsFold(v string) predicate.Validation {
 	return predicate.Validation(func(s *sql.Selector) {
 		s.Where(sql.ContainsFold(s.C(FieldIP), v))
+	})
+}
+
+// URLEQ applies the EQ predicate on the "url" field.
+func URLEQ(v string) predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldURL), v))
+	})
+}
+
+// URLNEQ applies the NEQ predicate on the "url" field.
+func URLNEQ(v string) predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldURL), v))
+	})
+}
+
+// URLIn applies the In predicate on the "url" field.
+func URLIn(vs ...string) predicate.Validation {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.In(s.C(FieldURL), v...))
+	})
+}
+
+// URLNotIn applies the NotIn predicate on the "url" field.
+func URLNotIn(vs ...string) predicate.Validation {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.NotIn(s.C(FieldURL), v...))
+	})
+}
+
+// URLGT applies the GT predicate on the "url" field.
+func URLGT(v string) predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldURL), v))
+	})
+}
+
+// URLGTE applies the GTE predicate on the "url" field.
+func URLGTE(v string) predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldURL), v))
+	})
+}
+
+// URLLT applies the LT predicate on the "url" field.
+func URLLT(v string) predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldURL), v))
+	})
+}
+
+// URLLTE applies the LTE predicate on the "url" field.
+func URLLTE(v string) predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldURL), v))
+	})
+}
+
+// URLContains applies the Contains predicate on the "url" field.
+func URLContains(v string) predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldURL), v))
+	})
+}
+
+// URLHasPrefix applies the HasPrefix predicate on the "url" field.
+func URLHasPrefix(v string) predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldURL), v))
+	})
+}
+
+// URLHasSuffix applies the HasSuffix predicate on the "url" field.
+func URLHasSuffix(v string) predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldURL), v))
+	})
+}
+
+// URLEqualFold applies the EqualFold predicate on the "url" field.
+func URLEqualFold(v string) predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldURL), v))
+	})
+}
+
+// URLContainsFold applies the ContainsFold predicate on the "url" field.
+func URLContainsFold(v string) predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldURL), v))
 	})
 }
 
@@ -1357,6 +1470,105 @@ func ServiceNameEqualFold(v string) predicate.Validation {
 func ServiceNameContainsFold(v string) predicate.Validation {
 	return predicate.Validation(func(s *sql.Selector) {
 		s.Where(sql.ContainsFold(s.C(FieldServiceName), v))
+	})
+}
+
+// FilePermissionEQ applies the EQ predicate on the "file_permission" field.
+func FilePermissionEQ(v string) predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldFilePermission), v))
+	})
+}
+
+// FilePermissionNEQ applies the NEQ predicate on the "file_permission" field.
+func FilePermissionNEQ(v string) predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldFilePermission), v))
+	})
+}
+
+// FilePermissionIn applies the In predicate on the "file_permission" field.
+func FilePermissionIn(vs ...string) predicate.Validation {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.In(s.C(FieldFilePermission), v...))
+	})
+}
+
+// FilePermissionNotIn applies the NotIn predicate on the "file_permission" field.
+func FilePermissionNotIn(vs ...string) predicate.Validation {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.NotIn(s.C(FieldFilePermission), v...))
+	})
+}
+
+// FilePermissionGT applies the GT predicate on the "file_permission" field.
+func FilePermissionGT(v string) predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldFilePermission), v))
+	})
+}
+
+// FilePermissionGTE applies the GTE predicate on the "file_permission" field.
+func FilePermissionGTE(v string) predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldFilePermission), v))
+	})
+}
+
+// FilePermissionLT applies the LT predicate on the "file_permission" field.
+func FilePermissionLT(v string) predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldFilePermission), v))
+	})
+}
+
+// FilePermissionLTE applies the LTE predicate on the "file_permission" field.
+func FilePermissionLTE(v string) predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldFilePermission), v))
+	})
+}
+
+// FilePermissionContains applies the Contains predicate on the "file_permission" field.
+func FilePermissionContains(v string) predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldFilePermission), v))
+	})
+}
+
+// FilePermissionHasPrefix applies the HasPrefix predicate on the "file_permission" field.
+func FilePermissionHasPrefix(v string) predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldFilePermission), v))
+	})
+}
+
+// FilePermissionHasSuffix applies the HasSuffix predicate on the "file_permission" field.
+func FilePermissionHasSuffix(v string) predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldFilePermission), v))
+	})
+}
+
+// FilePermissionEqualFold applies the EqualFold predicate on the "file_permission" field.
+func FilePermissionEqualFold(v string) predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldFilePermission), v))
+	})
+}
+
+// FilePermissionContainsFold applies the ContainsFold predicate on the "file_permission" field.
+func FilePermissionContainsFold(v string) predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldFilePermission), v))
 	})
 }
 

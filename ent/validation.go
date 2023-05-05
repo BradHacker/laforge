@@ -28,6 +28,8 @@ type Validation struct {
 	Regex string `json:"regex,omitempty" hcl:"regex,optional"`
 	// IP holds the value of the "ip" field.
 	IP string `json:"ip,omitempty" hcl:"ip,optional"`
+	// URL holds the value of the "url" field.
+	URL string `json:"url,omitempty" hcl:"url,optional"`
 	// Port holds the value of the "port" field.
 	Port int `json:"port,omitempty" hcl:"port,optional"`
 	// Hostname holds the value of the "hostname" field.
@@ -46,6 +48,8 @@ type Validation struct {
 	SearchString string `json:"search_string,omitempty" hcl:"search_string,optional"`
 	// ServiceName holds the value of the "service_name" field.
 	ServiceName string `json:"service_name,omitempty" hcl:"service_name,optional"`
+	// FilePermission holds the value of the "file_permission" field.
+	FilePermission string `json:"file_permission,omitempty" hcl:"file_permission,optional"`
 	// ServiceStatus holds the value of the "service_status" field.
 	ServiceStatus validation.ServiceStatus `json:"service_status,omitempty" hcl:"service_status,optional"`
 	// ProcessName holds the value of the "process_name" field.
@@ -106,7 +110,7 @@ func (*Validation) scanValues(columns []string) ([]interface{}, error) {
 			values[i] = new([]byte)
 		case validation.FieldPort:
 			values[i] = new(sql.NullInt64)
-		case validation.FieldHclID, validation.FieldValidationType, validation.FieldHash, validation.FieldRegex, validation.FieldIP, validation.FieldHostname, validation.FieldPackageName, validation.FieldUsername, validation.FieldGroupName, validation.FieldFilePath, validation.FieldSearchString, validation.FieldServiceName, validation.FieldServiceStatus, validation.FieldProcessName:
+		case validation.FieldHclID, validation.FieldValidationType, validation.FieldHash, validation.FieldRegex, validation.FieldIP, validation.FieldURL, validation.FieldHostname, validation.FieldPackageName, validation.FieldUsername, validation.FieldGroupName, validation.FieldFilePath, validation.FieldSearchString, validation.FieldServiceName, validation.FieldFilePermission, validation.FieldServiceStatus, validation.FieldProcessName:
 			values[i] = new(sql.NullString)
 		case validation.FieldID:
 			values[i] = new(uuid.UUID)
@@ -163,6 +167,12 @@ func (v *Validation) assignValues(columns []string, values []interface{}) error 
 			} else if value.Valid {
 				v.IP = value.String
 			}
+		case validation.FieldURL:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field url", values[i])
+			} else if value.Valid {
+				v.URL = value.String
+			}
 		case validation.FieldPort:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field port", values[i])
@@ -218,6 +228,12 @@ func (v *Validation) assignValues(columns []string, values []interface{}) error 
 				return fmt.Errorf("unexpected type %T for field service_name", values[i])
 			} else if value.Valid {
 				v.ServiceName = value.String
+			}
+		case validation.FieldFilePermission:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field file_permission", values[i])
+			} else if value.Valid {
+				v.FilePermission = value.String
 			}
 		case validation.FieldServiceStatus:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -286,6 +302,8 @@ func (v *Validation) String() string {
 	builder.WriteString(v.Regex)
 	builder.WriteString(", ip=")
 	builder.WriteString(v.IP)
+	builder.WriteString(", url=")
+	builder.WriteString(v.URL)
 	builder.WriteString(", port=")
 	builder.WriteString(fmt.Sprintf("%v", v.Port))
 	builder.WriteString(", hostname=")
@@ -304,6 +322,8 @@ func (v *Validation) String() string {
 	builder.WriteString(v.SearchString)
 	builder.WriteString(", service_name=")
 	builder.WriteString(v.ServiceName)
+	builder.WriteString(", file_permission=")
+	builder.WriteString(v.FilePermission)
 	builder.WriteString(", service_status=")
 	builder.WriteString(fmt.Sprintf("%v", v.ServiceStatus))
 	builder.WriteString(", process_name=")

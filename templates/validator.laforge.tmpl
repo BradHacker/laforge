@@ -39,6 +39,11 @@ validation "{{ $.ID }}"{
     package_name = {{ $.PackageName }}
     {{ end }}
 
+    {{ if  $.URL }} 
+    // package name to install
+    url = {{ $.URL }}
+    {{ end }}
+
     {{ if  $.Username }} 
     // name of user
     username = {{ $.Username }}
