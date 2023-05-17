@@ -45,6 +45,7 @@ import (
 	"github.com/gen0cide/laforge/ent/team"
 	"github.com/gen0cide/laforge/ent/token"
 	"github.com/gen0cide/laforge/ent/user"
+	"github.com/gen0cide/laforge/ent/validation"
 	"github.com/google/uuid"
 )
 
@@ -366,4 +367,10 @@ func init() {
 	userDescID := userFields[0].Descriptor()
 	// user.DefaultID holds the default value on creation for the id field.
 	user.DefaultID = userDescID.Default.(func() uuid.UUID)
+	validationFields := schema.Validation{}.Fields()
+	_ = validationFields
+	// validationDescID is the schema descriptor for id field.
+	validationDescID := validationFields[0].Descriptor()
+	// validation.DefaultID holds the default value on creation for the id field.
+	validation.DefaultID = validationDescID.Default.(func() uuid.UUID)
 }

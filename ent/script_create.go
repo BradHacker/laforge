@@ -107,6 +107,12 @@ func (sc *ScriptCreate) SetTags(m map[string]string) *ScriptCreate {
 	return sc
 }
 
+// SetValidations sets the "validations" field.
+func (sc *ScriptCreate) SetValidations(s []string) *ScriptCreate {
+	sc.mutation.SetValidations(s)
+	return sc
+}
+
 // SetID sets the "id" field.
 func (sc *ScriptCreate) SetID(u uuid.UUID) *ScriptCreate {
 	sc.mutation.SetID(u)
@@ -444,6 +450,14 @@ func (sc *ScriptCreate) createSpec() (*Script, *sqlgraph.CreateSpec) {
 			Column: script.FieldTags,
 		})
 		_node.Tags = value
+	}
+	if value, ok := sc.mutation.Validations(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeJSON,
+			Value:  value,
+			Column: script.FieldValidations,
+		})
+		_node.Validations = value
 	}
 	if nodes := sc.mutation.UsersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

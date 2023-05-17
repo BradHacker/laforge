@@ -90,6 +90,8 @@ type Tx struct {
 	Token *TokenClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
+	// Validation is the client for interacting with the Validation builders.
+	Validation *ValidationClient
 
 	// lazily loaded.
 	client     *Client
@@ -264,6 +266,7 @@ func (tx *Tx) init() {
 	tx.Team = NewTeamClient(tx.config)
 	tx.Token = NewTokenClient(tx.config)
 	tx.User = NewUserClient(tx.config)
+	tx.Validation = NewValidationClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

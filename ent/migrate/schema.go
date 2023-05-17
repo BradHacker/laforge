@@ -84,7 +84,7 @@ var (
 	// AgentTasksColumns holds the columns for the "agent_tasks" table.
 	AgentTasksColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "command", Type: field.TypeEnum, Enums: []string{"DEFAULT", "DELETE", "REBOOT", "EXTRACT", "DOWNLOAD", "CREATEUSER", "CREATEUSERPASS", "ADDTOGROUP", "EXECUTE", "VALIDATE", "CHANGEPERMS", "APPENDFILE", "ANSIBLE"}},
+		{Name: "command", Type: field.TypeEnum, Enums: []string{"DEFAULT", "DELETE", "REBOOT", "EXTRACT", "DOWNLOAD", "CREATEUSER", "CREATEUSERPASS", "ADDTOGROUP", "EXECUTE", "VALIDATE", "CHANGEPERMS", "APPENDFILE", "ANSIBLE", "VALIDATOR"}},
 		{Name: "args", Type: field.TypeString},
 		{Name: "number", Type: field.TypeInt},
 		{Name: "output", Type: field.TypeString, Default: ""},
@@ -93,6 +93,7 @@ var (
 		{Name: "agent_task_provisioning_step", Type: field.TypeUUID, Nullable: true},
 		{Name: "agent_task_provisioning_scheduled_step", Type: field.TypeUUID, Nullable: true},
 		{Name: "agent_task_provisioned_host", Type: field.TypeUUID},
+		{Name: "agent_task_validation", Type: field.TypeUUID, Nullable: true},
 	}
 	// AgentTasksTable holds the schema information for the "agent_tasks" table.
 	AgentTasksTable = &schema.Table{
@@ -118,6 +119,12 @@ var (
 				RefColumns: []*schema.Column{ProvisionedHostsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
+			{
+				Symbol:     "agent_tasks_validations_Validation",
+				Columns:    []*schema.Column{AgentTasksColumns[10]},
+				RefColumns: []*schema.Column{ValidationsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
 		},
 	}
 	// AnsiblesColumns holds the columns for the "ansibles" table.
@@ -132,6 +139,7 @@ var (
 		{Name: "inventory", Type: field.TypeString},
 		{Name: "abs_path", Type: field.TypeString},
 		{Name: "tags", Type: field.TypeJSON},
+		{Name: "validations", Type: field.TypeJSON},
 		{Name: "environment_ansibles", Type: field.TypeUUID, Nullable: true},
 	}
 	// AnsiblesTable holds the schema information for the "ansibles" table.
@@ -142,7 +150,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "ansibles_environments_Ansibles",
-				Columns:    []*schema.Column{AnsiblesColumns[10]},
+				Columns:    []*schema.Column{AnsiblesColumns[11]},
 				RefColumns: []*schema.Column{EnvironmentsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -250,6 +258,7 @@ var (
 		{Name: "timeout", Type: field.TypeInt},
 		{Name: "vars", Type: field.TypeJSON},
 		{Name: "tags", Type: field.TypeJSON},
+		{Name: "validations", Type: field.TypeJSON},
 		{Name: "environment_commands", Type: field.TypeUUID, Nullable: true},
 	}
 	// CommandsTable holds the schema information for the "commands" table.
@@ -260,7 +269,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "commands_environments_Commands",
-				Columns:    []*schema.Column{CommandsColumns[12]},
+				Columns:    []*schema.Column{CommandsColumns[13]},
 				RefColumns: []*schema.Column{EnvironmentsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -318,6 +327,7 @@ var (
 		{Name: "vars", Type: field.TypeJSON},
 		{Name: "disabled", Type: field.TypeBool},
 		{Name: "tags", Type: field.TypeJSON},
+		{Name: "validations", Type: field.TypeJSON},
 		{Name: "environment_dns_records", Type: field.TypeUUID, Nullable: true},
 	}
 	// DNSRecordsTable holds the schema information for the "dns_records" table.
@@ -328,7 +338,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "dns_records_environments_DNSRecords",
-				Columns:    []*schema.Column{DNSRecordsColumns[9]},
+				Columns:    []*schema.Column{DNSRecordsColumns[10]},
 				RefColumns: []*schema.Column{EnvironmentsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -381,6 +391,7 @@ var (
 		{Name: "hcl_id", Type: field.TypeString},
 		{Name: "path", Type: field.TypeString},
 		{Name: "tags", Type: field.TypeJSON},
+		{Name: "validations", Type: field.TypeJSON},
 		{Name: "environment_file_deletes", Type: field.TypeUUID, Nullable: true},
 	}
 	// FileDeletesTable holds the schema information for the "file_deletes" table.
@@ -391,7 +402,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "file_deletes_environments_FileDeletes",
-				Columns:    []*schema.Column{FileDeletesColumns[4]},
+				Columns:    []*schema.Column{FileDeletesColumns[5]},
 				RefColumns: []*schema.Column{EnvironmentsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -411,6 +422,7 @@ var (
 		{Name: "abs_path", Type: field.TypeString},
 		{Name: "is_txt", Type: field.TypeBool, Default: false},
 		{Name: "tags", Type: field.TypeJSON},
+		{Name: "validations", Type: field.TypeJSON},
 		{Name: "environment_file_downloads", Type: field.TypeUUID, Nullable: true},
 	}
 	// FileDownloadsTable holds the schema information for the "file_downloads" table.
@@ -421,7 +433,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "file_downloads_environments_FileDownloads",
-				Columns:    []*schema.Column{FileDownloadsColumns[12]},
+				Columns:    []*schema.Column{FileDownloadsColumns[13]},
 				RefColumns: []*schema.Column{EnvironmentsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -435,6 +447,7 @@ var (
 		{Name: "destination", Type: field.TypeString},
 		{Name: "type", Type: field.TypeString},
 		{Name: "tags", Type: field.TypeJSON},
+		{Name: "validations", Type: field.TypeJSON},
 		{Name: "environment_file_extracts", Type: field.TypeUUID, Nullable: true},
 	}
 	// FileExtractsTable holds the schema information for the "file_extracts" table.
@@ -445,7 +458,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "file_extracts_environments_FileExtracts",
-				Columns:    []*schema.Column{FileExtractsColumns[6]},
+				Columns:    []*schema.Column{FileExtractsColumns[7]},
 				RefColumns: []*schema.Column{EnvironmentsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -1069,6 +1082,7 @@ var (
 		{Name: "vars", Type: field.TypeJSON},
 		{Name: "abs_path", Type: field.TypeString},
 		{Name: "tags", Type: field.TypeJSON},
+		{Name: "validations", Type: field.TypeJSON, Nullable: true},
 		{Name: "environment_scripts", Type: field.TypeUUID, Nullable: true},
 	}
 	// ScriptsTable holds the schema information for the "scripts" table.
@@ -1079,7 +1093,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "scripts_environments_Scripts",
-				Columns:    []*schema.Column{ScriptsColumns[15]},
+				Columns:    []*schema.Column{ScriptsColumns[16]},
 				RefColumns: []*schema.Column{EnvironmentsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -1302,6 +1316,7 @@ var (
 		{Name: "finding_users", Type: field.TypeUUID, Nullable: true},
 		{Name: "host_users", Type: field.TypeUUID, Nullable: true},
 		{Name: "script_users", Type: field.TypeUUID, Nullable: true},
+		{Name: "validation_users", Type: field.TypeUUID, Nullable: true},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{
@@ -1338,6 +1353,49 @@ var (
 				Columns:    []*schema.Column{UsersColumns[9]},
 				RefColumns: []*schema.Column{ScriptsColumns[0]},
 				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "users_validations_Users",
+				Columns:    []*schema.Column{UsersColumns[10]},
+				RefColumns: []*schema.Column{ValidationsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
+	// ValidationsColumns holds the columns for the "validations" table.
+	ValidationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "hcl_id", Type: field.TypeString},
+		{Name: "validation_type", Type: field.TypeEnum, Enums: []string{"linux-apt-installed", "net-tcp-open", "net-udp-open", "net-http-content-regex", "file-exists", "file-hash", "file-content-regex", "dir-exists", "user-exists", "user-group-membership", "host-port-open", "host-process-running", "host-service-state", "net-icmp", "file-content-string", "file-permission"}},
+		{Name: "hash", Type: field.TypeString, Nullable: true},
+		{Name: "regex", Type: field.TypeString, Nullable: true},
+		{Name: "ip", Type: field.TypeString, Nullable: true},
+		{Name: "url", Type: field.TypeString, Nullable: true},
+		{Name: "port", Type: field.TypeInt, Nullable: true},
+		{Name: "hostname", Type: field.TypeString, Nullable: true},
+		{Name: "nameservers", Type: field.TypeJSON, Nullable: true},
+		{Name: "package_name", Type: field.TypeString, Nullable: true},
+		{Name: "username", Type: field.TypeString, Nullable: true},
+		{Name: "group_name", Type: field.TypeString, Nullable: true},
+		{Name: "file_path", Type: field.TypeString, Nullable: true},
+		{Name: "search_string", Type: field.TypeString, Nullable: true},
+		{Name: "service_name", Type: field.TypeString, Nullable: true},
+		{Name: "file_permission", Type: field.TypeString, Nullable: true},
+		{Name: "service_status", Type: field.TypeEnum, Enums: []string{"active", "inactive", "enabled", "disabled", "static", "masked", "alias", "linked"}, Default: "active"},
+		{Name: "process_name", Type: field.TypeString, Nullable: true},
+		{Name: "environment_validations", Type: field.TypeUUID, Nullable: true},
+	}
+	// ValidationsTable holds the schema information for the "validations" table.
+	ValidationsTable = &schema.Table{
+		Name:       "validations",
+		Columns:    ValidationsColumns,
+		PrimaryKey: []*schema.Column{ValidationsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "validations_environments_Validations",
+				Columns:    []*schema.Column{ValidationsColumns[19]},
+				RefColumns: []*schema.Column{EnvironmentsColumns[0]},
+				OnDelete:   schema.Cascade,
 			},
 		},
 	}
@@ -1582,6 +1640,7 @@ var (
 		TeamsTable,
 		TokensTable,
 		UsersTable,
+		ValidationsTable,
 		AdhocPlanNextAdhocPlansTable,
 		CompetitionDNSTable,
 		EnvironmentUsersTable,
@@ -1602,6 +1661,7 @@ func init() {
 	AgentTasksTable.ForeignKeys[0].RefTable = ProvisioningStepsTable
 	AgentTasksTable.ForeignKeys[1].RefTable = ProvisioningScheduledStepsTable
 	AgentTasksTable.ForeignKeys[2].RefTable = ProvisionedHostsTable
+	AgentTasksTable.ForeignKeys[3].RefTable = ValidationsTable
 	AnsiblesTable.ForeignKeys[0].RefTable = EnvironmentsTable
 	BuildsTable.ForeignKeys[0].RefTable = EnvironmentsTable
 	BuildsTable.ForeignKeys[1].RefTable = CompetitionsTable
@@ -1687,6 +1747,8 @@ func init() {
 	UsersTable.ForeignKeys[2].RefTable = FindingsTable
 	UsersTable.ForeignKeys[3].RefTable = HostsTable
 	UsersTable.ForeignKeys[4].RefTable = ScriptsTable
+	UsersTable.ForeignKeys[5].RefTable = ValidationsTable
+	ValidationsTable.ForeignKeys[0].RefTable = EnvironmentsTable
 	AdhocPlanNextAdhocPlansTable.ForeignKeys[0].RefTable = AdhocPlansTable
 	AdhocPlanNextAdhocPlansTable.ForeignKeys[1].RefTable = AdhocPlansTable
 	CompetitionDNSTable.ForeignKeys[0].RefTable = CompetitionsTable

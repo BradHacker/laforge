@@ -73,6 +73,8 @@ const (
 	EdgeRepositories = "Repositories"
 	// EdgeServerTasks holds the string denoting the servertasks edge name in mutations.
 	EdgeServerTasks = "ServerTasks"
+	// EdgeValidations holds the string denoting the validations edge name in mutations.
+	EdgeValidations = "Validations"
 	// Table holds the table name of the environment in the database.
 	Table = "environments"
 	// UsersTable is the table that holds the Users relation/edge. The primary key declared below.
@@ -207,6 +209,13 @@ const (
 	ServerTasksInverseTable = "server_tasks"
 	// ServerTasksColumn is the table column denoting the ServerTasks relation/edge.
 	ServerTasksColumn = "server_task_environment"
+	// ValidationsTable is the table that holds the Validations relation/edge.
+	ValidationsTable = "validations"
+	// ValidationsInverseTable is the table name for the Validation entity.
+	// It exists in this package in order to avoid circular dependency with the "validation" package.
+	ValidationsInverseTable = "validations"
+	// ValidationsColumn is the table column denoting the Validations relation/edge.
+	ValidationsColumn = "environment_validations"
 )
 
 // Columns holds all SQL columns for environment fields.

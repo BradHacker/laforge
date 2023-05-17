@@ -108,7 +108,7 @@ func MarkInProgress(ctx context.Context, rdb *redis.Client, logger *logging.Logg
 	planStatus, err := entPlan.Status(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to query status from plan: %v", err)
-		
+
 	}
 	entStatus, err := entProvisioningScheduledStep.Status(ctx)
 	if err != nil {

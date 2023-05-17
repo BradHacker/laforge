@@ -35,6 +35,8 @@ const (
 	EdgeProvisionedHost = "ProvisionedHost"
 	// EdgeAdhocPlans holds the string denoting the adhocplans edge name in mutations.
 	EdgeAdhocPlans = "AdhocPlans"
+	// EdgeValidation holds the string denoting the validation edge name in mutations.
+	EdgeValidation = "Validation"
 	// Table holds the table name of the agenttask in the database.
 	Table = "agent_tasks"
 	// ProvisioningStepTable is the table that holds the ProvisioningStep relation/edge.
@@ -65,6 +67,13 @@ const (
 	AdhocPlansInverseTable = "adhoc_plans"
 	// AdhocPlansColumn is the table column denoting the AdhocPlans relation/edge.
 	AdhocPlansColumn = "adhoc_plan_agent_task"
+	// ValidationTable is the table that holds the Validation relation/edge.
+	ValidationTable = "agent_tasks"
+	// ValidationInverseTable is the table name for the Validation entity.
+	// It exists in this package in order to avoid circular dependency with the "validation" package.
+	ValidationInverseTable = "validations"
+	// ValidationColumn is the table column denoting the Validation relation/edge.
+	ValidationColumn = "agent_task_validation"
 )
 
 // Columns holds all SQL columns for agenttask fields.
@@ -84,6 +93,7 @@ var ForeignKeys = []string{
 	"agent_task_provisioning_step",
 	"agent_task_provisioning_scheduled_step",
 	"agent_task_provisioned_host",
+	"agent_task_validation",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -128,6 +138,7 @@ const (
 	CommandCHANGEPERMS    Command = "CHANGEPERMS"
 	CommandAPPENDFILE     Command = "APPENDFILE"
 	CommandANSIBLE        Command = "ANSIBLE"
+	CommandVALIDATOR      Command = "VALIDATOR"
 )
 
 func (c Command) String() string {
@@ -137,7 +148,7 @@ func (c Command) String() string {
 // CommandValidator is a validator for the "command" field enum values. It is called by the builders before save.
 func CommandValidator(c Command) error {
 	switch c {
-	case CommandDEFAULT, CommandDELETE, CommandREBOOT, CommandEXTRACT, CommandDOWNLOAD, CommandCREATEUSER, CommandCREATEUSERPASS, CommandADDTOGROUP, CommandEXECUTE, CommandVALIDATE, CommandCHANGEPERMS, CommandAPPENDFILE, CommandANSIBLE:
+	case CommandDEFAULT, CommandDELETE, CommandREBOOT, CommandEXTRACT, CommandDOWNLOAD, CommandCREATEUSER, CommandCREATEUSERPASS, CommandADDTOGROUP, CommandEXECUTE, CommandVALIDATE, CommandCHANGEPERMS, CommandAPPENDFILE, CommandANSIBLE, CommandVALIDATOR:
 		return nil
 	default:
 		return fmt.Errorf("agenttask: invalid enum value for command field: %q", c)

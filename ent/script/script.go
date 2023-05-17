@@ -39,6 +39,8 @@ const (
 	FieldAbsPath = "abs_path"
 	// FieldTags holds the string denoting the tags field in the database.
 	FieldTags = "tags"
+	// FieldValidations holds the string denoting the validations field in the database.
+	FieldValidations = "validations"
 	// EdgeUsers holds the string denoting the users edge name in mutations.
 	EdgeUsers = "Users"
 	// EdgeFindings holds the string denoting the findings edge name in mutations.
@@ -87,6 +89,7 @@ var Columns = []string{
 	FieldVars,
 	FieldAbsPath,
 	FieldTags,
+	FieldValidations,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "scripts"

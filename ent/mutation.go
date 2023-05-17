@@ -49,6 +49,7 @@ import (
 	"github.com/gen0cide/laforge/ent/team"
 	"github.com/gen0cide/laforge/ent/token"
 	"github.com/gen0cide/laforge/ent/user"
+	"github.com/gen0cide/laforge/ent/validation"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/google/uuid"
 
@@ -103,6 +104,7 @@ const (
 	TypeTeam                      = "Team"
 	TypeToken                     = "Token"
 	TypeUser                      = "User"
+	TypeValidation                = "Validation"
 )
 
 // AdhocPlanMutation represents an operation that mutates the AdhocPlan nodes in the graph.
@@ -2275,6 +2277,8 @@ type AgentTaskMutation struct {
 	_AdhocPlans                       map[uuid.UUID]struct{}
 	removed_AdhocPlans                map[uuid.UUID]struct{}
 	cleared_AdhocPlans                bool
+	_Validation                       *uuid.UUID
+	cleared_Validation                bool
 	done                              bool
 	oldValue                          func(context.Context) (*AgentTask, error)
 	predicates                        []predicate.AgentTask
@@ -2791,6 +2795,45 @@ func (m *AgentTaskMutation) ResetAdhocPlans() {
 	m.removed_AdhocPlans = nil
 }
 
+// SetValidationID sets the "Validation" edge to the Validation entity by id.
+func (m *AgentTaskMutation) SetValidationID(id uuid.UUID) {
+	m._Validation = &id
+}
+
+// ClearValidation clears the "Validation" edge to the Validation entity.
+func (m *AgentTaskMutation) ClearValidation() {
+	m.cleared_Validation = true
+}
+
+// ValidationCleared reports if the "Validation" edge to the Validation entity was cleared.
+func (m *AgentTaskMutation) ValidationCleared() bool {
+	return m.cleared_Validation
+}
+
+// ValidationID returns the "Validation" edge ID in the mutation.
+func (m *AgentTaskMutation) ValidationID() (id uuid.UUID, exists bool) {
+	if m._Validation != nil {
+		return *m._Validation, true
+	}
+	return
+}
+
+// ValidationIDs returns the "Validation" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ValidationID instead. It exists only for internal usage by the builders.
+func (m *AgentTaskMutation) ValidationIDs() (ids []uuid.UUID) {
+	if id := m._Validation; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetValidation resets all changes to the "Validation" edge.
+func (m *AgentTaskMutation) ResetValidation() {
+	m._Validation = nil
+	m.cleared_Validation = false
+}
+
 // Where appends a list predicates to the AgentTaskMutation builder.
 func (m *AgentTaskMutation) Where(ps ...predicate.AgentTask) {
 	m.predicates = append(m.predicates, ps...)
@@ -3009,7 +3052,7 @@ func (m *AgentTaskMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *AgentTaskMutation) AddedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m._ProvisioningStep != nil {
 		edges = append(edges, agenttask.EdgeProvisioningStep)
 	}
@@ -3021,6 +3064,9 @@ func (m *AgentTaskMutation) AddedEdges() []string {
 	}
 	if m._AdhocPlans != nil {
 		edges = append(edges, agenttask.EdgeAdhocPlans)
+	}
+	if m._Validation != nil {
+		edges = append(edges, agenttask.EdgeValidation)
 	}
 	return edges
 }
@@ -3047,13 +3093,17 @@ func (m *AgentTaskMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case agenttask.EdgeValidation:
+		if id := m._Validation; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *AgentTaskMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.removed_AdhocPlans != nil {
 		edges = append(edges, agenttask.EdgeAdhocPlans)
 	}
@@ -3076,7 +3126,7 @@ func (m *AgentTaskMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *AgentTaskMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.cleared_ProvisioningStep {
 		edges = append(edges, agenttask.EdgeProvisioningStep)
 	}
@@ -3088,6 +3138,9 @@ func (m *AgentTaskMutation) ClearedEdges() []string {
 	}
 	if m.cleared_AdhocPlans {
 		edges = append(edges, agenttask.EdgeAdhocPlans)
+	}
+	if m.cleared_Validation {
+		edges = append(edges, agenttask.EdgeValidation)
 	}
 	return edges
 }
@@ -3104,6 +3157,8 @@ func (m *AgentTaskMutation) EdgeCleared(name string) bool {
 		return m.cleared_ProvisionedHost
 	case agenttask.EdgeAdhocPlans:
 		return m.cleared_AdhocPlans
+	case agenttask.EdgeValidation:
+		return m.cleared_Validation
 	}
 	return false
 }
@@ -3120,6 +3175,9 @@ func (m *AgentTaskMutation) ClearEdge(name string) error {
 		return nil
 	case agenttask.EdgeProvisionedHost:
 		m.ClearProvisionedHost()
+		return nil
+	case agenttask.EdgeValidation:
+		m.ClearValidation()
 		return nil
 	}
 	return fmt.Errorf("unknown AgentTask unique edge %s", name)
@@ -3141,6 +3199,9 @@ func (m *AgentTaskMutation) ResetEdge(name string) error {
 	case agenttask.EdgeAdhocPlans:
 		m.ResetAdhocPlans()
 		return nil
+	case agenttask.EdgeValidation:
+		m.ResetValidation()
+		return nil
 	}
 	return fmt.Errorf("unknown AgentTask edge %s", name)
 }
@@ -3160,6 +3221,7 @@ type AnsibleMutation struct {
 	inventory           *string
 	abs_path            *string
 	tags                *map[string]string
+	validations         *[]string
 	clearedFields       map[string]struct{}
 	_Users              map[uuid.UUID]struct{}
 	removed_Users       map[uuid.UUID]struct{}
@@ -3599,6 +3661,42 @@ func (m *AnsibleMutation) ResetTags() {
 	m.tags = nil
 }
 
+// SetValidations sets the "validations" field.
+func (m *AnsibleMutation) SetValidations(s []string) {
+	m.validations = &s
+}
+
+// Validations returns the value of the "validations" field in the mutation.
+func (m *AnsibleMutation) Validations() (r []string, exists bool) {
+	v := m.validations
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldValidations returns the old "validations" field's value of the Ansible entity.
+// If the Ansible object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AnsibleMutation) OldValidations(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldValidations is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldValidations requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldValidations: %w", err)
+	}
+	return oldValue.Validations, nil
+}
+
+// ResetValidations resets all changes to the "validations" field.
+func (m *AnsibleMutation) ResetValidations() {
+	m.validations = nil
+}
+
 // AddUserIDs adds the "Users" edge to the User entity by ids.
 func (m *AnsibleMutation) AddUserIDs(ids ...uuid.UUID) {
 	if m._Users == nil {
@@ -3711,7 +3809,7 @@ func (m *AnsibleMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *AnsibleMutation) Fields() []string {
-	fields := make([]string, 0, 9)
+	fields := make([]string, 0, 10)
 	if m.name != nil {
 		fields = append(fields, ansible.FieldName)
 	}
@@ -3739,6 +3837,9 @@ func (m *AnsibleMutation) Fields() []string {
 	if m.tags != nil {
 		fields = append(fields, ansible.FieldTags)
 	}
+	if m.validations != nil {
+		fields = append(fields, ansible.FieldValidations)
+	}
 	return fields
 }
 
@@ -3765,6 +3866,8 @@ func (m *AnsibleMutation) Field(name string) (ent.Value, bool) {
 		return m.AbsPath()
 	case ansible.FieldTags:
 		return m.Tags()
+	case ansible.FieldValidations:
+		return m.Validations()
 	}
 	return nil, false
 }
@@ -3792,6 +3895,8 @@ func (m *AnsibleMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldAbsPath(ctx)
 	case ansible.FieldTags:
 		return m.OldTags(ctx)
+	case ansible.FieldValidations:
+		return m.OldValidations(ctx)
 	}
 	return nil, fmt.Errorf("unknown Ansible field %s", name)
 }
@@ -3863,6 +3968,13 @@ func (m *AnsibleMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetTags(v)
+		return nil
+	case ansible.FieldValidations:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetValidations(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Ansible field %s", name)
@@ -3939,6 +4051,9 @@ func (m *AnsibleMutation) ResetField(name string) error {
 		return nil
 	case ansible.FieldTags:
 		m.ResetTags()
+		return nil
+	case ansible.FieldValidations:
+		m.ResetValidations()
 		return nil
 	}
 	return fmt.Errorf("unknown Ansible field %s", name)
@@ -7282,6 +7397,7 @@ type CommandMutation struct {
 	addtimeout          *int
 	vars                *map[string]string
 	tags                *map[string]string
+	validations         *[]string
 	clearedFields       map[string]struct{}
 	_Users              map[uuid.UUID]struct{}
 	removed_Users       map[uuid.UUID]struct{}
@@ -7833,6 +7949,42 @@ func (m *CommandMutation) ResetTags() {
 	m.tags = nil
 }
 
+// SetValidations sets the "validations" field.
+func (m *CommandMutation) SetValidations(s []string) {
+	m.validations = &s
+}
+
+// Validations returns the value of the "validations" field in the mutation.
+func (m *CommandMutation) Validations() (r []string, exists bool) {
+	v := m.validations
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldValidations returns the old "validations" field's value of the Command entity.
+// If the Command object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CommandMutation) OldValidations(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldValidations is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldValidations requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldValidations: %w", err)
+	}
+	return oldValue.Validations, nil
+}
+
+// ResetValidations resets all changes to the "validations" field.
+func (m *CommandMutation) ResetValidations() {
+	m.validations = nil
+}
+
 // AddUserIDs adds the "Users" edge to the User entity by ids.
 func (m *CommandMutation) AddUserIDs(ids ...uuid.UUID) {
 	if m._Users == nil {
@@ -7945,7 +8097,7 @@ func (m *CommandMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *CommandMutation) Fields() []string {
-	fields := make([]string, 0, 11)
+	fields := make([]string, 0, 12)
 	if m.hcl_id != nil {
 		fields = append(fields, command.FieldHclID)
 	}
@@ -7979,6 +8131,9 @@ func (m *CommandMutation) Fields() []string {
 	if m.tags != nil {
 		fields = append(fields, command.FieldTags)
 	}
+	if m.validations != nil {
+		fields = append(fields, command.FieldValidations)
+	}
 	return fields
 }
 
@@ -8009,6 +8164,8 @@ func (m *CommandMutation) Field(name string) (ent.Value, bool) {
 		return m.Vars()
 	case command.FieldTags:
 		return m.Tags()
+	case command.FieldValidations:
+		return m.Validations()
 	}
 	return nil, false
 }
@@ -8040,6 +8197,8 @@ func (m *CommandMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldVars(ctx)
 	case command.FieldTags:
 		return m.OldTags(ctx)
+	case command.FieldValidations:
+		return m.OldValidations(ctx)
 	}
 	return nil, fmt.Errorf("unknown Command field %s", name)
 }
@@ -8125,6 +8284,13 @@ func (m *CommandMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetTags(v)
+		return nil
+	case command.FieldValidations:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetValidations(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Command field %s", name)
@@ -8234,6 +8400,9 @@ func (m *CommandMutation) ResetField(name string) error {
 		return nil
 	case command.FieldTags:
 		m.ResetTags()
+		return nil
+	case command.FieldValidations:
+		m.ResetValidations()
 		return nil
 	}
 	return fmt.Errorf("unknown Command field %s", name)
@@ -10052,6 +10221,7 @@ type DNSRecordMutation struct {
 	vars                *map[string]string
 	disabled            *bool
 	tags                *map[string]string
+	validations         *[]string
 	clearedFields       map[string]struct{}
 	_Environment        *uuid.UUID
 	cleared_Environment bool
@@ -10452,6 +10622,42 @@ func (m *DNSRecordMutation) ResetTags() {
 	m.tags = nil
 }
 
+// SetValidations sets the "validations" field.
+func (m *DNSRecordMutation) SetValidations(s []string) {
+	m.validations = &s
+}
+
+// Validations returns the value of the "validations" field in the mutation.
+func (m *DNSRecordMutation) Validations() (r []string, exists bool) {
+	v := m.validations
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldValidations returns the old "validations" field's value of the DNSRecord entity.
+// If the DNSRecord object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DNSRecordMutation) OldValidations(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldValidations is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldValidations requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldValidations: %w", err)
+	}
+	return oldValue.Validations, nil
+}
+
+// ResetValidations resets all changes to the "validations" field.
+func (m *DNSRecordMutation) ResetValidations() {
+	m.validations = nil
+}
+
 // SetEnvironmentID sets the "Environment" edge to the Environment entity by id.
 func (m *DNSRecordMutation) SetEnvironmentID(id uuid.UUID) {
 	m._Environment = &id
@@ -10510,7 +10716,7 @@ func (m *DNSRecordMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *DNSRecordMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 9)
 	if m.hcl_id != nil {
 		fields = append(fields, dnsrecord.FieldHclID)
 	}
@@ -10534,6 +10740,9 @@ func (m *DNSRecordMutation) Fields() []string {
 	}
 	if m.tags != nil {
 		fields = append(fields, dnsrecord.FieldTags)
+	}
+	if m.validations != nil {
+		fields = append(fields, dnsrecord.FieldValidations)
 	}
 	return fields
 }
@@ -10559,6 +10768,8 @@ func (m *DNSRecordMutation) Field(name string) (ent.Value, bool) {
 		return m.Disabled()
 	case dnsrecord.FieldTags:
 		return m.Tags()
+	case dnsrecord.FieldValidations:
+		return m.Validations()
 	}
 	return nil, false
 }
@@ -10584,6 +10795,8 @@ func (m *DNSRecordMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldDisabled(ctx)
 	case dnsrecord.FieldTags:
 		return m.OldTags(ctx)
+	case dnsrecord.FieldValidations:
+		return m.OldValidations(ctx)
 	}
 	return nil, fmt.Errorf("unknown DNSRecord field %s", name)
 }
@@ -10648,6 +10861,13 @@ func (m *DNSRecordMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetTags(v)
+		return nil
+	case dnsrecord.FieldValidations:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetValidations(v)
 		return nil
 	}
 	return fmt.Errorf("unknown DNSRecord field %s", name)
@@ -10721,6 +10941,9 @@ func (m *DNSRecordMutation) ResetField(name string) error {
 		return nil
 	case dnsrecord.FieldTags:
 		m.ResetTags()
+		return nil
+	case dnsrecord.FieldValidations:
+		m.ResetValidations()
 		return nil
 	}
 	return fmt.Errorf("unknown DNSRecord field %s", name)
@@ -11304,6 +11527,9 @@ type EnvironmentMutation struct {
 	_ServerTasks             map[uuid.UUID]struct{}
 	removed_ServerTasks      map[uuid.UUID]struct{}
 	cleared_ServerTasks      bool
+	_Validations             map[uuid.UUID]struct{}
+	removed_Validations      map[uuid.UUID]struct{}
+	cleared_Validations      bool
 	done                     bool
 	oldValue                 func(context.Context) (*Environment, error)
 	predicates               []predicate.Environment
@@ -12929,6 +13155,60 @@ func (m *EnvironmentMutation) ResetServerTasks() {
 	m.removed_ServerTasks = nil
 }
 
+// AddValidationIDs adds the "Validations" edge to the Validation entity by ids.
+func (m *EnvironmentMutation) AddValidationIDs(ids ...uuid.UUID) {
+	if m._Validations == nil {
+		m._Validations = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m._Validations[ids[i]] = struct{}{}
+	}
+}
+
+// ClearValidations clears the "Validations" edge to the Validation entity.
+func (m *EnvironmentMutation) ClearValidations() {
+	m.cleared_Validations = true
+}
+
+// ValidationsCleared reports if the "Validations" edge to the Validation entity was cleared.
+func (m *EnvironmentMutation) ValidationsCleared() bool {
+	return m.cleared_Validations
+}
+
+// RemoveValidationIDs removes the "Validations" edge to the Validation entity by IDs.
+func (m *EnvironmentMutation) RemoveValidationIDs(ids ...uuid.UUID) {
+	if m.removed_Validations == nil {
+		m.removed_Validations = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m._Validations, ids[i])
+		m.removed_Validations[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedValidations returns the removed IDs of the "Validations" edge to the Validation entity.
+func (m *EnvironmentMutation) RemovedValidationsIDs() (ids []uuid.UUID) {
+	for id := range m.removed_Validations {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ValidationsIDs returns the "Validations" edge IDs in the mutation.
+func (m *EnvironmentMutation) ValidationsIDs() (ids []uuid.UUID) {
+	for id := range m._Validations {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetValidations resets all changes to the "Validations" edge.
+func (m *EnvironmentMutation) ResetValidations() {
+	m._Validations = nil
+	m.cleared_Validations = false
+	m.removed_Validations = nil
+}
+
 // Where appends a list predicates to the EnvironmentMutation builder.
 func (m *EnvironmentMutation) Where(ps ...predicate.Environment) {
 	m.predicates = append(m.predicates, ps...)
@@ -13244,7 +13524,7 @@ func (m *EnvironmentMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *EnvironmentMutation) AddedEdges() []string {
-	edges := make([]string, 0, 20)
+	edges := make([]string, 0, 21)
 	if m._Users != nil {
 		edges = append(edges, environment.EdgeUsers)
 	}
@@ -13304,6 +13584,9 @@ func (m *EnvironmentMutation) AddedEdges() []string {
 	}
 	if m._ServerTasks != nil {
 		edges = append(edges, environment.EdgeServerTasks)
+	}
+	if m._Validations != nil {
+		edges = append(edges, environment.EdgeValidations)
 	}
 	return edges
 }
@@ -13432,13 +13715,19 @@ func (m *EnvironmentMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case environment.EdgeValidations:
+		ids := make([]ent.Value, 0, len(m._Validations))
+		for id := range m._Validations {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *EnvironmentMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 20)
+	edges := make([]string, 0, 21)
 	if m.removed_Users != nil {
 		edges = append(edges, environment.EdgeUsers)
 	}
@@ -13498,6 +13787,9 @@ func (m *EnvironmentMutation) RemovedEdges() []string {
 	}
 	if m.removed_ServerTasks != nil {
 		edges = append(edges, environment.EdgeServerTasks)
+	}
+	if m.removed_Validations != nil {
+		edges = append(edges, environment.EdgeValidations)
 	}
 	return edges
 }
@@ -13626,13 +13918,19 @@ func (m *EnvironmentMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case environment.EdgeValidations:
+		ids := make([]ent.Value, 0, len(m.removed_Validations))
+		for id := range m.removed_Validations {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *EnvironmentMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 20)
+	edges := make([]string, 0, 21)
 	if m.cleared_Users {
 		edges = append(edges, environment.EdgeUsers)
 	}
@@ -13693,6 +13991,9 @@ func (m *EnvironmentMutation) ClearedEdges() []string {
 	if m.cleared_ServerTasks {
 		edges = append(edges, environment.EdgeServerTasks)
 	}
+	if m.cleared_Validations {
+		edges = append(edges, environment.EdgeValidations)
+	}
 	return edges
 }
 
@@ -13740,6 +14041,8 @@ func (m *EnvironmentMutation) EdgeCleared(name string) bool {
 		return m.cleared_Repositories
 	case environment.EdgeServerTasks:
 		return m.cleared_ServerTasks
+	case environment.EdgeValidations:
+		return m.cleared_Validations
 	}
 	return false
 }
@@ -13816,6 +14119,9 @@ func (m *EnvironmentMutation) ResetEdge(name string) error {
 	case environment.EdgeServerTasks:
 		m.ResetServerTasks()
 		return nil
+	case environment.EdgeValidations:
+		m.ResetValidations()
+		return nil
 	}
 	return fmt.Errorf("unknown Environment edge %s", name)
 }
@@ -13829,6 +14135,7 @@ type FileDeleteMutation struct {
 	hcl_id              *string
 	_path               *string
 	tags                *map[string]string
+	validations         *[]string
 	clearedFields       map[string]struct{}
 	_Environment        *uuid.UUID
 	cleared_Environment bool
@@ -14049,6 +14356,42 @@ func (m *FileDeleteMutation) ResetTags() {
 	m.tags = nil
 }
 
+// SetValidations sets the "validations" field.
+func (m *FileDeleteMutation) SetValidations(s []string) {
+	m.validations = &s
+}
+
+// Validations returns the value of the "validations" field in the mutation.
+func (m *FileDeleteMutation) Validations() (r []string, exists bool) {
+	v := m.validations
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldValidations returns the old "validations" field's value of the FileDelete entity.
+// If the FileDelete object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FileDeleteMutation) OldValidations(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldValidations is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldValidations requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldValidations: %w", err)
+	}
+	return oldValue.Validations, nil
+}
+
+// ResetValidations resets all changes to the "validations" field.
+func (m *FileDeleteMutation) ResetValidations() {
+	m.validations = nil
+}
+
 // SetEnvironmentID sets the "Environment" edge to the Environment entity by id.
 func (m *FileDeleteMutation) SetEnvironmentID(id uuid.UUID) {
 	m._Environment = &id
@@ -14107,7 +14450,7 @@ func (m *FileDeleteMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *FileDeleteMutation) Fields() []string {
-	fields := make([]string, 0, 3)
+	fields := make([]string, 0, 4)
 	if m.hcl_id != nil {
 		fields = append(fields, filedelete.FieldHclID)
 	}
@@ -14116,6 +14459,9 @@ func (m *FileDeleteMutation) Fields() []string {
 	}
 	if m.tags != nil {
 		fields = append(fields, filedelete.FieldTags)
+	}
+	if m.validations != nil {
+		fields = append(fields, filedelete.FieldValidations)
 	}
 	return fields
 }
@@ -14131,6 +14477,8 @@ func (m *FileDeleteMutation) Field(name string) (ent.Value, bool) {
 		return m.Path()
 	case filedelete.FieldTags:
 		return m.Tags()
+	case filedelete.FieldValidations:
+		return m.Validations()
 	}
 	return nil, false
 }
@@ -14146,6 +14494,8 @@ func (m *FileDeleteMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldPath(ctx)
 	case filedelete.FieldTags:
 		return m.OldTags(ctx)
+	case filedelete.FieldValidations:
+		return m.OldValidations(ctx)
 	}
 	return nil, fmt.Errorf("unknown FileDelete field %s", name)
 }
@@ -14175,6 +14525,13 @@ func (m *FileDeleteMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetTags(v)
+		return nil
+	case filedelete.FieldValidations:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetValidations(v)
 		return nil
 	}
 	return fmt.Errorf("unknown FileDelete field %s", name)
@@ -14233,6 +14590,9 @@ func (m *FileDeleteMutation) ResetField(name string) error {
 		return nil
 	case filedelete.FieldTags:
 		m.ResetTags()
+		return nil
+	case filedelete.FieldValidations:
+		m.ResetValidations()
 		return nil
 	}
 	return fmt.Errorf("unknown FileDelete field %s", name)
@@ -14331,6 +14691,7 @@ type FileDownloadMutation struct {
 	abs_path            *string
 	is_txt              *bool
 	tags                *map[string]string
+	validations         *[]string
 	clearedFields       map[string]struct{}
 	_Environment        *uuid.UUID
 	cleared_Environment bool
@@ -14839,6 +15200,42 @@ func (m *FileDownloadMutation) ResetTags() {
 	m.tags = nil
 }
 
+// SetValidations sets the "validations" field.
+func (m *FileDownloadMutation) SetValidations(s []string) {
+	m.validations = &s
+}
+
+// Validations returns the value of the "validations" field in the mutation.
+func (m *FileDownloadMutation) Validations() (r []string, exists bool) {
+	v := m.validations
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldValidations returns the old "validations" field's value of the FileDownload entity.
+// If the FileDownload object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FileDownloadMutation) OldValidations(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldValidations is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldValidations requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldValidations: %w", err)
+	}
+	return oldValue.Validations, nil
+}
+
+// ResetValidations resets all changes to the "validations" field.
+func (m *FileDownloadMutation) ResetValidations() {
+	m.validations = nil
+}
+
 // SetEnvironmentID sets the "Environment" edge to the Environment entity by id.
 func (m *FileDownloadMutation) SetEnvironmentID(id uuid.UUID) {
 	m._Environment = &id
@@ -14897,7 +15294,7 @@ func (m *FileDownloadMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *FileDownloadMutation) Fields() []string {
-	fields := make([]string, 0, 11)
+	fields := make([]string, 0, 12)
 	if m.hcl_id != nil {
 		fields = append(fields, filedownload.FieldHclID)
 	}
@@ -14931,6 +15328,9 @@ func (m *FileDownloadMutation) Fields() []string {
 	if m.tags != nil {
 		fields = append(fields, filedownload.FieldTags)
 	}
+	if m.validations != nil {
+		fields = append(fields, filedownload.FieldValidations)
+	}
 	return fields
 }
 
@@ -14961,6 +15361,8 @@ func (m *FileDownloadMutation) Field(name string) (ent.Value, bool) {
 		return m.IsTxt()
 	case filedownload.FieldTags:
 		return m.Tags()
+	case filedownload.FieldValidations:
+		return m.Validations()
 	}
 	return nil, false
 }
@@ -14992,6 +15394,8 @@ func (m *FileDownloadMutation) OldField(ctx context.Context, name string) (ent.V
 		return m.OldIsTxt(ctx)
 	case filedownload.FieldTags:
 		return m.OldTags(ctx)
+	case filedownload.FieldValidations:
+		return m.OldValidations(ctx)
 	}
 	return nil, fmt.Errorf("unknown FileDownload field %s", name)
 }
@@ -15078,6 +15482,13 @@ func (m *FileDownloadMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetTags(v)
 		return nil
+	case filedownload.FieldValidations:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetValidations(v)
+		return nil
 	}
 	return fmt.Errorf("unknown FileDownload field %s", name)
 }
@@ -15159,6 +15570,9 @@ func (m *FileDownloadMutation) ResetField(name string) error {
 		return nil
 	case filedownload.FieldTags:
 		m.ResetTags()
+		return nil
+	case filedownload.FieldValidations:
+		m.ResetValidations()
 		return nil
 	}
 	return fmt.Errorf("unknown FileDownload field %s", name)
@@ -15251,6 +15665,7 @@ type FileExtractMutation struct {
 	destination         *string
 	_type               *string
 	tags                *map[string]string
+	validations         *[]string
 	clearedFields       map[string]struct{}
 	_Environment        *uuid.UUID
 	cleared_Environment bool
@@ -15543,6 +15958,42 @@ func (m *FileExtractMutation) ResetTags() {
 	m.tags = nil
 }
 
+// SetValidations sets the "validations" field.
+func (m *FileExtractMutation) SetValidations(s []string) {
+	m.validations = &s
+}
+
+// Validations returns the value of the "validations" field in the mutation.
+func (m *FileExtractMutation) Validations() (r []string, exists bool) {
+	v := m.validations
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldValidations returns the old "validations" field's value of the FileExtract entity.
+// If the FileExtract object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FileExtractMutation) OldValidations(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldValidations is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldValidations requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldValidations: %w", err)
+	}
+	return oldValue.Validations, nil
+}
+
+// ResetValidations resets all changes to the "validations" field.
+func (m *FileExtractMutation) ResetValidations() {
+	m.validations = nil
+}
+
 // SetEnvironmentID sets the "Environment" edge to the Environment entity by id.
 func (m *FileExtractMutation) SetEnvironmentID(id uuid.UUID) {
 	m._Environment = &id
@@ -15601,7 +16052,7 @@ func (m *FileExtractMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *FileExtractMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 6)
 	if m.hcl_id != nil {
 		fields = append(fields, fileextract.FieldHclID)
 	}
@@ -15616,6 +16067,9 @@ func (m *FileExtractMutation) Fields() []string {
 	}
 	if m.tags != nil {
 		fields = append(fields, fileextract.FieldTags)
+	}
+	if m.validations != nil {
+		fields = append(fields, fileextract.FieldValidations)
 	}
 	return fields
 }
@@ -15635,6 +16089,8 @@ func (m *FileExtractMutation) Field(name string) (ent.Value, bool) {
 		return m.GetType()
 	case fileextract.FieldTags:
 		return m.Tags()
+	case fileextract.FieldValidations:
+		return m.Validations()
 	}
 	return nil, false
 }
@@ -15654,6 +16110,8 @@ func (m *FileExtractMutation) OldField(ctx context.Context, name string) (ent.Va
 		return m.OldType(ctx)
 	case fileextract.FieldTags:
 		return m.OldTags(ctx)
+	case fileextract.FieldValidations:
+		return m.OldValidations(ctx)
 	}
 	return nil, fmt.Errorf("unknown FileExtract field %s", name)
 }
@@ -15697,6 +16155,13 @@ func (m *FileExtractMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetTags(v)
+		return nil
+	case fileextract.FieldValidations:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetValidations(v)
 		return nil
 	}
 	return fmt.Errorf("unknown FileExtract field %s", name)
@@ -15761,6 +16226,9 @@ func (m *FileExtractMutation) ResetField(name string) error {
 		return nil
 	case fileextract.FieldTags:
 		m.ResetTags()
+		return nil
+	case fileextract.FieldValidations:
+		m.ResetValidations()
 		return nil
 	}
 	return fmt.Errorf("unknown FileExtract field %s", name)
@@ -30028,6 +30496,7 @@ type ScriptMutation struct {
 	vars                *map[string]string
 	abs_path            *string
 	tags                *map[string]string
+	validations         *[]string
 	clearedFields       map[string]struct{}
 	_Users              map[uuid.UUID]struct{}
 	removed_Users       map[uuid.UUID]struct{}
@@ -30690,6 +31159,55 @@ func (m *ScriptMutation) ResetTags() {
 	m.tags = nil
 }
 
+// SetValidations sets the "validations" field.
+func (m *ScriptMutation) SetValidations(s []string) {
+	m.validations = &s
+}
+
+// Validations returns the value of the "validations" field in the mutation.
+func (m *ScriptMutation) Validations() (r []string, exists bool) {
+	v := m.validations
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldValidations returns the old "validations" field's value of the Script entity.
+// If the Script object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ScriptMutation) OldValidations(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldValidations is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldValidations requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldValidations: %w", err)
+	}
+	return oldValue.Validations, nil
+}
+
+// ClearValidations clears the value of the "validations" field.
+func (m *ScriptMutation) ClearValidations() {
+	m.validations = nil
+	m.clearedFields[script.FieldValidations] = struct{}{}
+}
+
+// ValidationsCleared returns if the "validations" field was cleared in this mutation.
+func (m *ScriptMutation) ValidationsCleared() bool {
+	_, ok := m.clearedFields[script.FieldValidations]
+	return ok
+}
+
+// ResetValidations resets all changes to the "validations" field.
+func (m *ScriptMutation) ResetValidations() {
+	m.validations = nil
+	delete(m.clearedFields, script.FieldValidations)
+}
+
 // AddUserIDs adds the "Users" edge to the User entity by ids.
 func (m *ScriptMutation) AddUserIDs(ids ...uuid.UUID) {
 	if m._Users == nil {
@@ -30856,7 +31374,7 @@ func (m *ScriptMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ScriptMutation) Fields() []string {
-	fields := make([]string, 0, 14)
+	fields := make([]string, 0, 15)
 	if m.hcl_id != nil {
 		fields = append(fields, script.FieldHclID)
 	}
@@ -30899,6 +31417,9 @@ func (m *ScriptMutation) Fields() []string {
 	if m.tags != nil {
 		fields = append(fields, script.FieldTags)
 	}
+	if m.validations != nil {
+		fields = append(fields, script.FieldValidations)
+	}
 	return fields
 }
 
@@ -30935,6 +31456,8 @@ func (m *ScriptMutation) Field(name string) (ent.Value, bool) {
 		return m.AbsPath()
 	case script.FieldTags:
 		return m.Tags()
+	case script.FieldValidations:
+		return m.Validations()
 	}
 	return nil, false
 }
@@ -30972,6 +31495,8 @@ func (m *ScriptMutation) OldField(ctx context.Context, name string) (ent.Value, 
 		return m.OldAbsPath(ctx)
 	case script.FieldTags:
 		return m.OldTags(ctx)
+	case script.FieldValidations:
+		return m.OldValidations(ctx)
 	}
 	return nil, fmt.Errorf("unknown Script field %s", name)
 }
@@ -31079,6 +31604,13 @@ func (m *ScriptMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetTags(v)
 		return nil
+	case script.FieldValidations:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetValidations(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Script field %s", name)
 }
@@ -31135,7 +31667,11 @@ func (m *ScriptMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *ScriptMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(script.FieldValidations) {
+		fields = append(fields, script.FieldValidations)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -31148,6 +31684,11 @@ func (m *ScriptMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *ScriptMutation) ClearField(name string) error {
+	switch name {
+	case script.FieldValidations:
+		m.ClearValidations()
+		return nil
+	}
 	return fmt.Errorf("unknown Script nullable field %s", name)
 }
 
@@ -31196,6 +31737,9 @@ func (m *ScriptMutation) ResetField(name string) error {
 		return nil
 	case script.FieldTags:
 		m.ResetTags()
+		return nil
+	case script.FieldValidations:
+		m.ResetValidations()
 		return nil
 	}
 	return fmt.Errorf("unknown Script field %s", name)
@@ -35802,4 +36346,1716 @@ func (m *UserMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)
+}
+
+// ValidationMutation represents an operation that mutates the Validation nodes in the graph.
+type ValidationMutation struct {
+	config
+	op                  Op
+	typ                 string
+	id                  *uuid.UUID
+	hcl_id              *string
+	validation_type     *validation.ValidationType
+	hash                *string
+	regex               *string
+	ip                  *string
+	url                 *string
+	port                *int
+	addport             *int
+	hostname            *string
+	nameservers         *[]string
+	package_name        *string
+	username            *string
+	group_name          *string
+	file_path           *string
+	search_string       *string
+	service_name        *string
+	file_permission     *string
+	service_status      *validation.ServiceStatus
+	process_name        *string
+	clearedFields       map[string]struct{}
+	_Users              map[uuid.UUID]struct{}
+	removed_Users       map[uuid.UUID]struct{}
+	cleared_Users       bool
+	_Environment        *uuid.UUID
+	cleared_Environment bool
+	done                bool
+	oldValue            func(context.Context) (*Validation, error)
+	predicates          []predicate.Validation
+}
+
+var _ ent.Mutation = (*ValidationMutation)(nil)
+
+// validationOption allows management of the mutation configuration using functional options.
+type validationOption func(*ValidationMutation)
+
+// newValidationMutation creates new mutation for the Validation entity.
+func newValidationMutation(c config, op Op, opts ...validationOption) *ValidationMutation {
+	m := &ValidationMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeValidation,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withValidationID sets the ID field of the mutation.
+func withValidationID(id uuid.UUID) validationOption {
+	return func(m *ValidationMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Validation
+		)
+		m.oldValue = func(ctx context.Context) (*Validation, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Validation.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withValidation sets the old Validation of the mutation.
+func withValidation(node *Validation) validationOption {
+	return func(m *ValidationMutation) {
+		m.oldValue = func(context.Context) (*Validation, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ValidationMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ValidationMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Validation entities.
+func (m *ValidationMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ValidationMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ValidationMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Validation.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetHclID sets the "hcl_id" field.
+func (m *ValidationMutation) SetHclID(s string) {
+	m.hcl_id = &s
+}
+
+// HclID returns the value of the "hcl_id" field in the mutation.
+func (m *ValidationMutation) HclID() (r string, exists bool) {
+	v := m.hcl_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHclID returns the old "hcl_id" field's value of the Validation entity.
+// If the Validation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ValidationMutation) OldHclID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHclID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHclID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHclID: %w", err)
+	}
+	return oldValue.HclID, nil
+}
+
+// ResetHclID resets all changes to the "hcl_id" field.
+func (m *ValidationMutation) ResetHclID() {
+	m.hcl_id = nil
+}
+
+// SetValidationType sets the "validation_type" field.
+func (m *ValidationMutation) SetValidationType(vt validation.ValidationType) {
+	m.validation_type = &vt
+}
+
+// ValidationType returns the value of the "validation_type" field in the mutation.
+func (m *ValidationMutation) ValidationType() (r validation.ValidationType, exists bool) {
+	v := m.validation_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldValidationType returns the old "validation_type" field's value of the Validation entity.
+// If the Validation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ValidationMutation) OldValidationType(ctx context.Context) (v validation.ValidationType, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldValidationType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldValidationType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldValidationType: %w", err)
+	}
+	return oldValue.ValidationType, nil
+}
+
+// ResetValidationType resets all changes to the "validation_type" field.
+func (m *ValidationMutation) ResetValidationType() {
+	m.validation_type = nil
+}
+
+// SetHash sets the "hash" field.
+func (m *ValidationMutation) SetHash(s string) {
+	m.hash = &s
+}
+
+// Hash returns the value of the "hash" field in the mutation.
+func (m *ValidationMutation) Hash() (r string, exists bool) {
+	v := m.hash
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHash returns the old "hash" field's value of the Validation entity.
+// If the Validation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ValidationMutation) OldHash(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHash is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHash requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHash: %w", err)
+	}
+	return oldValue.Hash, nil
+}
+
+// ClearHash clears the value of the "hash" field.
+func (m *ValidationMutation) ClearHash() {
+	m.hash = nil
+	m.clearedFields[validation.FieldHash] = struct{}{}
+}
+
+// HashCleared returns if the "hash" field was cleared in this mutation.
+func (m *ValidationMutation) HashCleared() bool {
+	_, ok := m.clearedFields[validation.FieldHash]
+	return ok
+}
+
+// ResetHash resets all changes to the "hash" field.
+func (m *ValidationMutation) ResetHash() {
+	m.hash = nil
+	delete(m.clearedFields, validation.FieldHash)
+}
+
+// SetRegex sets the "regex" field.
+func (m *ValidationMutation) SetRegex(s string) {
+	m.regex = &s
+}
+
+// Regex returns the value of the "regex" field in the mutation.
+func (m *ValidationMutation) Regex() (r string, exists bool) {
+	v := m.regex
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRegex returns the old "regex" field's value of the Validation entity.
+// If the Validation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ValidationMutation) OldRegex(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRegex is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRegex requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRegex: %w", err)
+	}
+	return oldValue.Regex, nil
+}
+
+// ClearRegex clears the value of the "regex" field.
+func (m *ValidationMutation) ClearRegex() {
+	m.regex = nil
+	m.clearedFields[validation.FieldRegex] = struct{}{}
+}
+
+// RegexCleared returns if the "regex" field was cleared in this mutation.
+func (m *ValidationMutation) RegexCleared() bool {
+	_, ok := m.clearedFields[validation.FieldRegex]
+	return ok
+}
+
+// ResetRegex resets all changes to the "regex" field.
+func (m *ValidationMutation) ResetRegex() {
+	m.regex = nil
+	delete(m.clearedFields, validation.FieldRegex)
+}
+
+// SetIP sets the "ip" field.
+func (m *ValidationMutation) SetIP(s string) {
+	m.ip = &s
+}
+
+// IP returns the value of the "ip" field in the mutation.
+func (m *ValidationMutation) IP() (r string, exists bool) {
+	v := m.ip
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIP returns the old "ip" field's value of the Validation entity.
+// If the Validation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ValidationMutation) OldIP(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIP is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIP requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIP: %w", err)
+	}
+	return oldValue.IP, nil
+}
+
+// ClearIP clears the value of the "ip" field.
+func (m *ValidationMutation) ClearIP() {
+	m.ip = nil
+	m.clearedFields[validation.FieldIP] = struct{}{}
+}
+
+// IPCleared returns if the "ip" field was cleared in this mutation.
+func (m *ValidationMutation) IPCleared() bool {
+	_, ok := m.clearedFields[validation.FieldIP]
+	return ok
+}
+
+// ResetIP resets all changes to the "ip" field.
+func (m *ValidationMutation) ResetIP() {
+	m.ip = nil
+	delete(m.clearedFields, validation.FieldIP)
+}
+
+// SetURL sets the "url" field.
+func (m *ValidationMutation) SetURL(s string) {
+	m.url = &s
+}
+
+// URL returns the value of the "url" field in the mutation.
+func (m *ValidationMutation) URL() (r string, exists bool) {
+	v := m.url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldURL returns the old "url" field's value of the Validation entity.
+// If the Validation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ValidationMutation) OldURL(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldURL: %w", err)
+	}
+	return oldValue.URL, nil
+}
+
+// ClearURL clears the value of the "url" field.
+func (m *ValidationMutation) ClearURL() {
+	m.url = nil
+	m.clearedFields[validation.FieldURL] = struct{}{}
+}
+
+// URLCleared returns if the "url" field was cleared in this mutation.
+func (m *ValidationMutation) URLCleared() bool {
+	_, ok := m.clearedFields[validation.FieldURL]
+	return ok
+}
+
+// ResetURL resets all changes to the "url" field.
+func (m *ValidationMutation) ResetURL() {
+	m.url = nil
+	delete(m.clearedFields, validation.FieldURL)
+}
+
+// SetPort sets the "port" field.
+func (m *ValidationMutation) SetPort(i int) {
+	m.port = &i
+	m.addport = nil
+}
+
+// Port returns the value of the "port" field in the mutation.
+func (m *ValidationMutation) Port() (r int, exists bool) {
+	v := m.port
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPort returns the old "port" field's value of the Validation entity.
+// If the Validation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ValidationMutation) OldPort(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPort is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPort requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPort: %w", err)
+	}
+	return oldValue.Port, nil
+}
+
+// AddPort adds i to the "port" field.
+func (m *ValidationMutation) AddPort(i int) {
+	if m.addport != nil {
+		*m.addport += i
+	} else {
+		m.addport = &i
+	}
+}
+
+// AddedPort returns the value that was added to the "port" field in this mutation.
+func (m *ValidationMutation) AddedPort() (r int, exists bool) {
+	v := m.addport
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearPort clears the value of the "port" field.
+func (m *ValidationMutation) ClearPort() {
+	m.port = nil
+	m.addport = nil
+	m.clearedFields[validation.FieldPort] = struct{}{}
+}
+
+// PortCleared returns if the "port" field was cleared in this mutation.
+func (m *ValidationMutation) PortCleared() bool {
+	_, ok := m.clearedFields[validation.FieldPort]
+	return ok
+}
+
+// ResetPort resets all changes to the "port" field.
+func (m *ValidationMutation) ResetPort() {
+	m.port = nil
+	m.addport = nil
+	delete(m.clearedFields, validation.FieldPort)
+}
+
+// SetHostname sets the "hostname" field.
+func (m *ValidationMutation) SetHostname(s string) {
+	m.hostname = &s
+}
+
+// Hostname returns the value of the "hostname" field in the mutation.
+func (m *ValidationMutation) Hostname() (r string, exists bool) {
+	v := m.hostname
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHostname returns the old "hostname" field's value of the Validation entity.
+// If the Validation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ValidationMutation) OldHostname(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHostname is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHostname requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHostname: %w", err)
+	}
+	return oldValue.Hostname, nil
+}
+
+// ClearHostname clears the value of the "hostname" field.
+func (m *ValidationMutation) ClearHostname() {
+	m.hostname = nil
+	m.clearedFields[validation.FieldHostname] = struct{}{}
+}
+
+// HostnameCleared returns if the "hostname" field was cleared in this mutation.
+func (m *ValidationMutation) HostnameCleared() bool {
+	_, ok := m.clearedFields[validation.FieldHostname]
+	return ok
+}
+
+// ResetHostname resets all changes to the "hostname" field.
+func (m *ValidationMutation) ResetHostname() {
+	m.hostname = nil
+	delete(m.clearedFields, validation.FieldHostname)
+}
+
+// SetNameservers sets the "nameservers" field.
+func (m *ValidationMutation) SetNameservers(s []string) {
+	m.nameservers = &s
+}
+
+// Nameservers returns the value of the "nameservers" field in the mutation.
+func (m *ValidationMutation) Nameservers() (r []string, exists bool) {
+	v := m.nameservers
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldNameservers returns the old "nameservers" field's value of the Validation entity.
+// If the Validation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ValidationMutation) OldNameservers(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldNameservers is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldNameservers requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldNameservers: %w", err)
+	}
+	return oldValue.Nameservers, nil
+}
+
+// ClearNameservers clears the value of the "nameservers" field.
+func (m *ValidationMutation) ClearNameservers() {
+	m.nameservers = nil
+	m.clearedFields[validation.FieldNameservers] = struct{}{}
+}
+
+// NameserversCleared returns if the "nameservers" field was cleared in this mutation.
+func (m *ValidationMutation) NameserversCleared() bool {
+	_, ok := m.clearedFields[validation.FieldNameservers]
+	return ok
+}
+
+// ResetNameservers resets all changes to the "nameservers" field.
+func (m *ValidationMutation) ResetNameservers() {
+	m.nameservers = nil
+	delete(m.clearedFields, validation.FieldNameservers)
+}
+
+// SetPackageName sets the "package_name" field.
+func (m *ValidationMutation) SetPackageName(s string) {
+	m.package_name = &s
+}
+
+// PackageName returns the value of the "package_name" field in the mutation.
+func (m *ValidationMutation) PackageName() (r string, exists bool) {
+	v := m.package_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPackageName returns the old "package_name" field's value of the Validation entity.
+// If the Validation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ValidationMutation) OldPackageName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPackageName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPackageName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPackageName: %w", err)
+	}
+	return oldValue.PackageName, nil
+}
+
+// ClearPackageName clears the value of the "package_name" field.
+func (m *ValidationMutation) ClearPackageName() {
+	m.package_name = nil
+	m.clearedFields[validation.FieldPackageName] = struct{}{}
+}
+
+// PackageNameCleared returns if the "package_name" field was cleared in this mutation.
+func (m *ValidationMutation) PackageNameCleared() bool {
+	_, ok := m.clearedFields[validation.FieldPackageName]
+	return ok
+}
+
+// ResetPackageName resets all changes to the "package_name" field.
+func (m *ValidationMutation) ResetPackageName() {
+	m.package_name = nil
+	delete(m.clearedFields, validation.FieldPackageName)
+}
+
+// SetUsername sets the "username" field.
+func (m *ValidationMutation) SetUsername(s string) {
+	m.username = &s
+}
+
+// Username returns the value of the "username" field in the mutation.
+func (m *ValidationMutation) Username() (r string, exists bool) {
+	v := m.username
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUsername returns the old "username" field's value of the Validation entity.
+// If the Validation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ValidationMutation) OldUsername(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUsername is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUsername requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUsername: %w", err)
+	}
+	return oldValue.Username, nil
+}
+
+// ClearUsername clears the value of the "username" field.
+func (m *ValidationMutation) ClearUsername() {
+	m.username = nil
+	m.clearedFields[validation.FieldUsername] = struct{}{}
+}
+
+// UsernameCleared returns if the "username" field was cleared in this mutation.
+func (m *ValidationMutation) UsernameCleared() bool {
+	_, ok := m.clearedFields[validation.FieldUsername]
+	return ok
+}
+
+// ResetUsername resets all changes to the "username" field.
+func (m *ValidationMutation) ResetUsername() {
+	m.username = nil
+	delete(m.clearedFields, validation.FieldUsername)
+}
+
+// SetGroupName sets the "group_name" field.
+func (m *ValidationMutation) SetGroupName(s string) {
+	m.group_name = &s
+}
+
+// GroupName returns the value of the "group_name" field in the mutation.
+func (m *ValidationMutation) GroupName() (r string, exists bool) {
+	v := m.group_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGroupName returns the old "group_name" field's value of the Validation entity.
+// If the Validation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ValidationMutation) OldGroupName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGroupName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGroupName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGroupName: %w", err)
+	}
+	return oldValue.GroupName, nil
+}
+
+// ClearGroupName clears the value of the "group_name" field.
+func (m *ValidationMutation) ClearGroupName() {
+	m.group_name = nil
+	m.clearedFields[validation.FieldGroupName] = struct{}{}
+}
+
+// GroupNameCleared returns if the "group_name" field was cleared in this mutation.
+func (m *ValidationMutation) GroupNameCleared() bool {
+	_, ok := m.clearedFields[validation.FieldGroupName]
+	return ok
+}
+
+// ResetGroupName resets all changes to the "group_name" field.
+func (m *ValidationMutation) ResetGroupName() {
+	m.group_name = nil
+	delete(m.clearedFields, validation.FieldGroupName)
+}
+
+// SetFilePath sets the "file_path" field.
+func (m *ValidationMutation) SetFilePath(s string) {
+	m.file_path = &s
+}
+
+// FilePath returns the value of the "file_path" field in the mutation.
+func (m *ValidationMutation) FilePath() (r string, exists bool) {
+	v := m.file_path
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFilePath returns the old "file_path" field's value of the Validation entity.
+// If the Validation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ValidationMutation) OldFilePath(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFilePath is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFilePath requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFilePath: %w", err)
+	}
+	return oldValue.FilePath, nil
+}
+
+// ClearFilePath clears the value of the "file_path" field.
+func (m *ValidationMutation) ClearFilePath() {
+	m.file_path = nil
+	m.clearedFields[validation.FieldFilePath] = struct{}{}
+}
+
+// FilePathCleared returns if the "file_path" field was cleared in this mutation.
+func (m *ValidationMutation) FilePathCleared() bool {
+	_, ok := m.clearedFields[validation.FieldFilePath]
+	return ok
+}
+
+// ResetFilePath resets all changes to the "file_path" field.
+func (m *ValidationMutation) ResetFilePath() {
+	m.file_path = nil
+	delete(m.clearedFields, validation.FieldFilePath)
+}
+
+// SetSearchString sets the "search_string" field.
+func (m *ValidationMutation) SetSearchString(s string) {
+	m.search_string = &s
+}
+
+// SearchString returns the value of the "search_string" field in the mutation.
+func (m *ValidationMutation) SearchString() (r string, exists bool) {
+	v := m.search_string
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSearchString returns the old "search_string" field's value of the Validation entity.
+// If the Validation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ValidationMutation) OldSearchString(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSearchString is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSearchString requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSearchString: %w", err)
+	}
+	return oldValue.SearchString, nil
+}
+
+// ClearSearchString clears the value of the "search_string" field.
+func (m *ValidationMutation) ClearSearchString() {
+	m.search_string = nil
+	m.clearedFields[validation.FieldSearchString] = struct{}{}
+}
+
+// SearchStringCleared returns if the "search_string" field was cleared in this mutation.
+func (m *ValidationMutation) SearchStringCleared() bool {
+	_, ok := m.clearedFields[validation.FieldSearchString]
+	return ok
+}
+
+// ResetSearchString resets all changes to the "search_string" field.
+func (m *ValidationMutation) ResetSearchString() {
+	m.search_string = nil
+	delete(m.clearedFields, validation.FieldSearchString)
+}
+
+// SetServiceName sets the "service_name" field.
+func (m *ValidationMutation) SetServiceName(s string) {
+	m.service_name = &s
+}
+
+// ServiceName returns the value of the "service_name" field in the mutation.
+func (m *ValidationMutation) ServiceName() (r string, exists bool) {
+	v := m.service_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldServiceName returns the old "service_name" field's value of the Validation entity.
+// If the Validation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ValidationMutation) OldServiceName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldServiceName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldServiceName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldServiceName: %w", err)
+	}
+	return oldValue.ServiceName, nil
+}
+
+// ClearServiceName clears the value of the "service_name" field.
+func (m *ValidationMutation) ClearServiceName() {
+	m.service_name = nil
+	m.clearedFields[validation.FieldServiceName] = struct{}{}
+}
+
+// ServiceNameCleared returns if the "service_name" field was cleared in this mutation.
+func (m *ValidationMutation) ServiceNameCleared() bool {
+	_, ok := m.clearedFields[validation.FieldServiceName]
+	return ok
+}
+
+// ResetServiceName resets all changes to the "service_name" field.
+func (m *ValidationMutation) ResetServiceName() {
+	m.service_name = nil
+	delete(m.clearedFields, validation.FieldServiceName)
+}
+
+// SetFilePermission sets the "file_permission" field.
+func (m *ValidationMutation) SetFilePermission(s string) {
+	m.file_permission = &s
+}
+
+// FilePermission returns the value of the "file_permission" field in the mutation.
+func (m *ValidationMutation) FilePermission() (r string, exists bool) {
+	v := m.file_permission
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFilePermission returns the old "file_permission" field's value of the Validation entity.
+// If the Validation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ValidationMutation) OldFilePermission(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFilePermission is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFilePermission requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFilePermission: %w", err)
+	}
+	return oldValue.FilePermission, nil
+}
+
+// ClearFilePermission clears the value of the "file_permission" field.
+func (m *ValidationMutation) ClearFilePermission() {
+	m.file_permission = nil
+	m.clearedFields[validation.FieldFilePermission] = struct{}{}
+}
+
+// FilePermissionCleared returns if the "file_permission" field was cleared in this mutation.
+func (m *ValidationMutation) FilePermissionCleared() bool {
+	_, ok := m.clearedFields[validation.FieldFilePermission]
+	return ok
+}
+
+// ResetFilePermission resets all changes to the "file_permission" field.
+func (m *ValidationMutation) ResetFilePermission() {
+	m.file_permission = nil
+	delete(m.clearedFields, validation.FieldFilePermission)
+}
+
+// SetServiceStatus sets the "service_status" field.
+func (m *ValidationMutation) SetServiceStatus(vs validation.ServiceStatus) {
+	m.service_status = &vs
+}
+
+// ServiceStatus returns the value of the "service_status" field in the mutation.
+func (m *ValidationMutation) ServiceStatus() (r validation.ServiceStatus, exists bool) {
+	v := m.service_status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldServiceStatus returns the old "service_status" field's value of the Validation entity.
+// If the Validation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ValidationMutation) OldServiceStatus(ctx context.Context) (v validation.ServiceStatus, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldServiceStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldServiceStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldServiceStatus: %w", err)
+	}
+	return oldValue.ServiceStatus, nil
+}
+
+// ResetServiceStatus resets all changes to the "service_status" field.
+func (m *ValidationMutation) ResetServiceStatus() {
+	m.service_status = nil
+}
+
+// SetProcessName sets the "process_name" field.
+func (m *ValidationMutation) SetProcessName(s string) {
+	m.process_name = &s
+}
+
+// ProcessName returns the value of the "process_name" field in the mutation.
+func (m *ValidationMutation) ProcessName() (r string, exists bool) {
+	v := m.process_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProcessName returns the old "process_name" field's value of the Validation entity.
+// If the Validation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ValidationMutation) OldProcessName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProcessName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProcessName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProcessName: %w", err)
+	}
+	return oldValue.ProcessName, nil
+}
+
+// ClearProcessName clears the value of the "process_name" field.
+func (m *ValidationMutation) ClearProcessName() {
+	m.process_name = nil
+	m.clearedFields[validation.FieldProcessName] = struct{}{}
+}
+
+// ProcessNameCleared returns if the "process_name" field was cleared in this mutation.
+func (m *ValidationMutation) ProcessNameCleared() bool {
+	_, ok := m.clearedFields[validation.FieldProcessName]
+	return ok
+}
+
+// ResetProcessName resets all changes to the "process_name" field.
+func (m *ValidationMutation) ResetProcessName() {
+	m.process_name = nil
+	delete(m.clearedFields, validation.FieldProcessName)
+}
+
+// AddUserIDs adds the "Users" edge to the User entity by ids.
+func (m *ValidationMutation) AddUserIDs(ids ...uuid.UUID) {
+	if m._Users == nil {
+		m._Users = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m._Users[ids[i]] = struct{}{}
+	}
+}
+
+// ClearUsers clears the "Users" edge to the User entity.
+func (m *ValidationMutation) ClearUsers() {
+	m.cleared_Users = true
+}
+
+// UsersCleared reports if the "Users" edge to the User entity was cleared.
+func (m *ValidationMutation) UsersCleared() bool {
+	return m.cleared_Users
+}
+
+// RemoveUserIDs removes the "Users" edge to the User entity by IDs.
+func (m *ValidationMutation) RemoveUserIDs(ids ...uuid.UUID) {
+	if m.removed_Users == nil {
+		m.removed_Users = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m._Users, ids[i])
+		m.removed_Users[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedUsers returns the removed IDs of the "Users" edge to the User entity.
+func (m *ValidationMutation) RemovedUsersIDs() (ids []uuid.UUID) {
+	for id := range m.removed_Users {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// UsersIDs returns the "Users" edge IDs in the mutation.
+func (m *ValidationMutation) UsersIDs() (ids []uuid.UUID) {
+	for id := range m._Users {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetUsers resets all changes to the "Users" edge.
+func (m *ValidationMutation) ResetUsers() {
+	m._Users = nil
+	m.cleared_Users = false
+	m.removed_Users = nil
+}
+
+// SetEnvironmentID sets the "Environment" edge to the Environment entity by id.
+func (m *ValidationMutation) SetEnvironmentID(id uuid.UUID) {
+	m._Environment = &id
+}
+
+// ClearEnvironment clears the "Environment" edge to the Environment entity.
+func (m *ValidationMutation) ClearEnvironment() {
+	m.cleared_Environment = true
+}
+
+// EnvironmentCleared reports if the "Environment" edge to the Environment entity was cleared.
+func (m *ValidationMutation) EnvironmentCleared() bool {
+	return m.cleared_Environment
+}
+
+// EnvironmentID returns the "Environment" edge ID in the mutation.
+func (m *ValidationMutation) EnvironmentID() (id uuid.UUID, exists bool) {
+	if m._Environment != nil {
+		return *m._Environment, true
+	}
+	return
+}
+
+// EnvironmentIDs returns the "Environment" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// EnvironmentID instead. It exists only for internal usage by the builders.
+func (m *ValidationMutation) EnvironmentIDs() (ids []uuid.UUID) {
+	if id := m._Environment; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetEnvironment resets all changes to the "Environment" edge.
+func (m *ValidationMutation) ResetEnvironment() {
+	m._Environment = nil
+	m.cleared_Environment = false
+}
+
+// Where appends a list predicates to the ValidationMutation builder.
+func (m *ValidationMutation) Where(ps ...predicate.Validation) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// Op returns the operation name.
+func (m *ValidationMutation) Op() Op {
+	return m.op
+}
+
+// Type returns the node type of this mutation (Validation).
+func (m *ValidationMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ValidationMutation) Fields() []string {
+	fields := make([]string, 0, 18)
+	if m.hcl_id != nil {
+		fields = append(fields, validation.FieldHclID)
+	}
+	if m.validation_type != nil {
+		fields = append(fields, validation.FieldValidationType)
+	}
+	if m.hash != nil {
+		fields = append(fields, validation.FieldHash)
+	}
+	if m.regex != nil {
+		fields = append(fields, validation.FieldRegex)
+	}
+	if m.ip != nil {
+		fields = append(fields, validation.FieldIP)
+	}
+	if m.url != nil {
+		fields = append(fields, validation.FieldURL)
+	}
+	if m.port != nil {
+		fields = append(fields, validation.FieldPort)
+	}
+	if m.hostname != nil {
+		fields = append(fields, validation.FieldHostname)
+	}
+	if m.nameservers != nil {
+		fields = append(fields, validation.FieldNameservers)
+	}
+	if m.package_name != nil {
+		fields = append(fields, validation.FieldPackageName)
+	}
+	if m.username != nil {
+		fields = append(fields, validation.FieldUsername)
+	}
+	if m.group_name != nil {
+		fields = append(fields, validation.FieldGroupName)
+	}
+	if m.file_path != nil {
+		fields = append(fields, validation.FieldFilePath)
+	}
+	if m.search_string != nil {
+		fields = append(fields, validation.FieldSearchString)
+	}
+	if m.service_name != nil {
+		fields = append(fields, validation.FieldServiceName)
+	}
+	if m.file_permission != nil {
+		fields = append(fields, validation.FieldFilePermission)
+	}
+	if m.service_status != nil {
+		fields = append(fields, validation.FieldServiceStatus)
+	}
+	if m.process_name != nil {
+		fields = append(fields, validation.FieldProcessName)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ValidationMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case validation.FieldHclID:
+		return m.HclID()
+	case validation.FieldValidationType:
+		return m.ValidationType()
+	case validation.FieldHash:
+		return m.Hash()
+	case validation.FieldRegex:
+		return m.Regex()
+	case validation.FieldIP:
+		return m.IP()
+	case validation.FieldURL:
+		return m.URL()
+	case validation.FieldPort:
+		return m.Port()
+	case validation.FieldHostname:
+		return m.Hostname()
+	case validation.FieldNameservers:
+		return m.Nameservers()
+	case validation.FieldPackageName:
+		return m.PackageName()
+	case validation.FieldUsername:
+		return m.Username()
+	case validation.FieldGroupName:
+		return m.GroupName()
+	case validation.FieldFilePath:
+		return m.FilePath()
+	case validation.FieldSearchString:
+		return m.SearchString()
+	case validation.FieldServiceName:
+		return m.ServiceName()
+	case validation.FieldFilePermission:
+		return m.FilePermission()
+	case validation.FieldServiceStatus:
+		return m.ServiceStatus()
+	case validation.FieldProcessName:
+		return m.ProcessName()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ValidationMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case validation.FieldHclID:
+		return m.OldHclID(ctx)
+	case validation.FieldValidationType:
+		return m.OldValidationType(ctx)
+	case validation.FieldHash:
+		return m.OldHash(ctx)
+	case validation.FieldRegex:
+		return m.OldRegex(ctx)
+	case validation.FieldIP:
+		return m.OldIP(ctx)
+	case validation.FieldURL:
+		return m.OldURL(ctx)
+	case validation.FieldPort:
+		return m.OldPort(ctx)
+	case validation.FieldHostname:
+		return m.OldHostname(ctx)
+	case validation.FieldNameservers:
+		return m.OldNameservers(ctx)
+	case validation.FieldPackageName:
+		return m.OldPackageName(ctx)
+	case validation.FieldUsername:
+		return m.OldUsername(ctx)
+	case validation.FieldGroupName:
+		return m.OldGroupName(ctx)
+	case validation.FieldFilePath:
+		return m.OldFilePath(ctx)
+	case validation.FieldSearchString:
+		return m.OldSearchString(ctx)
+	case validation.FieldServiceName:
+		return m.OldServiceName(ctx)
+	case validation.FieldFilePermission:
+		return m.OldFilePermission(ctx)
+	case validation.FieldServiceStatus:
+		return m.OldServiceStatus(ctx)
+	case validation.FieldProcessName:
+		return m.OldProcessName(ctx)
+	}
+	return nil, fmt.Errorf("unknown Validation field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ValidationMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case validation.FieldHclID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHclID(v)
+		return nil
+	case validation.FieldValidationType:
+		v, ok := value.(validation.ValidationType)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetValidationType(v)
+		return nil
+	case validation.FieldHash:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHash(v)
+		return nil
+	case validation.FieldRegex:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRegex(v)
+		return nil
+	case validation.FieldIP:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIP(v)
+		return nil
+	case validation.FieldURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetURL(v)
+		return nil
+	case validation.FieldPort:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPort(v)
+		return nil
+	case validation.FieldHostname:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHostname(v)
+		return nil
+	case validation.FieldNameservers:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetNameservers(v)
+		return nil
+	case validation.FieldPackageName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPackageName(v)
+		return nil
+	case validation.FieldUsername:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUsername(v)
+		return nil
+	case validation.FieldGroupName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGroupName(v)
+		return nil
+	case validation.FieldFilePath:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFilePath(v)
+		return nil
+	case validation.FieldSearchString:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSearchString(v)
+		return nil
+	case validation.FieldServiceName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetServiceName(v)
+		return nil
+	case validation.FieldFilePermission:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFilePermission(v)
+		return nil
+	case validation.FieldServiceStatus:
+		v, ok := value.(validation.ServiceStatus)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetServiceStatus(v)
+		return nil
+	case validation.FieldProcessName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProcessName(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Validation field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ValidationMutation) AddedFields() []string {
+	var fields []string
+	if m.addport != nil {
+		fields = append(fields, validation.FieldPort)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ValidationMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case validation.FieldPort:
+		return m.AddedPort()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ValidationMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case validation.FieldPort:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddPort(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Validation numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ValidationMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(validation.FieldHash) {
+		fields = append(fields, validation.FieldHash)
+	}
+	if m.FieldCleared(validation.FieldRegex) {
+		fields = append(fields, validation.FieldRegex)
+	}
+	if m.FieldCleared(validation.FieldIP) {
+		fields = append(fields, validation.FieldIP)
+	}
+	if m.FieldCleared(validation.FieldURL) {
+		fields = append(fields, validation.FieldURL)
+	}
+	if m.FieldCleared(validation.FieldPort) {
+		fields = append(fields, validation.FieldPort)
+	}
+	if m.FieldCleared(validation.FieldHostname) {
+		fields = append(fields, validation.FieldHostname)
+	}
+	if m.FieldCleared(validation.FieldNameservers) {
+		fields = append(fields, validation.FieldNameservers)
+	}
+	if m.FieldCleared(validation.FieldPackageName) {
+		fields = append(fields, validation.FieldPackageName)
+	}
+	if m.FieldCleared(validation.FieldUsername) {
+		fields = append(fields, validation.FieldUsername)
+	}
+	if m.FieldCleared(validation.FieldGroupName) {
+		fields = append(fields, validation.FieldGroupName)
+	}
+	if m.FieldCleared(validation.FieldFilePath) {
+		fields = append(fields, validation.FieldFilePath)
+	}
+	if m.FieldCleared(validation.FieldSearchString) {
+		fields = append(fields, validation.FieldSearchString)
+	}
+	if m.FieldCleared(validation.FieldServiceName) {
+		fields = append(fields, validation.FieldServiceName)
+	}
+	if m.FieldCleared(validation.FieldFilePermission) {
+		fields = append(fields, validation.FieldFilePermission)
+	}
+	if m.FieldCleared(validation.FieldProcessName) {
+		fields = append(fields, validation.FieldProcessName)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ValidationMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ValidationMutation) ClearField(name string) error {
+	switch name {
+	case validation.FieldHash:
+		m.ClearHash()
+		return nil
+	case validation.FieldRegex:
+		m.ClearRegex()
+		return nil
+	case validation.FieldIP:
+		m.ClearIP()
+		return nil
+	case validation.FieldURL:
+		m.ClearURL()
+		return nil
+	case validation.FieldPort:
+		m.ClearPort()
+		return nil
+	case validation.FieldHostname:
+		m.ClearHostname()
+		return nil
+	case validation.FieldNameservers:
+		m.ClearNameservers()
+		return nil
+	case validation.FieldPackageName:
+		m.ClearPackageName()
+		return nil
+	case validation.FieldUsername:
+		m.ClearUsername()
+		return nil
+	case validation.FieldGroupName:
+		m.ClearGroupName()
+		return nil
+	case validation.FieldFilePath:
+		m.ClearFilePath()
+		return nil
+	case validation.FieldSearchString:
+		m.ClearSearchString()
+		return nil
+	case validation.FieldServiceName:
+		m.ClearServiceName()
+		return nil
+	case validation.FieldFilePermission:
+		m.ClearFilePermission()
+		return nil
+	case validation.FieldProcessName:
+		m.ClearProcessName()
+		return nil
+	}
+	return fmt.Errorf("unknown Validation nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ValidationMutation) ResetField(name string) error {
+	switch name {
+	case validation.FieldHclID:
+		m.ResetHclID()
+		return nil
+	case validation.FieldValidationType:
+		m.ResetValidationType()
+		return nil
+	case validation.FieldHash:
+		m.ResetHash()
+		return nil
+	case validation.FieldRegex:
+		m.ResetRegex()
+		return nil
+	case validation.FieldIP:
+		m.ResetIP()
+		return nil
+	case validation.FieldURL:
+		m.ResetURL()
+		return nil
+	case validation.FieldPort:
+		m.ResetPort()
+		return nil
+	case validation.FieldHostname:
+		m.ResetHostname()
+		return nil
+	case validation.FieldNameservers:
+		m.ResetNameservers()
+		return nil
+	case validation.FieldPackageName:
+		m.ResetPackageName()
+		return nil
+	case validation.FieldUsername:
+		m.ResetUsername()
+		return nil
+	case validation.FieldGroupName:
+		m.ResetGroupName()
+		return nil
+	case validation.FieldFilePath:
+		m.ResetFilePath()
+		return nil
+	case validation.FieldSearchString:
+		m.ResetSearchString()
+		return nil
+	case validation.FieldServiceName:
+		m.ResetServiceName()
+		return nil
+	case validation.FieldFilePermission:
+		m.ResetFilePermission()
+		return nil
+	case validation.FieldServiceStatus:
+		m.ResetServiceStatus()
+		return nil
+	case validation.FieldProcessName:
+		m.ResetProcessName()
+		return nil
+	}
+	return fmt.Errorf("unknown Validation field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ValidationMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m._Users != nil {
+		edges = append(edges, validation.EdgeUsers)
+	}
+	if m._Environment != nil {
+		edges = append(edges, validation.EdgeEnvironment)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ValidationMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case validation.EdgeUsers:
+		ids := make([]ent.Value, 0, len(m._Users))
+		for id := range m._Users {
+			ids = append(ids, id)
+		}
+		return ids
+	case validation.EdgeEnvironment:
+		if id := m._Environment; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ValidationMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.removed_Users != nil {
+		edges = append(edges, validation.EdgeUsers)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ValidationMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case validation.EdgeUsers:
+		ids := make([]ent.Value, 0, len(m.removed_Users))
+		for id := range m.removed_Users {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ValidationMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.cleared_Users {
+		edges = append(edges, validation.EdgeUsers)
+	}
+	if m.cleared_Environment {
+		edges = append(edges, validation.EdgeEnvironment)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ValidationMutation) EdgeCleared(name string) bool {
+	switch name {
+	case validation.EdgeUsers:
+		return m.cleared_Users
+	case validation.EdgeEnvironment:
+		return m.cleared_Environment
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ValidationMutation) ClearEdge(name string) error {
+	switch name {
+	case validation.EdgeEnvironment:
+		m.ClearEnvironment()
+		return nil
+	}
+	return fmt.Errorf("unknown Validation unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ValidationMutation) ResetEdge(name string) error {
+	switch name {
+	case validation.EdgeUsers:
+		m.ResetUsers()
+		return nil
+	case validation.EdgeEnvironment:
+		m.ResetEnvironment()
+		return nil
+	}
+	return fmt.Errorf("unknown Validation edge %s", name)
 }

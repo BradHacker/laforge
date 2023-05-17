@@ -132,5 +132,9 @@ func (Environment) Edges() []ent.Edge {
 			Ref("Environments"),
 		edge.From("ServerTasks", ServerTask.Type).
 			Ref("Environment"),
+		edge.To("Validations", Validation.Type).
+			Annotations(entsql.Annotation{
+				OnDelete: entsql.Cascade,
+			}),
 	}
 }

@@ -63,6 +63,7 @@ type hooks struct {
 	Team                      []ent.Hook
 	Token                     []ent.Hook
 	User                      []ent.Hook
+	Validation                []ent.Hook
 }
 
 // Options applies the options on the config object.

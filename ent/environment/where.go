@@ -1312,6 +1312,34 @@ func HasServerTasksWith(preds ...predicate.ServerTask) predicate.Environment {
 	})
 }
 
+// HasValidations applies the HasEdge predicate on the "Validations" edge.
+func HasValidations() predicate.Environment {
+	return predicate.Environment(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(ValidationsTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ValidationsTable, ValidationsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasValidationsWith applies the HasEdge predicate on the "Validations" edge with a given conditions (other predicates).
+func HasValidationsWith(preds ...predicate.Validation) predicate.Environment {
+	return predicate.Environment(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(ValidationsInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ValidationsTable, ValidationsColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Environment) predicate.Environment {
 	return predicate.Environment(func(s *sql.Selector) {

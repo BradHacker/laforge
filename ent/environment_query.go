@@ -33,6 +33,7 @@ import (
 	"github.com/gen0cide/laforge/ent/script"
 	"github.com/gen0cide/laforge/ent/servertask"
 	"github.com/gen0cide/laforge/ent/user"
+	"github.com/gen0cide/laforge/ent/validation"
 	"github.com/google/uuid"
 )
 
@@ -65,6 +66,7 @@ type EnvironmentQuery struct {
 	withBuilds           *BuildQuery
 	withRepositories     *RepositoryQuery
 	withServerTasks      *ServerTaskQuery
+	withValidations      *ValidationQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -541,6 +543,28 @@ func (eq *EnvironmentQuery) QueryServerTasks() *ServerTaskQuery {
 	return query
 }
 
+// QueryValidations chains the current query on the "Validations" edge.
+func (eq *EnvironmentQuery) QueryValidations() *ValidationQuery {
+	query := &ValidationQuery{config: eq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := eq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := eq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(environment.Table, environment.FieldID, selector),
+			sqlgraph.To(validation.Table, validation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, environment.ValidationsTable, environment.ValidationsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(eq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first Environment entity from the query.
 // Returns a *NotFoundError when no Environment was found.
 func (eq *EnvironmentQuery) First(ctx context.Context) (*Environment, error) {
@@ -742,6 +766,7 @@ func (eq *EnvironmentQuery) Clone() *EnvironmentQuery {
 		withBuilds:           eq.withBuilds.Clone(),
 		withRepositories:     eq.withRepositories.Clone(),
 		withServerTasks:      eq.withServerTasks.Clone(),
+		withValidations:      eq.withValidations.Clone(),
 		// clone intermediate query.
 		sql:    eq.sql.Clone(),
 		path:   eq.path,
@@ -969,6 +994,17 @@ func (eq *EnvironmentQuery) WithServerTasks(opts ...func(*ServerTaskQuery)) *Env
 	return eq
 }
 
+// WithValidations tells the query-builder to eager-load the nodes that are connected to
+// the "Validations" edge. The optional arguments are used to configure the query builder of the edge.
+func (eq *EnvironmentQuery) WithValidations(opts ...func(*ValidationQuery)) *EnvironmentQuery {
+	query := &ValidationQuery{config: eq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	eq.withValidations = query
+	return eq
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -1037,7 +1073,7 @@ func (eq *EnvironmentQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 	var (
 		nodes       = []*Environment{}
 		_spec       = eq.querySpec()
-		loadedTypes = [20]bool{
+		loadedTypes = [21]bool{
 			eq.withUsers != nil,
 			eq.withHosts != nil,
 			eq.withCompetitions != nil,
@@ -1058,6 +1094,7 @@ func (eq *EnvironmentQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 			eq.withBuilds != nil,
 			eq.withRepositories != nil,
 			eq.withServerTasks != nil,
+			eq.withValidations != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
@@ -1219,6 +1256,13 @@ func (eq *EnvironmentQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 		if err := eq.loadServerTasks(ctx, query, nodes,
 			func(n *Environment) { n.Edges.ServerTasks = []*ServerTask{} },
 			func(n *Environment, e *ServerTask) { n.Edges.ServerTasks = append(n.Edges.ServerTasks, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := eq.withValidations; query != nil {
+		if err := eq.loadValidations(ctx, query, nodes,
+			func(n *Environment) { n.Edges.Validations = []*Validation{} },
+			func(n *Environment, e *Validation) { n.Edges.Validations = append(n.Edges.Validations, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -1948,6 +1992,37 @@ func (eq *EnvironmentQuery) loadServerTasks(ctx context.Context, query *ServerTa
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected foreign-key "server_task_environment" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (eq *EnvironmentQuery) loadValidations(ctx context.Context, query *ValidationQuery, nodes []*Environment, init func(*Environment), assign func(*Environment, *Validation)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Environment)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.InValues(environment.ValidationsColumn, fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.environment_validations
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "environment_validations" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "environment_validations" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

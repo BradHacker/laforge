@@ -16,6 +16,7 @@ import (
 	"github.com/gen0cide/laforge/ent/provisionedhost"
 	"github.com/gen0cide/laforge/ent/provisioningscheduledstep"
 	"github.com/gen0cide/laforge/ent/provisioningstep"
+	"github.com/gen0cide/laforge/ent/validation"
 	"github.com/google/uuid"
 )
 
@@ -155,6 +156,25 @@ func (atu *AgentTaskUpdate) AddAdhocPlans(a ...*AdhocPlan) *AgentTaskUpdate {
 	return atu.AddAdhocPlanIDs(ids...)
 }
 
+// SetValidationID sets the "Validation" edge to the Validation entity by ID.
+func (atu *AgentTaskUpdate) SetValidationID(id uuid.UUID) *AgentTaskUpdate {
+	atu.mutation.SetValidationID(id)
+	return atu
+}
+
+// SetNillableValidationID sets the "Validation" edge to the Validation entity by ID if the given value is not nil.
+func (atu *AgentTaskUpdate) SetNillableValidationID(id *uuid.UUID) *AgentTaskUpdate {
+	if id != nil {
+		atu = atu.SetValidationID(*id)
+	}
+	return atu
+}
+
+// SetValidation sets the "Validation" edge to the Validation entity.
+func (atu *AgentTaskUpdate) SetValidation(v *Validation) *AgentTaskUpdate {
+	return atu.SetValidationID(v.ID)
+}
+
 // Mutation returns the AgentTaskMutation object of the builder.
 func (atu *AgentTaskUpdate) Mutation() *AgentTaskMutation {
 	return atu.mutation
@@ -197,6 +217,12 @@ func (atu *AgentTaskUpdate) RemoveAdhocPlans(a ...*AdhocPlan) *AgentTaskUpdate {
 		ids[i] = a[i].ID
 	}
 	return atu.RemoveAdhocPlanIDs(ids...)
+}
+
+// ClearValidation clears the "Validation" edge to the Validation entity.
+func (atu *AgentTaskUpdate) ClearValidation() *AgentTaskUpdate {
+	atu.mutation.ClearValidation()
+	return atu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -503,6 +529,41 @@ func (atu *AgentTaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if atu.mutation.ValidationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   agenttask.ValidationTable,
+			Columns: []string{agenttask.ValidationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: validation.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := atu.mutation.ValidationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   agenttask.ValidationTable,
+			Columns: []string{agenttask.ValidationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: validation.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, atu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{agenttask.Label}
@@ -645,6 +706,25 @@ func (atuo *AgentTaskUpdateOne) AddAdhocPlans(a ...*AdhocPlan) *AgentTaskUpdateO
 	return atuo.AddAdhocPlanIDs(ids...)
 }
 
+// SetValidationID sets the "Validation" edge to the Validation entity by ID.
+func (atuo *AgentTaskUpdateOne) SetValidationID(id uuid.UUID) *AgentTaskUpdateOne {
+	atuo.mutation.SetValidationID(id)
+	return atuo
+}
+
+// SetNillableValidationID sets the "Validation" edge to the Validation entity by ID if the given value is not nil.
+func (atuo *AgentTaskUpdateOne) SetNillableValidationID(id *uuid.UUID) *AgentTaskUpdateOne {
+	if id != nil {
+		atuo = atuo.SetValidationID(*id)
+	}
+	return atuo
+}
+
+// SetValidation sets the "Validation" edge to the Validation entity.
+func (atuo *AgentTaskUpdateOne) SetValidation(v *Validation) *AgentTaskUpdateOne {
+	return atuo.SetValidationID(v.ID)
+}
+
 // Mutation returns the AgentTaskMutation object of the builder.
 func (atuo *AgentTaskUpdateOne) Mutation() *AgentTaskMutation {
 	return atuo.mutation
@@ -687,6 +767,12 @@ func (atuo *AgentTaskUpdateOne) RemoveAdhocPlans(a ...*AdhocPlan) *AgentTaskUpda
 		ids[i] = a[i].ID
 	}
 	return atuo.RemoveAdhocPlanIDs(ids...)
+}
+
+// ClearValidation clears the "Validation" edge to the Validation entity.
+func (atuo *AgentTaskUpdateOne) ClearValidation() *AgentTaskUpdateOne {
+	atuo.mutation.ClearValidation()
+	return atuo
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -1015,6 +1101,41 @@ func (atuo *AgentTaskUpdateOne) sqlSave(ctx context.Context) (_node *AgentTask, 
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeUUID,
 					Column: adhocplan.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if atuo.mutation.ValidationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   agenttask.ValidationTable,
+			Columns: []string{agenttask.ValidationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: validation.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := atuo.mutation.ValidationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   agenttask.ValidationTable,
+			Columns: []string{agenttask.ValidationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: validation.FieldID,
 				},
 			},
 		}

@@ -100,6 +100,14 @@ func (at *AgentTask) AdhocPlans(ctx context.Context) ([]*AdhocPlan, error) {
 	return result, err
 }
 
+func (at *AgentTask) Validation(ctx context.Context) (*Validation, error) {
+	result, err := at.Edges.ValidationOrErr()
+	if IsNotLoaded(err) {
+		result, err = at.QueryValidation().Only(ctx)
+	}
+	return result, MaskNotFound(err)
+}
+
 func (a *Ansible) Users(ctx context.Context) ([]*User, error) {
 	result, err := a.Edges.UsersOrErr()
 	if IsNotLoaded(err) {
@@ -480,6 +488,14 @@ func (e *Environment) ServerTasks(ctx context.Context) ([]*ServerTask, error) {
 	result, err := e.Edges.ServerTasksOrErr()
 	if IsNotLoaded(err) {
 		result, err = e.QueryServerTasks().All(ctx)
+	}
+	return result, err
+}
+
+func (e *Environment) Validations(ctx context.Context) ([]*Validation, error) {
+	result, err := e.Edges.ValidationsOrErr()
+	if IsNotLoaded(err) {
+		result, err = e.QueryValidations().All(ctx)
 	}
 	return result, err
 }
@@ -1370,4 +1386,20 @@ func (u *User) Environments(ctx context.Context) ([]*Environment, error) {
 		result, err = u.QueryEnvironments().All(ctx)
 	}
 	return result, err
+}
+
+func (v *Validation) Users(ctx context.Context) ([]*User, error) {
+	result, err := v.Edges.UsersOrErr()
+	if IsNotLoaded(err) {
+		result, err = v.QueryUsers().All(ctx)
+	}
+	return result, err
+}
+
+func (v *Validation) Environment(ctx context.Context) (*Environment, error) {
+	result, err := v.Edges.EnvironmentOrErr()
+	if IsNotLoaded(err) {
+		result, err = v.QueryEnvironment().Only(ctx)
+	}
+	return result, MaskNotFound(err)
 }

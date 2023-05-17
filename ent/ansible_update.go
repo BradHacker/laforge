@@ -84,6 +84,12 @@ func (au *AnsibleUpdate) SetTags(m map[string]string) *AnsibleUpdate {
 	return au
 }
 
+// SetValidations sets the "validations" field.
+func (au *AnsibleUpdate) SetValidations(s []string) *AnsibleUpdate {
+	au.mutation.SetValidations(s)
+	return au
+}
+
 // AddUserIDs adds the "Users" edge to the User entity by IDs.
 func (au *AnsibleUpdate) AddUserIDs(ids ...uuid.UUID) *AnsibleUpdate {
 	au.mutation.AddUserIDs(ids...)
@@ -301,6 +307,13 @@ func (au *AnsibleUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: ansible.FieldTags,
 		})
 	}
+	if value, ok := au.mutation.Validations(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeJSON,
+			Value:  value,
+			Column: ansible.FieldValidations,
+		})
+	}
 	if au.mutation.UsersCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -460,6 +473,12 @@ func (auo *AnsibleUpdateOne) SetAbsPath(s string) *AnsibleUpdateOne {
 // SetTags sets the "tags" field.
 func (auo *AnsibleUpdateOne) SetTags(m map[string]string) *AnsibleUpdateOne {
 	auo.mutation.SetTags(m)
+	return auo
+}
+
+// SetValidations sets the "validations" field.
+func (auo *AnsibleUpdateOne) SetValidations(s []string) *AnsibleUpdateOne {
+	auo.mutation.SetValidations(s)
 	return auo
 }
 
@@ -708,6 +727,13 @@ func (auo *AnsibleUpdateOne) sqlSave(ctx context.Context) (_node *Ansible, err e
 			Type:   field.TypeJSON,
 			Value:  value,
 			Column: ansible.FieldTags,
+		})
+	}
+	if value, ok := auo.mutation.Validations(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeJSON,
+			Value:  value,
+			Column: ansible.FieldValidations,
 		})
 	}
 	if auo.mutation.UsersCleared() {

@@ -31,6 +31,7 @@ func (AgentTask) Fields() []ent.Field {
 			"CHANGEPERMS",
 			"APPENDFILE",
 			"ANSIBLE",
+			"VALIDATOR",
 		),
 		field.String("args"),
 		field.Int("number"),
@@ -52,5 +53,7 @@ func (AgentTask) Edges() []ent.Edge {
 			Unique(),
 		edge.From("AdhocPlans", AdhocPlan.Type).
 			Ref("AgentTask"),
+		edge.To("Validation", Validation.Type).
+			Unique(),
 	}
 }

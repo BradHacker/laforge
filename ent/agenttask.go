@@ -11,6 +11,7 @@ import (
 	"github.com/gen0cide/laforge/ent/provisionedhost"
 	"github.com/gen0cide/laforge/ent/provisioningscheduledstep"
 	"github.com/gen0cide/laforge/ent/provisioningstep"
+	"github.com/gen0cide/laforge/ent/validation"
 	"github.com/google/uuid"
 )
 
@@ -44,10 +45,13 @@ type AgentTask struct {
 	HCLProvisionedHost *ProvisionedHost `json:"ProvisionedHost,omitempty"`
 	// AdhocPlans holds the value of the AdhocPlans edge.
 	HCLAdhocPlans []*AdhocPlan `json:"AdhocPlans,omitempty"`
+	// Validation holds the value of the Validation edge.
+	HCLValidation *Validation `json:"Validation,omitempty"`
 	//
 	agent_task_provisioning_step           *uuid.UUID
 	agent_task_provisioning_scheduled_step *uuid.UUID
 	agent_task_provisioned_host            *uuid.UUID
+	agent_task_validation                  *uuid.UUID
 }
 
 // AgentTaskEdges holds the relations/edges for other nodes in the graph.
@@ -60,9 +64,11 @@ type AgentTaskEdges struct {
 	ProvisionedHost *ProvisionedHost `json:"ProvisionedHost,omitempty"`
 	// AdhocPlans holds the value of the AdhocPlans edge.
 	AdhocPlans []*AdhocPlan `json:"AdhocPlans,omitempty"`
+	// Validation holds the value of the Validation edge.
+	Validation *Validation `json:"Validation,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [5]bool
 }
 
 // ProvisioningStepOrErr returns the ProvisioningStep value or an error if the edge
@@ -116,6 +122,20 @@ func (e AgentTaskEdges) AdhocPlansOrErr() ([]*AdhocPlan, error) {
 	return nil, &NotLoadedError{edge: "AdhocPlans"}
 }
 
+// ValidationOrErr returns the Validation value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e AgentTaskEdges) ValidationOrErr() (*Validation, error) {
+	if e.loadedTypes[4] {
+		if e.Validation == nil {
+			// The edge Validation was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: validation.Label}
+		}
+		return e.Validation, nil
+	}
+	return nil, &NotLoadedError{edge: "Validation"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*AgentTask) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
@@ -132,6 +152,8 @@ func (*AgentTask) scanValues(columns []string) ([]interface{}, error) {
 		case agenttask.ForeignKeys[1]: // agent_task_provisioning_scheduled_step
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case agenttask.ForeignKeys[2]: // agent_task_provisioned_host
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
+		case agenttask.ForeignKeys[3]: // agent_task_validation
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type AgentTask", columns[i])
@@ -211,6 +233,13 @@ func (at *AgentTask) assignValues(columns []string, values []interface{}) error 
 				at.agent_task_provisioned_host = new(uuid.UUID)
 				*at.agent_task_provisioned_host = *value.S.(*uuid.UUID)
 			}
+		case agenttask.ForeignKeys[3]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field agent_task_validation", values[i])
+			} else if value.Valid {
+				at.agent_task_validation = new(uuid.UUID)
+				*at.agent_task_validation = *value.S.(*uuid.UUID)
+			}
 		}
 	}
 	return nil
@@ -234,6 +263,11 @@ func (at *AgentTask) QueryProvisionedHost() *ProvisionedHostQuery {
 // QueryAdhocPlans queries the "AdhocPlans" edge of the AgentTask entity.
 func (at *AgentTask) QueryAdhocPlans() *AdhocPlanQuery {
 	return (&AgentTaskClient{config: at.config}).QueryAdhocPlans(at)
+}
+
+// QueryValidation queries the "Validation" edge of the AgentTask entity.
+func (at *AgentTask) QueryValidation() *ValidationQuery {
+	return (&AgentTaskClient{config: at.config}).QueryValidation(at)
 }
 
 // Update returns a builder for updating this AgentTask.

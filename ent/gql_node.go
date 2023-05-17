@@ -48,6 +48,7 @@ import (
 	"github.com/gen0cide/laforge/ent/team"
 	"github.com/gen0cide/laforge/ent/token"
 	"github.com/gen0cide/laforge/ent/user"
+	"github.com/gen0cide/laforge/ent/validation"
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
 )
@@ -297,7 +298,7 @@ func (at *AgentTask) Node(ctx context.Context) (node *Node, err error) {
 		ID:     at.ID,
 		Type:   "AgentTask",
 		Fields: make([]*Field, 6),
-		Edges:  make([]*Edge, 4),
+		Edges:  make([]*Edge, 5),
 	}
 	var buf []byte
 	if buf, err = json.Marshal(at.Command); err != nil {
@@ -388,6 +389,16 @@ func (at *AgentTask) Node(ctx context.Context) (node *Node, err error) {
 	if err != nil {
 		return nil, err
 	}
+	node.Edges[4] = &Edge{
+		Type: "Validation",
+		Name: "Validation",
+	}
+	err = at.QueryValidation().
+		Select(validation.FieldID).
+		Scan(ctx, &node.Edges[4].IDs)
+	if err != nil {
+		return nil, err
+	}
 	return node, nil
 }
 
@@ -395,7 +406,7 @@ func (a *Ansible) Node(ctx context.Context) (node *Node, err error) {
 	node = &Node{
 		ID:     a.ID,
 		Type:   "Ansible",
-		Fields: make([]*Field, 9),
+		Fields: make([]*Field, 10),
 		Edges:  make([]*Edge, 2),
 	}
 	var buf []byte
@@ -469,6 +480,14 @@ func (a *Ansible) Node(ctx context.Context) (node *Node, err error) {
 	node.Fields[8] = &Field{
 		Type:  "map[string]string",
 		Name:  "tags",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(a.Validations); err != nil {
+		return nil, err
+	}
+	node.Fields[9] = &Field{
+		Type:  "[]string",
+		Name:  "validations",
 		Value: string(buf),
 	}
 	node.Edges[0] = &Edge{
@@ -853,7 +872,7 @@ func (c *Command) Node(ctx context.Context) (node *Node, err error) {
 	node = &Node{
 		ID:     c.ID,
 		Type:   "Command",
-		Fields: make([]*Field, 11),
+		Fields: make([]*Field, 12),
 		Edges:  make([]*Edge, 2),
 	}
 	var buf []byte
@@ -943,6 +962,14 @@ func (c *Command) Node(ctx context.Context) (node *Node, err error) {
 	node.Fields[10] = &Field{
 		Type:  "map[string]string",
 		Name:  "tags",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(c.Validations); err != nil {
+		return nil, err
+	}
+	node.Fields[11] = &Field{
+		Type:  "[]string",
+		Name:  "validations",
 		Value: string(buf),
 	}
 	node.Edges[0] = &Edge{
@@ -1140,7 +1167,7 @@ func (dr *DNSRecord) Node(ctx context.Context) (node *Node, err error) {
 	node = &Node{
 		ID:     dr.ID,
 		Type:   "DNSRecord",
-		Fields: make([]*Field, 8),
+		Fields: make([]*Field, 9),
 		Edges:  make([]*Edge, 1),
 	}
 	var buf []byte
@@ -1208,6 +1235,14 @@ func (dr *DNSRecord) Node(ctx context.Context) (node *Node, err error) {
 		Name:  "tags",
 		Value: string(buf),
 	}
+	if buf, err = json.Marshal(dr.Validations); err != nil {
+		return nil, err
+	}
+	node.Fields[8] = &Field{
+		Type:  "[]string",
+		Name:  "validations",
+		Value: string(buf),
+	}
 	node.Edges[0] = &Edge{
 		Type: "Environment",
 		Name: "Environment",
@@ -1255,7 +1290,7 @@ func (e *Environment) Node(ctx context.Context) (node *Node, err error) {
 		ID:     e.ID,
 		Type:   "Environment",
 		Fields: make([]*Field, 11),
-		Edges:  make([]*Edge, 20),
+		Edges:  make([]*Edge, 21),
 	}
 	var buf []byte
 	if buf, err = json.Marshal(e.HclID); err != nil {
@@ -1546,6 +1581,16 @@ func (e *Environment) Node(ctx context.Context) (node *Node, err error) {
 	if err != nil {
 		return nil, err
 	}
+	node.Edges[20] = &Edge{
+		Type: "Validation",
+		Name: "Validations",
+	}
+	err = e.QueryValidations().
+		Select(validation.FieldID).
+		Scan(ctx, &node.Edges[20].IDs)
+	if err != nil {
+		return nil, err
+	}
 	return node, nil
 }
 
@@ -1553,7 +1598,7 @@ func (fd *FileDelete) Node(ctx context.Context) (node *Node, err error) {
 	node = &Node{
 		ID:     fd.ID,
 		Type:   "FileDelete",
-		Fields: make([]*Field, 3),
+		Fields: make([]*Field, 4),
 		Edges:  make([]*Edge, 1),
 	}
 	var buf []byte
@@ -1581,6 +1626,14 @@ func (fd *FileDelete) Node(ctx context.Context) (node *Node, err error) {
 		Name:  "tags",
 		Value: string(buf),
 	}
+	if buf, err = json.Marshal(fd.Validations); err != nil {
+		return nil, err
+	}
+	node.Fields[3] = &Field{
+		Type:  "[]string",
+		Name:  "validations",
+		Value: string(buf),
+	}
 	node.Edges[0] = &Edge{
 		Type: "Environment",
 		Name: "Environment",
@@ -1598,7 +1651,7 @@ func (fd *FileDownload) Node(ctx context.Context) (node *Node, err error) {
 	node = &Node{
 		ID:     fd.ID,
 		Type:   "FileDownload",
-		Fields: make([]*Field, 11),
+		Fields: make([]*Field, 12),
 		Edges:  make([]*Edge, 1),
 	}
 	var buf []byte
@@ -1690,6 +1743,14 @@ func (fd *FileDownload) Node(ctx context.Context) (node *Node, err error) {
 		Name:  "tags",
 		Value: string(buf),
 	}
+	if buf, err = json.Marshal(fd.Validations); err != nil {
+		return nil, err
+	}
+	node.Fields[11] = &Field{
+		Type:  "[]string",
+		Name:  "validations",
+		Value: string(buf),
+	}
 	node.Edges[0] = &Edge{
 		Type: "Environment",
 		Name: "Environment",
@@ -1707,7 +1768,7 @@ func (fe *FileExtract) Node(ctx context.Context) (node *Node, err error) {
 	node = &Node{
 		ID:     fe.ID,
 		Type:   "FileExtract",
-		Fields: make([]*Field, 5),
+		Fields: make([]*Field, 6),
 		Edges:  make([]*Edge, 1),
 	}
 	var buf []byte
@@ -1749,6 +1810,14 @@ func (fe *FileExtract) Node(ctx context.Context) (node *Node, err error) {
 	node.Fields[4] = &Field{
 		Type:  "map[string]string",
 		Name:  "tags",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(fe.Validations); err != nil {
+		return nil, err
+	}
+	node.Fields[5] = &Field{
+		Type:  "[]string",
+		Name:  "validations",
 		Value: string(buf),
 	}
 	node.Edges[0] = &Edge{
@@ -3374,7 +3443,7 @@ func (s *Script) Node(ctx context.Context) (node *Node, err error) {
 	node = &Node{
 		ID:     s.ID,
 		Type:   "Script",
-		Fields: make([]*Field, 14),
+		Fields: make([]*Field, 15),
 		Edges:  make([]*Edge, 3),
 	}
 	var buf []byte
@@ -3488,6 +3557,14 @@ func (s *Script) Node(ctx context.Context) (node *Node, err error) {
 	node.Fields[13] = &Field{
 		Type:  "map[string]string",
 		Name:  "tags",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(s.Validations); err != nil {
+		return nil, err
+	}
+	node.Fields[14] = &Field{
+		Type:  "[]string",
+		Name:  "validations",
 		Value: string(buf),
 	}
 	node.Edges[0] = &Edge{
@@ -3993,6 +4070,181 @@ func (u *User) Node(ctx context.Context) (node *Node, err error) {
 	return node, nil
 }
 
+func (v *Validation) Node(ctx context.Context) (node *Node, err error) {
+	node = &Node{
+		ID:     v.ID,
+		Type:   "Validation",
+		Fields: make([]*Field, 18),
+		Edges:  make([]*Edge, 2),
+	}
+	var buf []byte
+	if buf, err = json.Marshal(v.HclID); err != nil {
+		return nil, err
+	}
+	node.Fields[0] = &Field{
+		Type:  "string",
+		Name:  "hcl_id",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(v.ValidationType); err != nil {
+		return nil, err
+	}
+	node.Fields[1] = &Field{
+		Type:  "validation.ValidationType",
+		Name:  "validation_type",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(v.Hash); err != nil {
+		return nil, err
+	}
+	node.Fields[2] = &Field{
+		Type:  "string",
+		Name:  "hash",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(v.Regex); err != nil {
+		return nil, err
+	}
+	node.Fields[3] = &Field{
+		Type:  "string",
+		Name:  "regex",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(v.IP); err != nil {
+		return nil, err
+	}
+	node.Fields[4] = &Field{
+		Type:  "string",
+		Name:  "ip",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(v.URL); err != nil {
+		return nil, err
+	}
+	node.Fields[5] = &Field{
+		Type:  "string",
+		Name:  "url",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(v.Port); err != nil {
+		return nil, err
+	}
+	node.Fields[6] = &Field{
+		Type:  "int",
+		Name:  "port",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(v.Hostname); err != nil {
+		return nil, err
+	}
+	node.Fields[7] = &Field{
+		Type:  "string",
+		Name:  "hostname",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(v.Nameservers); err != nil {
+		return nil, err
+	}
+	node.Fields[8] = &Field{
+		Type:  "[]string",
+		Name:  "nameservers",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(v.PackageName); err != nil {
+		return nil, err
+	}
+	node.Fields[9] = &Field{
+		Type:  "string",
+		Name:  "package_name",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(v.Username); err != nil {
+		return nil, err
+	}
+	node.Fields[10] = &Field{
+		Type:  "string",
+		Name:  "username",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(v.GroupName); err != nil {
+		return nil, err
+	}
+	node.Fields[11] = &Field{
+		Type:  "string",
+		Name:  "group_name",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(v.FilePath); err != nil {
+		return nil, err
+	}
+	node.Fields[12] = &Field{
+		Type:  "string",
+		Name:  "file_path",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(v.SearchString); err != nil {
+		return nil, err
+	}
+	node.Fields[13] = &Field{
+		Type:  "string",
+		Name:  "search_string",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(v.ServiceName); err != nil {
+		return nil, err
+	}
+	node.Fields[14] = &Field{
+		Type:  "string",
+		Name:  "service_name",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(v.FilePermission); err != nil {
+		return nil, err
+	}
+	node.Fields[15] = &Field{
+		Type:  "string",
+		Name:  "file_permission",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(v.ServiceStatus); err != nil {
+		return nil, err
+	}
+	node.Fields[16] = &Field{
+		Type:  "validation.ServiceStatus",
+		Name:  "service_status",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(v.ProcessName); err != nil {
+		return nil, err
+	}
+	node.Fields[17] = &Field{
+		Type:  "string",
+		Name:  "process_name",
+		Value: string(buf),
+	}
+	node.Edges[0] = &Edge{
+		Type: "User",
+		Name: "Users",
+	}
+	err = v.QueryUsers().
+		Select(user.FieldID).
+		Scan(ctx, &node.Edges[0].IDs)
+	if err != nil {
+		return nil, err
+	}
+	node.Edges[1] = &Edge{
+		Type: "Environment",
+		Name: "Environment",
+	}
+	err = v.QueryEnvironment().
+		Select(environment.FieldID).
+		Scan(ctx, &node.Edges[1].IDs)
+	if err != nil {
+		return nil, err
+	}
+	return node, nil
+}
+
 func (c *Client) Node(ctx context.Context, id uuid.UUID) (*Node, error) {
 	n, err := c.Noder(ctx, id)
 	if err != nil {
@@ -4405,6 +4657,15 @@ func (c *Client) noder(ctx context.Context, table string, id uuid.UUID) (Noder, 
 		n, err := c.User.Query().
 			Where(user.ID(id)).
 			CollectFields(ctx, "User").
+			Only(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return n, nil
+	case validation.Table:
+		n, err := c.Validation.Query().
+			Where(validation.ID(id)).
+			CollectFields(ctx, "Validation").
 			Only(ctx)
 		if err != nil {
 			return nil, err
@@ -4981,6 +5242,19 @@ func (c *Client) noders(ctx context.Context, table string, ids []uuid.UUID) ([]N
 		nodes, err := c.User.Query().
 			Where(user.IDIn(ids...)).
 			CollectFields(ctx, "User").
+			All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, node := range nodes {
+			for _, noder := range idmap[node.ID] {
+				*noder = node
+			}
+		}
+	case validation.Table:
+		nodes, err := c.Validation.Query().
+			Where(validation.IDIn(ids...)).
+			CollectFields(ctx, "Validation").
 			All(ctx)
 		if err != nil {
 			return nil, err

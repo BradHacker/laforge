@@ -653,6 +653,34 @@ func HasAdhocPlansWith(preds ...predicate.AdhocPlan) predicate.AgentTask {
 	})
 }
 
+// HasValidation applies the HasEdge predicate on the "Validation" edge.
+func HasValidation() predicate.AgentTask {
+	return predicate.AgentTask(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(ValidationTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, ValidationTable, ValidationColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasValidationWith applies the HasEdge predicate on the "Validation" edge with a given conditions (other predicates).
+func HasValidationWith(preds ...predicate.Validation) predicate.AgentTask {
+	return predicate.AgentTask(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(ValidationInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, ValidationTable, ValidationColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.AgentTask) predicate.AgentTask {
 	return predicate.AgentTask(func(s *sql.Selector) {

@@ -27,6 +27,8 @@ const (
 	FieldDisabled = "disabled"
 	// FieldTags holds the string denoting the tags field in the database.
 	FieldTags = "tags"
+	// FieldValidations holds the string denoting the validations field in the database.
+	FieldValidations = "validations"
 	// EdgeEnvironment holds the string denoting the environment edge name in mutations.
 	EdgeEnvironment = "Environment"
 	// Table holds the table name of the dnsrecord in the database.
@@ -51,6 +53,7 @@ var Columns = []string{
 	FieldVars,
 	FieldDisabled,
 	FieldTags,
+	FieldValidations,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "dns_records"

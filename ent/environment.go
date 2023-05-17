@@ -84,6 +84,8 @@ type Environment struct {
 	HCLRepositories []*Repository `json:"Repositories,omitempty"`
 	// ServerTasks holds the value of the ServerTasks edge.
 	HCLServerTasks []*ServerTask `json:"ServerTasks,omitempty"`
+	// Validations holds the value of the Validations edge.
+	HCLValidations []*Validation `json:"Validations,omitempty"`
 	//
 
 }
@@ -130,9 +132,11 @@ type EnvironmentEdges struct {
 	Repositories []*Repository `json:"Repositories,omitempty"`
 	// ServerTasks holds the value of the ServerTasks edge.
 	ServerTasks []*ServerTask `json:"ServerTasks,omitempty"`
+	// Validations holds the value of the Validations edge.
+	Validations []*Validation `json:"Validations,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [20]bool
+	loadedTypes [21]bool
 }
 
 // UsersOrErr returns the Users value or an error if the edge
@@ -313,6 +317,15 @@ func (e EnvironmentEdges) ServerTasksOrErr() ([]*ServerTask, error) {
 		return e.ServerTasks, nil
 	}
 	return nil, &NotLoadedError{edge: "ServerTasks"}
+}
+
+// ValidationsOrErr returns the Validations value or an error if the edge
+// was not loaded in eager-loading.
+func (e EnvironmentEdges) ValidationsOrErr() ([]*Validation, error) {
+	if e.loadedTypes[20] {
+		return e.Validations, nil
+	}
+	return nil, &NotLoadedError{edge: "Validations"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -526,6 +539,11 @@ func (e *Environment) QueryRepositories() *RepositoryQuery {
 // QueryServerTasks queries the "ServerTasks" edge of the Environment entity.
 func (e *Environment) QueryServerTasks() *ServerTaskQuery {
 	return (&EnvironmentClient{config: e.config}).QueryServerTasks(e)
+}
+
+// QueryValidations queries the "Validations" edge of the Environment entity.
+func (e *Environment) QueryValidations() *ValidationQuery {
+	return (&EnvironmentClient{config: e.config}).QueryValidations(e)
 }
 
 // Update returns a builder for updating this Environment.

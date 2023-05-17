@@ -17,6 +17,7 @@ import (
 	"github.com/gen0cide/laforge/ent/provisionedhost"
 	"github.com/gen0cide/laforge/ent/provisioningscheduledstep"
 	"github.com/gen0cide/laforge/ent/provisioningstep"
+	"github.com/gen0cide/laforge/ent/validation"
 	"github.com/google/uuid"
 )
 
@@ -33,6 +34,7 @@ type AgentTaskQuery struct {
 	withProvisioningScheduledStep *ProvisioningScheduledStepQuery
 	withProvisionedHost           *ProvisionedHostQuery
 	withAdhocPlans                *AdhocPlanQuery
+	withValidation                *ValidationQuery
 	withFKs                       bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -151,6 +153,28 @@ func (atq *AgentTaskQuery) QueryAdhocPlans() *AdhocPlanQuery {
 			sqlgraph.From(agenttask.Table, agenttask.FieldID, selector),
 			sqlgraph.To(adhocplan.Table, adhocplan.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, true, agenttask.AdhocPlansTable, agenttask.AdhocPlansColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(atq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryValidation chains the current query on the "Validation" edge.
+func (atq *AgentTaskQuery) QueryValidation() *ValidationQuery {
+	query := &ValidationQuery{config: atq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := atq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := atq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(agenttask.Table, agenttask.FieldID, selector),
+			sqlgraph.To(validation.Table, validation.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, agenttask.ValidationTable, agenttask.ValidationColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(atq.driver.Dialect(), step)
 		return fromU, nil
@@ -343,6 +367,7 @@ func (atq *AgentTaskQuery) Clone() *AgentTaskQuery {
 		withProvisioningScheduledStep: atq.withProvisioningScheduledStep.Clone(),
 		withProvisionedHost:           atq.withProvisionedHost.Clone(),
 		withAdhocPlans:                atq.withAdhocPlans.Clone(),
+		withValidation:                atq.withValidation.Clone(),
 		// clone intermediate query.
 		sql:    atq.sql.Clone(),
 		path:   atq.path,
@@ -391,6 +416,17 @@ func (atq *AgentTaskQuery) WithAdhocPlans(opts ...func(*AdhocPlanQuery)) *AgentT
 		opt(query)
 	}
 	atq.withAdhocPlans = query
+	return atq
+}
+
+// WithValidation tells the query-builder to eager-load the nodes that are connected to
+// the "Validation" edge. The optional arguments are used to configure the query builder of the edge.
+func (atq *AgentTaskQuery) WithValidation(opts ...func(*ValidationQuery)) *AgentTaskQuery {
+	query := &ValidationQuery{config: atq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	atq.withValidation = query
 	return atq
 }
 
@@ -463,14 +499,15 @@ func (atq *AgentTaskQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*A
 		nodes       = []*AgentTask{}
 		withFKs     = atq.withFKs
 		_spec       = atq.querySpec()
-		loadedTypes = [4]bool{
+		loadedTypes = [5]bool{
 			atq.withProvisioningStep != nil,
 			atq.withProvisioningScheduledStep != nil,
 			atq.withProvisionedHost != nil,
 			atq.withAdhocPlans != nil,
+			atq.withValidation != nil,
 		}
 	)
-	if atq.withProvisioningStep != nil || atq.withProvisioningScheduledStep != nil || atq.withProvisionedHost != nil {
+	if atq.withProvisioningStep != nil || atq.withProvisioningScheduledStep != nil || atq.withProvisionedHost != nil || atq.withValidation != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -516,6 +553,12 @@ func (atq *AgentTaskQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*A
 		if err := atq.loadAdhocPlans(ctx, query, nodes,
 			func(n *AgentTask) { n.Edges.AdhocPlans = []*AdhocPlan{} },
 			func(n *AgentTask, e *AdhocPlan) { n.Edges.AdhocPlans = append(n.Edges.AdhocPlans, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := atq.withValidation; query != nil {
+		if err := atq.loadValidation(ctx, query, nodes, nil,
+			func(n *AgentTask, e *Validation) { n.Edges.Validation = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -637,6 +680,35 @@ func (atq *AgentTaskQuery) loadAdhocPlans(ctx context.Context, query *AdhocPlanQ
 			return fmt.Errorf(`unexpected foreign-key "adhoc_plan_agent_task" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
+	}
+	return nil
+}
+func (atq *AgentTaskQuery) loadValidation(ctx context.Context, query *ValidationQuery, nodes []*AgentTask, init func(*AgentTask), assign func(*AgentTask, *Validation)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*AgentTask)
+	for i := range nodes {
+		if nodes[i].agent_task_validation == nil {
+			continue
+		}
+		fk := *nodes[i].agent_task_validation
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	query.Where(validation.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "agent_task_validation" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
 	}
 	return nil
 }

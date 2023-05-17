@@ -14,6 +14,7 @@ import (
 	"github.com/gen0cide/laforge/ent/provisionedhost"
 	"github.com/gen0cide/laforge/ent/provisioningscheduledstep"
 	"github.com/gen0cide/laforge/ent/provisioningstep"
+	"github.com/gen0cide/laforge/ent/validation"
 	"github.com/google/uuid"
 )
 
@@ -152,6 +153,25 @@ func (atc *AgentTaskCreate) AddAdhocPlans(a ...*AdhocPlan) *AgentTaskCreate {
 		ids[i] = a[i].ID
 	}
 	return atc.AddAdhocPlanIDs(ids...)
+}
+
+// SetValidationID sets the "Validation" edge to the Validation entity by ID.
+func (atc *AgentTaskCreate) SetValidationID(id uuid.UUID) *AgentTaskCreate {
+	atc.mutation.SetValidationID(id)
+	return atc
+}
+
+// SetNillableValidationID sets the "Validation" edge to the Validation entity by ID if the given value is not nil.
+func (atc *AgentTaskCreate) SetNillableValidationID(id *uuid.UUID) *AgentTaskCreate {
+	if id != nil {
+		atc = atc.SetValidationID(*id)
+	}
+	return atc
+}
+
+// SetValidation sets the "Validation" edge to the Validation entity.
+func (atc *AgentTaskCreate) SetValidation(v *Validation) *AgentTaskCreate {
+	return atc.SetValidationID(v.ID)
 }
 
 // Mutation returns the AgentTaskMutation object of the builder.
@@ -439,6 +459,26 @@ func (atc *AgentTaskCreate) createSpec() (*AgentTask, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := atc.mutation.ValidationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   agenttask.ValidationTable,
+			Columns: []string{agenttask.ValidationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: validation.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.agent_task_validation = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
