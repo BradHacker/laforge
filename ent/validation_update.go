@@ -48,9 +48,37 @@ func (vu *ValidationUpdate) SetHash(s string) *ValidationUpdate {
 	return vu
 }
 
+// SetNillableHash sets the "hash" field if the given value is not nil.
+func (vu *ValidationUpdate) SetNillableHash(s *string) *ValidationUpdate {
+	if s != nil {
+		vu.SetHash(*s)
+	}
+	return vu
+}
+
+// ClearHash clears the value of the "hash" field.
+func (vu *ValidationUpdate) ClearHash() *ValidationUpdate {
+	vu.mutation.ClearHash()
+	return vu
+}
+
 // SetRegex sets the "regex" field.
 func (vu *ValidationUpdate) SetRegex(s string) *ValidationUpdate {
 	vu.mutation.SetRegex(s)
+	return vu
+}
+
+// SetNillableRegex sets the "regex" field if the given value is not nil.
+func (vu *ValidationUpdate) SetNillableRegex(s *string) *ValidationUpdate {
+	if s != nil {
+		vu.SetRegex(*s)
+	}
+	return vu
+}
+
+// ClearRegex clears the value of the "regex" field.
+func (vu *ValidationUpdate) ClearRegex() *ValidationUpdate {
+	vu.mutation.ClearRegex()
 	return vu
 }
 
@@ -60,9 +88,37 @@ func (vu *ValidationUpdate) SetIP(s string) *ValidationUpdate {
 	return vu
 }
 
+// SetNillableIP sets the "ip" field if the given value is not nil.
+func (vu *ValidationUpdate) SetNillableIP(s *string) *ValidationUpdate {
+	if s != nil {
+		vu.SetIP(*s)
+	}
+	return vu
+}
+
+// ClearIP clears the value of the "ip" field.
+func (vu *ValidationUpdate) ClearIP() *ValidationUpdate {
+	vu.mutation.ClearIP()
+	return vu
+}
+
 // SetURL sets the "url" field.
 func (vu *ValidationUpdate) SetURL(s string) *ValidationUpdate {
 	vu.mutation.SetURL(s)
+	return vu
+}
+
+// SetNillableURL sets the "url" field if the given value is not nil.
+func (vu *ValidationUpdate) SetNillableURL(s *string) *ValidationUpdate {
+	if s != nil {
+		vu.SetURL(*s)
+	}
+	return vu
+}
+
+// ClearURL clears the value of the "url" field.
+func (vu *ValidationUpdate) ClearURL() *ValidationUpdate {
+	vu.mutation.ClearURL()
 	return vu
 }
 
@@ -73,9 +129,23 @@ func (vu *ValidationUpdate) SetPort(i int) *ValidationUpdate {
 	return vu
 }
 
+// SetNillablePort sets the "port" field if the given value is not nil.
+func (vu *ValidationUpdate) SetNillablePort(i *int) *ValidationUpdate {
+	if i != nil {
+		vu.SetPort(*i)
+	}
+	return vu
+}
+
 // AddPort adds i to the "port" field.
 func (vu *ValidationUpdate) AddPort(i int) *ValidationUpdate {
 	vu.mutation.AddPort(i)
+	return vu
+}
+
+// ClearPort clears the value of the "port" field.
+func (vu *ValidationUpdate) ClearPort() *ValidationUpdate {
+	vu.mutation.ClearPort()
 	return vu
 }
 
@@ -85,9 +155,29 @@ func (vu *ValidationUpdate) SetHostname(s string) *ValidationUpdate {
 	return vu
 }
 
+// SetNillableHostname sets the "hostname" field if the given value is not nil.
+func (vu *ValidationUpdate) SetNillableHostname(s *string) *ValidationUpdate {
+	if s != nil {
+		vu.SetHostname(*s)
+	}
+	return vu
+}
+
+// ClearHostname clears the value of the "hostname" field.
+func (vu *ValidationUpdate) ClearHostname() *ValidationUpdate {
+	vu.mutation.ClearHostname()
+	return vu
+}
+
 // SetNameservers sets the "nameservers" field.
 func (vu *ValidationUpdate) SetNameservers(s []string) *ValidationUpdate {
 	vu.mutation.SetNameservers(s)
+	return vu
+}
+
+// ClearNameservers clears the value of the "nameservers" field.
+func (vu *ValidationUpdate) ClearNameservers() *ValidationUpdate {
+	vu.mutation.ClearNameservers()
 	return vu
 }
 
@@ -97,9 +187,37 @@ func (vu *ValidationUpdate) SetPackageName(s string) *ValidationUpdate {
 	return vu
 }
 
+// SetNillablePackageName sets the "package_name" field if the given value is not nil.
+func (vu *ValidationUpdate) SetNillablePackageName(s *string) *ValidationUpdate {
+	if s != nil {
+		vu.SetPackageName(*s)
+	}
+	return vu
+}
+
+// ClearPackageName clears the value of the "package_name" field.
+func (vu *ValidationUpdate) ClearPackageName() *ValidationUpdate {
+	vu.mutation.ClearPackageName()
+	return vu
+}
+
 // SetUsername sets the "username" field.
 func (vu *ValidationUpdate) SetUsername(s string) *ValidationUpdate {
 	vu.mutation.SetUsername(s)
+	return vu
+}
+
+// SetNillableUsername sets the "username" field if the given value is not nil.
+func (vu *ValidationUpdate) SetNillableUsername(s *string) *ValidationUpdate {
+	if s != nil {
+		vu.SetUsername(*s)
+	}
+	return vu
+}
+
+// ClearUsername clears the value of the "username" field.
+func (vu *ValidationUpdate) ClearUsername() *ValidationUpdate {
+	vu.mutation.ClearUsername()
 	return vu
 }
 
@@ -109,9 +227,37 @@ func (vu *ValidationUpdate) SetGroupName(s string) *ValidationUpdate {
 	return vu
 }
 
+// SetNillableGroupName sets the "group_name" field if the given value is not nil.
+func (vu *ValidationUpdate) SetNillableGroupName(s *string) *ValidationUpdate {
+	if s != nil {
+		vu.SetGroupName(*s)
+	}
+	return vu
+}
+
+// ClearGroupName clears the value of the "group_name" field.
+func (vu *ValidationUpdate) ClearGroupName() *ValidationUpdate {
+	vu.mutation.ClearGroupName()
+	return vu
+}
+
 // SetFilePath sets the "file_path" field.
 func (vu *ValidationUpdate) SetFilePath(s string) *ValidationUpdate {
 	vu.mutation.SetFilePath(s)
+	return vu
+}
+
+// SetNillableFilePath sets the "file_path" field if the given value is not nil.
+func (vu *ValidationUpdate) SetNillableFilePath(s *string) *ValidationUpdate {
+	if s != nil {
+		vu.SetFilePath(*s)
+	}
+	return vu
+}
+
+// ClearFilePath clears the value of the "file_path" field.
+func (vu *ValidationUpdate) ClearFilePath() *ValidationUpdate {
+	vu.mutation.ClearFilePath()
 	return vu
 }
 
@@ -121,15 +267,57 @@ func (vu *ValidationUpdate) SetSearchString(s string) *ValidationUpdate {
 	return vu
 }
 
+// SetNillableSearchString sets the "search_string" field if the given value is not nil.
+func (vu *ValidationUpdate) SetNillableSearchString(s *string) *ValidationUpdate {
+	if s != nil {
+		vu.SetSearchString(*s)
+	}
+	return vu
+}
+
+// ClearSearchString clears the value of the "search_string" field.
+func (vu *ValidationUpdate) ClearSearchString() *ValidationUpdate {
+	vu.mutation.ClearSearchString()
+	return vu
+}
+
 // SetServiceName sets the "service_name" field.
 func (vu *ValidationUpdate) SetServiceName(s string) *ValidationUpdate {
 	vu.mutation.SetServiceName(s)
 	return vu
 }
 
+// SetNillableServiceName sets the "service_name" field if the given value is not nil.
+func (vu *ValidationUpdate) SetNillableServiceName(s *string) *ValidationUpdate {
+	if s != nil {
+		vu.SetServiceName(*s)
+	}
+	return vu
+}
+
+// ClearServiceName clears the value of the "service_name" field.
+func (vu *ValidationUpdate) ClearServiceName() *ValidationUpdate {
+	vu.mutation.ClearServiceName()
+	return vu
+}
+
 // SetFilePermission sets the "file_permission" field.
 func (vu *ValidationUpdate) SetFilePermission(s string) *ValidationUpdate {
 	vu.mutation.SetFilePermission(s)
+	return vu
+}
+
+// SetNillableFilePermission sets the "file_permission" field if the given value is not nil.
+func (vu *ValidationUpdate) SetNillableFilePermission(s *string) *ValidationUpdate {
+	if s != nil {
+		vu.SetFilePermission(*s)
+	}
+	return vu
+}
+
+// ClearFilePermission clears the value of the "file_permission" field.
+func (vu *ValidationUpdate) ClearFilePermission() *ValidationUpdate {
+	vu.mutation.ClearFilePermission()
 	return vu
 }
 
@@ -150,6 +338,20 @@ func (vu *ValidationUpdate) SetNillableServiceStatus(vs *validation.ServiceStatu
 // SetProcessName sets the "process_name" field.
 func (vu *ValidationUpdate) SetProcessName(s string) *ValidationUpdate {
 	vu.mutation.SetProcessName(s)
+	return vu
+}
+
+// SetNillableProcessName sets the "process_name" field if the given value is not nil.
+func (vu *ValidationUpdate) SetNillableProcessName(s *string) *ValidationUpdate {
+	if s != nil {
+		vu.SetProcessName(*s)
+	}
+	return vu
+}
+
+// ClearProcessName clears the value of the "process_name" field.
+func (vu *ValidationUpdate) ClearProcessName() *ValidationUpdate {
+	vu.mutation.ClearProcessName()
 	return vu
 }
 
@@ -333,10 +535,22 @@ func (vu *ValidationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: validation.FieldHash,
 		})
 	}
+	if vu.mutation.HashCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: validation.FieldHash,
+		})
+	}
 	if value, ok := vu.mutation.Regex(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  value,
+			Column: validation.FieldRegex,
+		})
+	}
+	if vu.mutation.RegexCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
 			Column: validation.FieldRegex,
 		})
 	}
@@ -347,10 +561,22 @@ func (vu *ValidationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: validation.FieldIP,
 		})
 	}
+	if vu.mutation.IPCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: validation.FieldIP,
+		})
+	}
 	if value, ok := vu.mutation.URL(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  value,
+			Column: validation.FieldURL,
+		})
+	}
+	if vu.mutation.URLCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
 			Column: validation.FieldURL,
 		})
 	}
@@ -368,10 +594,22 @@ func (vu *ValidationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: validation.FieldPort,
 		})
 	}
+	if vu.mutation.PortCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt,
+			Column: validation.FieldPort,
+		})
+	}
 	if value, ok := vu.mutation.Hostname(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  value,
+			Column: validation.FieldHostname,
+		})
+	}
+	if vu.mutation.HostnameCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
 			Column: validation.FieldHostname,
 		})
 	}
@@ -382,10 +620,22 @@ func (vu *ValidationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: validation.FieldNameservers,
 		})
 	}
+	if vu.mutation.NameserversCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeJSON,
+			Column: validation.FieldNameservers,
+		})
+	}
 	if value, ok := vu.mutation.PackageName(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  value,
+			Column: validation.FieldPackageName,
+		})
+	}
+	if vu.mutation.PackageNameCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
 			Column: validation.FieldPackageName,
 		})
 	}
@@ -396,10 +646,22 @@ func (vu *ValidationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: validation.FieldUsername,
 		})
 	}
+	if vu.mutation.UsernameCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: validation.FieldUsername,
+		})
+	}
 	if value, ok := vu.mutation.GroupName(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  value,
+			Column: validation.FieldGroupName,
+		})
+	}
+	if vu.mutation.GroupNameCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
 			Column: validation.FieldGroupName,
 		})
 	}
@@ -410,10 +672,22 @@ func (vu *ValidationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: validation.FieldFilePath,
 		})
 	}
+	if vu.mutation.FilePathCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: validation.FieldFilePath,
+		})
+	}
 	if value, ok := vu.mutation.SearchString(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  value,
+			Column: validation.FieldSearchString,
+		})
+	}
+	if vu.mutation.SearchStringCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
 			Column: validation.FieldSearchString,
 		})
 	}
@@ -424,10 +698,22 @@ func (vu *ValidationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: validation.FieldServiceName,
 		})
 	}
+	if vu.mutation.ServiceNameCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: validation.FieldServiceName,
+		})
+	}
 	if value, ok := vu.mutation.FilePermission(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  value,
+			Column: validation.FieldFilePermission,
+		})
+	}
+	if vu.mutation.FilePermissionCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
 			Column: validation.FieldFilePermission,
 		})
 	}
@@ -442,6 +728,12 @@ func (vu *ValidationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  value,
+			Column: validation.FieldProcessName,
+		})
+	}
+	if vu.mutation.ProcessNameCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
 			Column: validation.FieldProcessName,
 		})
 	}
@@ -571,9 +863,37 @@ func (vuo *ValidationUpdateOne) SetHash(s string) *ValidationUpdateOne {
 	return vuo
 }
 
+// SetNillableHash sets the "hash" field if the given value is not nil.
+func (vuo *ValidationUpdateOne) SetNillableHash(s *string) *ValidationUpdateOne {
+	if s != nil {
+		vuo.SetHash(*s)
+	}
+	return vuo
+}
+
+// ClearHash clears the value of the "hash" field.
+func (vuo *ValidationUpdateOne) ClearHash() *ValidationUpdateOne {
+	vuo.mutation.ClearHash()
+	return vuo
+}
+
 // SetRegex sets the "regex" field.
 func (vuo *ValidationUpdateOne) SetRegex(s string) *ValidationUpdateOne {
 	vuo.mutation.SetRegex(s)
+	return vuo
+}
+
+// SetNillableRegex sets the "regex" field if the given value is not nil.
+func (vuo *ValidationUpdateOne) SetNillableRegex(s *string) *ValidationUpdateOne {
+	if s != nil {
+		vuo.SetRegex(*s)
+	}
+	return vuo
+}
+
+// ClearRegex clears the value of the "regex" field.
+func (vuo *ValidationUpdateOne) ClearRegex() *ValidationUpdateOne {
+	vuo.mutation.ClearRegex()
 	return vuo
 }
 
@@ -583,9 +903,37 @@ func (vuo *ValidationUpdateOne) SetIP(s string) *ValidationUpdateOne {
 	return vuo
 }
 
+// SetNillableIP sets the "ip" field if the given value is not nil.
+func (vuo *ValidationUpdateOne) SetNillableIP(s *string) *ValidationUpdateOne {
+	if s != nil {
+		vuo.SetIP(*s)
+	}
+	return vuo
+}
+
+// ClearIP clears the value of the "ip" field.
+func (vuo *ValidationUpdateOne) ClearIP() *ValidationUpdateOne {
+	vuo.mutation.ClearIP()
+	return vuo
+}
+
 // SetURL sets the "url" field.
 func (vuo *ValidationUpdateOne) SetURL(s string) *ValidationUpdateOne {
 	vuo.mutation.SetURL(s)
+	return vuo
+}
+
+// SetNillableURL sets the "url" field if the given value is not nil.
+func (vuo *ValidationUpdateOne) SetNillableURL(s *string) *ValidationUpdateOne {
+	if s != nil {
+		vuo.SetURL(*s)
+	}
+	return vuo
+}
+
+// ClearURL clears the value of the "url" field.
+func (vuo *ValidationUpdateOne) ClearURL() *ValidationUpdateOne {
+	vuo.mutation.ClearURL()
 	return vuo
 }
 
@@ -596,9 +944,23 @@ func (vuo *ValidationUpdateOne) SetPort(i int) *ValidationUpdateOne {
 	return vuo
 }
 
+// SetNillablePort sets the "port" field if the given value is not nil.
+func (vuo *ValidationUpdateOne) SetNillablePort(i *int) *ValidationUpdateOne {
+	if i != nil {
+		vuo.SetPort(*i)
+	}
+	return vuo
+}
+
 // AddPort adds i to the "port" field.
 func (vuo *ValidationUpdateOne) AddPort(i int) *ValidationUpdateOne {
 	vuo.mutation.AddPort(i)
+	return vuo
+}
+
+// ClearPort clears the value of the "port" field.
+func (vuo *ValidationUpdateOne) ClearPort() *ValidationUpdateOne {
+	vuo.mutation.ClearPort()
 	return vuo
 }
 
@@ -608,9 +970,29 @@ func (vuo *ValidationUpdateOne) SetHostname(s string) *ValidationUpdateOne {
 	return vuo
 }
 
+// SetNillableHostname sets the "hostname" field if the given value is not nil.
+func (vuo *ValidationUpdateOne) SetNillableHostname(s *string) *ValidationUpdateOne {
+	if s != nil {
+		vuo.SetHostname(*s)
+	}
+	return vuo
+}
+
+// ClearHostname clears the value of the "hostname" field.
+func (vuo *ValidationUpdateOne) ClearHostname() *ValidationUpdateOne {
+	vuo.mutation.ClearHostname()
+	return vuo
+}
+
 // SetNameservers sets the "nameservers" field.
 func (vuo *ValidationUpdateOne) SetNameservers(s []string) *ValidationUpdateOne {
 	vuo.mutation.SetNameservers(s)
+	return vuo
+}
+
+// ClearNameservers clears the value of the "nameservers" field.
+func (vuo *ValidationUpdateOne) ClearNameservers() *ValidationUpdateOne {
+	vuo.mutation.ClearNameservers()
 	return vuo
 }
 
@@ -620,9 +1002,37 @@ func (vuo *ValidationUpdateOne) SetPackageName(s string) *ValidationUpdateOne {
 	return vuo
 }
 
+// SetNillablePackageName sets the "package_name" field if the given value is not nil.
+func (vuo *ValidationUpdateOne) SetNillablePackageName(s *string) *ValidationUpdateOne {
+	if s != nil {
+		vuo.SetPackageName(*s)
+	}
+	return vuo
+}
+
+// ClearPackageName clears the value of the "package_name" field.
+func (vuo *ValidationUpdateOne) ClearPackageName() *ValidationUpdateOne {
+	vuo.mutation.ClearPackageName()
+	return vuo
+}
+
 // SetUsername sets the "username" field.
 func (vuo *ValidationUpdateOne) SetUsername(s string) *ValidationUpdateOne {
 	vuo.mutation.SetUsername(s)
+	return vuo
+}
+
+// SetNillableUsername sets the "username" field if the given value is not nil.
+func (vuo *ValidationUpdateOne) SetNillableUsername(s *string) *ValidationUpdateOne {
+	if s != nil {
+		vuo.SetUsername(*s)
+	}
+	return vuo
+}
+
+// ClearUsername clears the value of the "username" field.
+func (vuo *ValidationUpdateOne) ClearUsername() *ValidationUpdateOne {
+	vuo.mutation.ClearUsername()
 	return vuo
 }
 
@@ -632,9 +1042,37 @@ func (vuo *ValidationUpdateOne) SetGroupName(s string) *ValidationUpdateOne {
 	return vuo
 }
 
+// SetNillableGroupName sets the "group_name" field if the given value is not nil.
+func (vuo *ValidationUpdateOne) SetNillableGroupName(s *string) *ValidationUpdateOne {
+	if s != nil {
+		vuo.SetGroupName(*s)
+	}
+	return vuo
+}
+
+// ClearGroupName clears the value of the "group_name" field.
+func (vuo *ValidationUpdateOne) ClearGroupName() *ValidationUpdateOne {
+	vuo.mutation.ClearGroupName()
+	return vuo
+}
+
 // SetFilePath sets the "file_path" field.
 func (vuo *ValidationUpdateOne) SetFilePath(s string) *ValidationUpdateOne {
 	vuo.mutation.SetFilePath(s)
+	return vuo
+}
+
+// SetNillableFilePath sets the "file_path" field if the given value is not nil.
+func (vuo *ValidationUpdateOne) SetNillableFilePath(s *string) *ValidationUpdateOne {
+	if s != nil {
+		vuo.SetFilePath(*s)
+	}
+	return vuo
+}
+
+// ClearFilePath clears the value of the "file_path" field.
+func (vuo *ValidationUpdateOne) ClearFilePath() *ValidationUpdateOne {
+	vuo.mutation.ClearFilePath()
 	return vuo
 }
 
@@ -644,15 +1082,57 @@ func (vuo *ValidationUpdateOne) SetSearchString(s string) *ValidationUpdateOne {
 	return vuo
 }
 
+// SetNillableSearchString sets the "search_string" field if the given value is not nil.
+func (vuo *ValidationUpdateOne) SetNillableSearchString(s *string) *ValidationUpdateOne {
+	if s != nil {
+		vuo.SetSearchString(*s)
+	}
+	return vuo
+}
+
+// ClearSearchString clears the value of the "search_string" field.
+func (vuo *ValidationUpdateOne) ClearSearchString() *ValidationUpdateOne {
+	vuo.mutation.ClearSearchString()
+	return vuo
+}
+
 // SetServiceName sets the "service_name" field.
 func (vuo *ValidationUpdateOne) SetServiceName(s string) *ValidationUpdateOne {
 	vuo.mutation.SetServiceName(s)
 	return vuo
 }
 
+// SetNillableServiceName sets the "service_name" field if the given value is not nil.
+func (vuo *ValidationUpdateOne) SetNillableServiceName(s *string) *ValidationUpdateOne {
+	if s != nil {
+		vuo.SetServiceName(*s)
+	}
+	return vuo
+}
+
+// ClearServiceName clears the value of the "service_name" field.
+func (vuo *ValidationUpdateOne) ClearServiceName() *ValidationUpdateOne {
+	vuo.mutation.ClearServiceName()
+	return vuo
+}
+
 // SetFilePermission sets the "file_permission" field.
 func (vuo *ValidationUpdateOne) SetFilePermission(s string) *ValidationUpdateOne {
 	vuo.mutation.SetFilePermission(s)
+	return vuo
+}
+
+// SetNillableFilePermission sets the "file_permission" field if the given value is not nil.
+func (vuo *ValidationUpdateOne) SetNillableFilePermission(s *string) *ValidationUpdateOne {
+	if s != nil {
+		vuo.SetFilePermission(*s)
+	}
+	return vuo
+}
+
+// ClearFilePermission clears the value of the "file_permission" field.
+func (vuo *ValidationUpdateOne) ClearFilePermission() *ValidationUpdateOne {
+	vuo.mutation.ClearFilePermission()
 	return vuo
 }
 
@@ -673,6 +1153,20 @@ func (vuo *ValidationUpdateOne) SetNillableServiceStatus(vs *validation.ServiceS
 // SetProcessName sets the "process_name" field.
 func (vuo *ValidationUpdateOne) SetProcessName(s string) *ValidationUpdateOne {
 	vuo.mutation.SetProcessName(s)
+	return vuo
+}
+
+// SetNillableProcessName sets the "process_name" field if the given value is not nil.
+func (vuo *ValidationUpdateOne) SetNillableProcessName(s *string) *ValidationUpdateOne {
+	if s != nil {
+		vuo.SetProcessName(*s)
+	}
+	return vuo
+}
+
+// ClearProcessName clears the value of the "process_name" field.
+func (vuo *ValidationUpdateOne) ClearProcessName() *ValidationUpdateOne {
+	vuo.mutation.ClearProcessName()
 	return vuo
 }
 
@@ -886,10 +1380,22 @@ func (vuo *ValidationUpdateOne) sqlSave(ctx context.Context) (_node *Validation,
 			Column: validation.FieldHash,
 		})
 	}
+	if vuo.mutation.HashCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: validation.FieldHash,
+		})
+	}
 	if value, ok := vuo.mutation.Regex(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  value,
+			Column: validation.FieldRegex,
+		})
+	}
+	if vuo.mutation.RegexCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
 			Column: validation.FieldRegex,
 		})
 	}
@@ -900,10 +1406,22 @@ func (vuo *ValidationUpdateOne) sqlSave(ctx context.Context) (_node *Validation,
 			Column: validation.FieldIP,
 		})
 	}
+	if vuo.mutation.IPCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: validation.FieldIP,
+		})
+	}
 	if value, ok := vuo.mutation.URL(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  value,
+			Column: validation.FieldURL,
+		})
+	}
+	if vuo.mutation.URLCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
 			Column: validation.FieldURL,
 		})
 	}
@@ -921,10 +1439,22 @@ func (vuo *ValidationUpdateOne) sqlSave(ctx context.Context) (_node *Validation,
 			Column: validation.FieldPort,
 		})
 	}
+	if vuo.mutation.PortCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt,
+			Column: validation.FieldPort,
+		})
+	}
 	if value, ok := vuo.mutation.Hostname(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  value,
+			Column: validation.FieldHostname,
+		})
+	}
+	if vuo.mutation.HostnameCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
 			Column: validation.FieldHostname,
 		})
 	}
@@ -935,10 +1465,22 @@ func (vuo *ValidationUpdateOne) sqlSave(ctx context.Context) (_node *Validation,
 			Column: validation.FieldNameservers,
 		})
 	}
+	if vuo.mutation.NameserversCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeJSON,
+			Column: validation.FieldNameservers,
+		})
+	}
 	if value, ok := vuo.mutation.PackageName(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  value,
+			Column: validation.FieldPackageName,
+		})
+	}
+	if vuo.mutation.PackageNameCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
 			Column: validation.FieldPackageName,
 		})
 	}
@@ -949,10 +1491,22 @@ func (vuo *ValidationUpdateOne) sqlSave(ctx context.Context) (_node *Validation,
 			Column: validation.FieldUsername,
 		})
 	}
+	if vuo.mutation.UsernameCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: validation.FieldUsername,
+		})
+	}
 	if value, ok := vuo.mutation.GroupName(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  value,
+			Column: validation.FieldGroupName,
+		})
+	}
+	if vuo.mutation.GroupNameCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
 			Column: validation.FieldGroupName,
 		})
 	}
@@ -963,10 +1517,22 @@ func (vuo *ValidationUpdateOne) sqlSave(ctx context.Context) (_node *Validation,
 			Column: validation.FieldFilePath,
 		})
 	}
+	if vuo.mutation.FilePathCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: validation.FieldFilePath,
+		})
+	}
 	if value, ok := vuo.mutation.SearchString(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  value,
+			Column: validation.FieldSearchString,
+		})
+	}
+	if vuo.mutation.SearchStringCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
 			Column: validation.FieldSearchString,
 		})
 	}
@@ -977,10 +1543,22 @@ func (vuo *ValidationUpdateOne) sqlSave(ctx context.Context) (_node *Validation,
 			Column: validation.FieldServiceName,
 		})
 	}
+	if vuo.mutation.ServiceNameCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: validation.FieldServiceName,
+		})
+	}
 	if value, ok := vuo.mutation.FilePermission(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  value,
+			Column: validation.FieldFilePermission,
+		})
+	}
+	if vuo.mutation.FilePermissionCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
 			Column: validation.FieldFilePermission,
 		})
 	}
@@ -995,6 +1573,12 @@ func (vuo *ValidationUpdateOne) sqlSave(ctx context.Context) (_node *Validation,
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  value,
+			Column: validation.FieldProcessName,
+		})
+	}
+	if vuo.mutation.ProcessNameCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
 			Column: validation.FieldProcessName,
 		})
 	}

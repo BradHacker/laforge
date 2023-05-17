@@ -405,6 +405,20 @@ func HashHasSuffix(v string) predicate.Validation {
 	})
 }
 
+// HashIsNil applies the IsNil predicate on the "hash" field.
+func HashIsNil() predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldHash)))
+	})
+}
+
+// HashNotNil applies the NotNil predicate on the "hash" field.
+func HashNotNil() predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldHash)))
+	})
+}
+
 // HashEqualFold applies the EqualFold predicate on the "hash" field.
 func HashEqualFold(v string) predicate.Validation {
 	return predicate.Validation(func(s *sql.Selector) {
@@ -501,6 +515,20 @@ func RegexHasPrefix(v string) predicate.Validation {
 func RegexHasSuffix(v string) predicate.Validation {
 	return predicate.Validation(func(s *sql.Selector) {
 		s.Where(sql.HasSuffix(s.C(FieldRegex), v))
+	})
+}
+
+// RegexIsNil applies the IsNil predicate on the "regex" field.
+func RegexIsNil() predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldRegex)))
+	})
+}
+
+// RegexNotNil applies the NotNil predicate on the "regex" field.
+func RegexNotNil() predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldRegex)))
 	})
 }
 
@@ -603,6 +631,20 @@ func IPHasSuffix(v string) predicate.Validation {
 	})
 }
 
+// IPIsNil applies the IsNil predicate on the "ip" field.
+func IPIsNil() predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldIP)))
+	})
+}
+
+// IPNotNil applies the NotNil predicate on the "ip" field.
+func IPNotNil() predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldIP)))
+	})
+}
+
 // IPEqualFold applies the EqualFold predicate on the "ip" field.
 func IPEqualFold(v string) predicate.Validation {
 	return predicate.Validation(func(s *sql.Selector) {
@@ -702,6 +744,20 @@ func URLHasSuffix(v string) predicate.Validation {
 	})
 }
 
+// URLIsNil applies the IsNil predicate on the "url" field.
+func URLIsNil() predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldURL)))
+	})
+}
+
+// URLNotNil applies the NotNil predicate on the "url" field.
+func URLNotNil() predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldURL)))
+	})
+}
+
 // URLEqualFold applies the EqualFold predicate on the "url" field.
 func URLEqualFold(v string) predicate.Validation {
 	return predicate.Validation(func(s *sql.Selector) {
@@ -777,6 +833,20 @@ func PortLT(v int) predicate.Validation {
 func PortLTE(v int) predicate.Validation {
 	return predicate.Validation(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldPort), v))
+	})
+}
+
+// PortIsNil applies the IsNil predicate on the "port" field.
+func PortIsNil() predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldPort)))
+	})
+}
+
+// PortNotNil applies the NotNil predicate on the "port" field.
+func PortNotNil() predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldPort)))
 	})
 }
 
@@ -865,6 +935,20 @@ func HostnameHasSuffix(v string) predicate.Validation {
 	})
 }
 
+// HostnameIsNil applies the IsNil predicate on the "hostname" field.
+func HostnameIsNil() predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldHostname)))
+	})
+}
+
+// HostnameNotNil applies the NotNil predicate on the "hostname" field.
+func HostnameNotNil() predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldHostname)))
+	})
+}
+
 // HostnameEqualFold applies the EqualFold predicate on the "hostname" field.
 func HostnameEqualFold(v string) predicate.Validation {
 	return predicate.Validation(func(s *sql.Selector) {
@@ -876,6 +960,20 @@ func HostnameEqualFold(v string) predicate.Validation {
 func HostnameContainsFold(v string) predicate.Validation {
 	return predicate.Validation(func(s *sql.Selector) {
 		s.Where(sql.ContainsFold(s.C(FieldHostname), v))
+	})
+}
+
+// NameserversIsNil applies the IsNil predicate on the "nameservers" field.
+func NameserversIsNil() predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldNameservers)))
+	})
+}
+
+// NameserversNotNil applies the NotNil predicate on the "nameservers" field.
+func NameserversNotNil() predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldNameservers)))
 	})
 }
 
@@ -961,6 +1059,20 @@ func PackageNameHasPrefix(v string) predicate.Validation {
 func PackageNameHasSuffix(v string) predicate.Validation {
 	return predicate.Validation(func(s *sql.Selector) {
 		s.Where(sql.HasSuffix(s.C(FieldPackageName), v))
+	})
+}
+
+// PackageNameIsNil applies the IsNil predicate on the "package_name" field.
+func PackageNameIsNil() predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldPackageName)))
+	})
+}
+
+// PackageNameNotNil applies the NotNil predicate on the "package_name" field.
+func PackageNameNotNil() predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldPackageName)))
 	})
 }
 
@@ -1063,6 +1175,20 @@ func UsernameHasSuffix(v string) predicate.Validation {
 	})
 }
 
+// UsernameIsNil applies the IsNil predicate on the "username" field.
+func UsernameIsNil() predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldUsername)))
+	})
+}
+
+// UsernameNotNil applies the NotNil predicate on the "username" field.
+func UsernameNotNil() predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldUsername)))
+	})
+}
+
 // UsernameEqualFold applies the EqualFold predicate on the "username" field.
 func UsernameEqualFold(v string) predicate.Validation {
 	return predicate.Validation(func(s *sql.Selector) {
@@ -1159,6 +1285,20 @@ func GroupNameHasPrefix(v string) predicate.Validation {
 func GroupNameHasSuffix(v string) predicate.Validation {
 	return predicate.Validation(func(s *sql.Selector) {
 		s.Where(sql.HasSuffix(s.C(FieldGroupName), v))
+	})
+}
+
+// GroupNameIsNil applies the IsNil predicate on the "group_name" field.
+func GroupNameIsNil() predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldGroupName)))
+	})
+}
+
+// GroupNameNotNil applies the NotNil predicate on the "group_name" field.
+func GroupNameNotNil() predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldGroupName)))
 	})
 }
 
@@ -1261,6 +1401,20 @@ func FilePathHasSuffix(v string) predicate.Validation {
 	})
 }
 
+// FilePathIsNil applies the IsNil predicate on the "file_path" field.
+func FilePathIsNil() predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldFilePath)))
+	})
+}
+
+// FilePathNotNil applies the NotNil predicate on the "file_path" field.
+func FilePathNotNil() predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldFilePath)))
+	})
+}
+
 // FilePathEqualFold applies the EqualFold predicate on the "file_path" field.
 func FilePathEqualFold(v string) predicate.Validation {
 	return predicate.Validation(func(s *sql.Selector) {
@@ -1357,6 +1511,20 @@ func SearchStringHasPrefix(v string) predicate.Validation {
 func SearchStringHasSuffix(v string) predicate.Validation {
 	return predicate.Validation(func(s *sql.Selector) {
 		s.Where(sql.HasSuffix(s.C(FieldSearchString), v))
+	})
+}
+
+// SearchStringIsNil applies the IsNil predicate on the "search_string" field.
+func SearchStringIsNil() predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldSearchString)))
+	})
+}
+
+// SearchStringNotNil applies the NotNil predicate on the "search_string" field.
+func SearchStringNotNil() predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldSearchString)))
 	})
 }
 
@@ -1459,6 +1627,20 @@ func ServiceNameHasSuffix(v string) predicate.Validation {
 	})
 }
 
+// ServiceNameIsNil applies the IsNil predicate on the "service_name" field.
+func ServiceNameIsNil() predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldServiceName)))
+	})
+}
+
+// ServiceNameNotNil applies the NotNil predicate on the "service_name" field.
+func ServiceNameNotNil() predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldServiceName)))
+	})
+}
+
 // ServiceNameEqualFold applies the EqualFold predicate on the "service_name" field.
 func ServiceNameEqualFold(v string) predicate.Validation {
 	return predicate.Validation(func(s *sql.Selector) {
@@ -1555,6 +1737,20 @@ func FilePermissionHasPrefix(v string) predicate.Validation {
 func FilePermissionHasSuffix(v string) predicate.Validation {
 	return predicate.Validation(func(s *sql.Selector) {
 		s.Where(sql.HasSuffix(s.C(FieldFilePermission), v))
+	})
+}
+
+// FilePermissionIsNil applies the IsNil predicate on the "file_permission" field.
+func FilePermissionIsNil() predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldFilePermission)))
+	})
+}
+
+// FilePermissionNotNil applies the NotNil predicate on the "file_permission" field.
+func FilePermissionNotNil() predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldFilePermission)))
 	})
 }
 
@@ -1690,6 +1886,20 @@ func ProcessNameHasPrefix(v string) predicate.Validation {
 func ProcessNameHasSuffix(v string) predicate.Validation {
 	return predicate.Validation(func(s *sql.Selector) {
 		s.Where(sql.HasSuffix(s.C(FieldProcessName), v))
+	})
+}
+
+// ProcessNameIsNil applies the IsNil predicate on the "process_name" field.
+func ProcessNameIsNil() predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldProcessName)))
+	})
+}
+
+// ProcessNameNotNil applies the NotNil predicate on the "process_name" field.
+func ProcessNameNotNil() predicate.Validation {
+	return predicate.Validation(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldProcessName)))
 	})
 }
 

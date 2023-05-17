@@ -39,20 +39,20 @@ func (Validation) Fields() []ent.Field {
 				"file-permission",
 			).
 			StructTag(`hcl:"validation_type"`),
-		field.String("hash").StructTag(`hcl:"hash,optional"`),
-		field.String("regex").StructTag(`hcl:"regex,optional"`),
-		field.String("ip").StructTag(`hcl:"ip,optional"`),
-		field.String("url").StructTag(`hcl:"url,optional"`),
-		field.Int("port").StructTag(`hcl:"port,optional"`),
-		field.String("hostname").StructTag(`hcl:"hostname,optional"`),
-		field.JSON("nameservers", []string{}).StructTag(`hcl:"nameservers,optional"`),
-		field.String("package_name").StructTag(`hcl:"package_name,optional"`),
-		field.String("username").StructTag(`hcl:"username,optional"`),
-		field.String("group_name").StructTag(`hcl:"group_name,optional"`),
-		field.String("file_path").StructTag(`hcl:"file_path,optional"`),
-		field.String("search_string").StructTag(`hcl:"search_string,optional"`),
-		field.String("service_name").StructTag(`hcl:"service_name,optional"`),
-		field.String("file_permission").StructTag(`hcl:"file_permission,optional"`),
+		field.String("hash").StructTag(`hcl:"hash,optional"`).Optional(),
+		field.String("regex").StructTag(`hcl:"regex,optional"`).Optional(),
+		field.String("ip").StructTag(`hcl:"ip,optional"`).Optional(),
+		field.String("url").StructTag(`hcl:"url,optional"`).Optional(),
+		field.Int("port").StructTag(`hcl:"port,optional"`).Optional(),
+		field.String("hostname").StructTag(`hcl:"hostname,optional"`).Optional(),
+		field.JSON("nameservers", []string{}).StructTag(`hcl:"nameservers,optional"`).Optional(),
+		field.String("package_name").StructTag(`hcl:"package_name,optional"`).Optional(),
+		field.String("username").StructTag(`hcl:"username,optional"`).Optional(),
+		field.String("group_name").StructTag(`hcl:"group_name,optional"`).Optional(),
+		field.String("file_path").StructTag(`hcl:"file_path,optional"`).Optional(),
+		field.String("search_string").StructTag(`hcl:"search_string,optional"`).Optional(),
+		field.String("service_name").StructTag(`hcl:"service_name,optional"`).Optional(),
+		field.String("file_permission").StructTag(`hcl:"file_permission,optional"`).Optional(),
 		field.Enum("service_status").
 			Values(
 				"active",
@@ -66,7 +66,7 @@ func (Validation) Fields() []ent.Field {
 			).
 			StructTag(`hcl:"service_status,optional"`).
 			Default("active"),
-		field.String("process_name").StructTag(`hcl:"process_name,optional"`),
+		field.String("process_name").StructTag(`hcl:"process_name,optional"`).Optional(),
 	}
 }
 

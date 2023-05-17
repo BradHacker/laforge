@@ -36591,9 +36591,22 @@ func (m *ValidationMutation) OldHash(ctx context.Context) (v string, err error) 
 	return oldValue.Hash, nil
 }
 
+// ClearHash clears the value of the "hash" field.
+func (m *ValidationMutation) ClearHash() {
+	m.hash = nil
+	m.clearedFields[validation.FieldHash] = struct{}{}
+}
+
+// HashCleared returns if the "hash" field was cleared in this mutation.
+func (m *ValidationMutation) HashCleared() bool {
+	_, ok := m.clearedFields[validation.FieldHash]
+	return ok
+}
+
 // ResetHash resets all changes to the "hash" field.
 func (m *ValidationMutation) ResetHash() {
 	m.hash = nil
+	delete(m.clearedFields, validation.FieldHash)
 }
 
 // SetRegex sets the "regex" field.
@@ -36627,9 +36640,22 @@ func (m *ValidationMutation) OldRegex(ctx context.Context) (v string, err error)
 	return oldValue.Regex, nil
 }
 
+// ClearRegex clears the value of the "regex" field.
+func (m *ValidationMutation) ClearRegex() {
+	m.regex = nil
+	m.clearedFields[validation.FieldRegex] = struct{}{}
+}
+
+// RegexCleared returns if the "regex" field was cleared in this mutation.
+func (m *ValidationMutation) RegexCleared() bool {
+	_, ok := m.clearedFields[validation.FieldRegex]
+	return ok
+}
+
 // ResetRegex resets all changes to the "regex" field.
 func (m *ValidationMutation) ResetRegex() {
 	m.regex = nil
+	delete(m.clearedFields, validation.FieldRegex)
 }
 
 // SetIP sets the "ip" field.
@@ -36663,9 +36689,22 @@ func (m *ValidationMutation) OldIP(ctx context.Context) (v string, err error) {
 	return oldValue.IP, nil
 }
 
+// ClearIP clears the value of the "ip" field.
+func (m *ValidationMutation) ClearIP() {
+	m.ip = nil
+	m.clearedFields[validation.FieldIP] = struct{}{}
+}
+
+// IPCleared returns if the "ip" field was cleared in this mutation.
+func (m *ValidationMutation) IPCleared() bool {
+	_, ok := m.clearedFields[validation.FieldIP]
+	return ok
+}
+
 // ResetIP resets all changes to the "ip" field.
 func (m *ValidationMutation) ResetIP() {
 	m.ip = nil
+	delete(m.clearedFields, validation.FieldIP)
 }
 
 // SetURL sets the "url" field.
@@ -36699,9 +36738,22 @@ func (m *ValidationMutation) OldURL(ctx context.Context) (v string, err error) {
 	return oldValue.URL, nil
 }
 
+// ClearURL clears the value of the "url" field.
+func (m *ValidationMutation) ClearURL() {
+	m.url = nil
+	m.clearedFields[validation.FieldURL] = struct{}{}
+}
+
+// URLCleared returns if the "url" field was cleared in this mutation.
+func (m *ValidationMutation) URLCleared() bool {
+	_, ok := m.clearedFields[validation.FieldURL]
+	return ok
+}
+
 // ResetURL resets all changes to the "url" field.
 func (m *ValidationMutation) ResetURL() {
 	m.url = nil
+	delete(m.clearedFields, validation.FieldURL)
 }
 
 // SetPort sets the "port" field.
@@ -36754,10 +36806,24 @@ func (m *ValidationMutation) AddedPort() (r int, exists bool) {
 	return *v, true
 }
 
+// ClearPort clears the value of the "port" field.
+func (m *ValidationMutation) ClearPort() {
+	m.port = nil
+	m.addport = nil
+	m.clearedFields[validation.FieldPort] = struct{}{}
+}
+
+// PortCleared returns if the "port" field was cleared in this mutation.
+func (m *ValidationMutation) PortCleared() bool {
+	_, ok := m.clearedFields[validation.FieldPort]
+	return ok
+}
+
 // ResetPort resets all changes to the "port" field.
 func (m *ValidationMutation) ResetPort() {
 	m.port = nil
 	m.addport = nil
+	delete(m.clearedFields, validation.FieldPort)
 }
 
 // SetHostname sets the "hostname" field.
@@ -36791,9 +36857,22 @@ func (m *ValidationMutation) OldHostname(ctx context.Context) (v string, err err
 	return oldValue.Hostname, nil
 }
 
+// ClearHostname clears the value of the "hostname" field.
+func (m *ValidationMutation) ClearHostname() {
+	m.hostname = nil
+	m.clearedFields[validation.FieldHostname] = struct{}{}
+}
+
+// HostnameCleared returns if the "hostname" field was cleared in this mutation.
+func (m *ValidationMutation) HostnameCleared() bool {
+	_, ok := m.clearedFields[validation.FieldHostname]
+	return ok
+}
+
 // ResetHostname resets all changes to the "hostname" field.
 func (m *ValidationMutation) ResetHostname() {
 	m.hostname = nil
+	delete(m.clearedFields, validation.FieldHostname)
 }
 
 // SetNameservers sets the "nameservers" field.
@@ -36827,9 +36906,22 @@ func (m *ValidationMutation) OldNameservers(ctx context.Context) (v []string, er
 	return oldValue.Nameservers, nil
 }
 
+// ClearNameservers clears the value of the "nameservers" field.
+func (m *ValidationMutation) ClearNameservers() {
+	m.nameservers = nil
+	m.clearedFields[validation.FieldNameservers] = struct{}{}
+}
+
+// NameserversCleared returns if the "nameservers" field was cleared in this mutation.
+func (m *ValidationMutation) NameserversCleared() bool {
+	_, ok := m.clearedFields[validation.FieldNameservers]
+	return ok
+}
+
 // ResetNameservers resets all changes to the "nameservers" field.
 func (m *ValidationMutation) ResetNameservers() {
 	m.nameservers = nil
+	delete(m.clearedFields, validation.FieldNameservers)
 }
 
 // SetPackageName sets the "package_name" field.
@@ -36863,9 +36955,22 @@ func (m *ValidationMutation) OldPackageName(ctx context.Context) (v string, err 
 	return oldValue.PackageName, nil
 }
 
+// ClearPackageName clears the value of the "package_name" field.
+func (m *ValidationMutation) ClearPackageName() {
+	m.package_name = nil
+	m.clearedFields[validation.FieldPackageName] = struct{}{}
+}
+
+// PackageNameCleared returns if the "package_name" field was cleared in this mutation.
+func (m *ValidationMutation) PackageNameCleared() bool {
+	_, ok := m.clearedFields[validation.FieldPackageName]
+	return ok
+}
+
 // ResetPackageName resets all changes to the "package_name" field.
 func (m *ValidationMutation) ResetPackageName() {
 	m.package_name = nil
+	delete(m.clearedFields, validation.FieldPackageName)
 }
 
 // SetUsername sets the "username" field.
@@ -36899,9 +37004,22 @@ func (m *ValidationMutation) OldUsername(ctx context.Context) (v string, err err
 	return oldValue.Username, nil
 }
 
+// ClearUsername clears the value of the "username" field.
+func (m *ValidationMutation) ClearUsername() {
+	m.username = nil
+	m.clearedFields[validation.FieldUsername] = struct{}{}
+}
+
+// UsernameCleared returns if the "username" field was cleared in this mutation.
+func (m *ValidationMutation) UsernameCleared() bool {
+	_, ok := m.clearedFields[validation.FieldUsername]
+	return ok
+}
+
 // ResetUsername resets all changes to the "username" field.
 func (m *ValidationMutation) ResetUsername() {
 	m.username = nil
+	delete(m.clearedFields, validation.FieldUsername)
 }
 
 // SetGroupName sets the "group_name" field.
@@ -36935,9 +37053,22 @@ func (m *ValidationMutation) OldGroupName(ctx context.Context) (v string, err er
 	return oldValue.GroupName, nil
 }
 
+// ClearGroupName clears the value of the "group_name" field.
+func (m *ValidationMutation) ClearGroupName() {
+	m.group_name = nil
+	m.clearedFields[validation.FieldGroupName] = struct{}{}
+}
+
+// GroupNameCleared returns if the "group_name" field was cleared in this mutation.
+func (m *ValidationMutation) GroupNameCleared() bool {
+	_, ok := m.clearedFields[validation.FieldGroupName]
+	return ok
+}
+
 // ResetGroupName resets all changes to the "group_name" field.
 func (m *ValidationMutation) ResetGroupName() {
 	m.group_name = nil
+	delete(m.clearedFields, validation.FieldGroupName)
 }
 
 // SetFilePath sets the "file_path" field.
@@ -36971,9 +37102,22 @@ func (m *ValidationMutation) OldFilePath(ctx context.Context) (v string, err err
 	return oldValue.FilePath, nil
 }
 
+// ClearFilePath clears the value of the "file_path" field.
+func (m *ValidationMutation) ClearFilePath() {
+	m.file_path = nil
+	m.clearedFields[validation.FieldFilePath] = struct{}{}
+}
+
+// FilePathCleared returns if the "file_path" field was cleared in this mutation.
+func (m *ValidationMutation) FilePathCleared() bool {
+	_, ok := m.clearedFields[validation.FieldFilePath]
+	return ok
+}
+
 // ResetFilePath resets all changes to the "file_path" field.
 func (m *ValidationMutation) ResetFilePath() {
 	m.file_path = nil
+	delete(m.clearedFields, validation.FieldFilePath)
 }
 
 // SetSearchString sets the "search_string" field.
@@ -37007,9 +37151,22 @@ func (m *ValidationMutation) OldSearchString(ctx context.Context) (v string, err
 	return oldValue.SearchString, nil
 }
 
+// ClearSearchString clears the value of the "search_string" field.
+func (m *ValidationMutation) ClearSearchString() {
+	m.search_string = nil
+	m.clearedFields[validation.FieldSearchString] = struct{}{}
+}
+
+// SearchStringCleared returns if the "search_string" field was cleared in this mutation.
+func (m *ValidationMutation) SearchStringCleared() bool {
+	_, ok := m.clearedFields[validation.FieldSearchString]
+	return ok
+}
+
 // ResetSearchString resets all changes to the "search_string" field.
 func (m *ValidationMutation) ResetSearchString() {
 	m.search_string = nil
+	delete(m.clearedFields, validation.FieldSearchString)
 }
 
 // SetServiceName sets the "service_name" field.
@@ -37043,9 +37200,22 @@ func (m *ValidationMutation) OldServiceName(ctx context.Context) (v string, err 
 	return oldValue.ServiceName, nil
 }
 
+// ClearServiceName clears the value of the "service_name" field.
+func (m *ValidationMutation) ClearServiceName() {
+	m.service_name = nil
+	m.clearedFields[validation.FieldServiceName] = struct{}{}
+}
+
+// ServiceNameCleared returns if the "service_name" field was cleared in this mutation.
+func (m *ValidationMutation) ServiceNameCleared() bool {
+	_, ok := m.clearedFields[validation.FieldServiceName]
+	return ok
+}
+
 // ResetServiceName resets all changes to the "service_name" field.
 func (m *ValidationMutation) ResetServiceName() {
 	m.service_name = nil
+	delete(m.clearedFields, validation.FieldServiceName)
 }
 
 // SetFilePermission sets the "file_permission" field.
@@ -37079,9 +37249,22 @@ func (m *ValidationMutation) OldFilePermission(ctx context.Context) (v string, e
 	return oldValue.FilePermission, nil
 }
 
+// ClearFilePermission clears the value of the "file_permission" field.
+func (m *ValidationMutation) ClearFilePermission() {
+	m.file_permission = nil
+	m.clearedFields[validation.FieldFilePermission] = struct{}{}
+}
+
+// FilePermissionCleared returns if the "file_permission" field was cleared in this mutation.
+func (m *ValidationMutation) FilePermissionCleared() bool {
+	_, ok := m.clearedFields[validation.FieldFilePermission]
+	return ok
+}
+
 // ResetFilePermission resets all changes to the "file_permission" field.
 func (m *ValidationMutation) ResetFilePermission() {
 	m.file_permission = nil
+	delete(m.clearedFields, validation.FieldFilePermission)
 }
 
 // SetServiceStatus sets the "service_status" field.
@@ -37151,9 +37334,22 @@ func (m *ValidationMutation) OldProcessName(ctx context.Context) (v string, err 
 	return oldValue.ProcessName, nil
 }
 
+// ClearProcessName clears the value of the "process_name" field.
+func (m *ValidationMutation) ClearProcessName() {
+	m.process_name = nil
+	m.clearedFields[validation.FieldProcessName] = struct{}{}
+}
+
+// ProcessNameCleared returns if the "process_name" field was cleared in this mutation.
+func (m *ValidationMutation) ProcessNameCleared() bool {
+	_, ok := m.clearedFields[validation.FieldProcessName]
+	return ok
+}
+
 // ResetProcessName resets all changes to the "process_name" field.
 func (m *ValidationMutation) ResetProcessName() {
 	m.process_name = nil
+	delete(m.clearedFields, validation.FieldProcessName)
 }
 
 // AddUserIDs adds the "Users" edge to the User entity by ids.
@@ -37591,7 +37787,53 @@ func (m *ValidationMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *ValidationMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(validation.FieldHash) {
+		fields = append(fields, validation.FieldHash)
+	}
+	if m.FieldCleared(validation.FieldRegex) {
+		fields = append(fields, validation.FieldRegex)
+	}
+	if m.FieldCleared(validation.FieldIP) {
+		fields = append(fields, validation.FieldIP)
+	}
+	if m.FieldCleared(validation.FieldURL) {
+		fields = append(fields, validation.FieldURL)
+	}
+	if m.FieldCleared(validation.FieldPort) {
+		fields = append(fields, validation.FieldPort)
+	}
+	if m.FieldCleared(validation.FieldHostname) {
+		fields = append(fields, validation.FieldHostname)
+	}
+	if m.FieldCleared(validation.FieldNameservers) {
+		fields = append(fields, validation.FieldNameservers)
+	}
+	if m.FieldCleared(validation.FieldPackageName) {
+		fields = append(fields, validation.FieldPackageName)
+	}
+	if m.FieldCleared(validation.FieldUsername) {
+		fields = append(fields, validation.FieldUsername)
+	}
+	if m.FieldCleared(validation.FieldGroupName) {
+		fields = append(fields, validation.FieldGroupName)
+	}
+	if m.FieldCleared(validation.FieldFilePath) {
+		fields = append(fields, validation.FieldFilePath)
+	}
+	if m.FieldCleared(validation.FieldSearchString) {
+		fields = append(fields, validation.FieldSearchString)
+	}
+	if m.FieldCleared(validation.FieldServiceName) {
+		fields = append(fields, validation.FieldServiceName)
+	}
+	if m.FieldCleared(validation.FieldFilePermission) {
+		fields = append(fields, validation.FieldFilePermission)
+	}
+	if m.FieldCleared(validation.FieldProcessName) {
+		fields = append(fields, validation.FieldProcessName)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -37604,6 +37846,53 @@ func (m *ValidationMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *ValidationMutation) ClearField(name string) error {
+	switch name {
+	case validation.FieldHash:
+		m.ClearHash()
+		return nil
+	case validation.FieldRegex:
+		m.ClearRegex()
+		return nil
+	case validation.FieldIP:
+		m.ClearIP()
+		return nil
+	case validation.FieldURL:
+		m.ClearURL()
+		return nil
+	case validation.FieldPort:
+		m.ClearPort()
+		return nil
+	case validation.FieldHostname:
+		m.ClearHostname()
+		return nil
+	case validation.FieldNameservers:
+		m.ClearNameservers()
+		return nil
+	case validation.FieldPackageName:
+		m.ClearPackageName()
+		return nil
+	case validation.FieldUsername:
+		m.ClearUsername()
+		return nil
+	case validation.FieldGroupName:
+		m.ClearGroupName()
+		return nil
+	case validation.FieldFilePath:
+		m.ClearFilePath()
+		return nil
+	case validation.FieldSearchString:
+		m.ClearSearchString()
+		return nil
+	case validation.FieldServiceName:
+		m.ClearServiceName()
+		return nil
+	case validation.FieldFilePermission:
+		m.ClearFilePermission()
+		return nil
+	case validation.FieldProcessName:
+		m.ClearProcessName()
+		return nil
+	}
 	return fmt.Errorf("unknown Validation nullable field %s", name)
 }
 

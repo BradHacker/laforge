@@ -40,9 +40,25 @@ func (vc *ValidationCreate) SetHash(s string) *ValidationCreate {
 	return vc
 }
 
+// SetNillableHash sets the "hash" field if the given value is not nil.
+func (vc *ValidationCreate) SetNillableHash(s *string) *ValidationCreate {
+	if s != nil {
+		vc.SetHash(*s)
+	}
+	return vc
+}
+
 // SetRegex sets the "regex" field.
 func (vc *ValidationCreate) SetRegex(s string) *ValidationCreate {
 	vc.mutation.SetRegex(s)
+	return vc
+}
+
+// SetNillableRegex sets the "regex" field if the given value is not nil.
+func (vc *ValidationCreate) SetNillableRegex(s *string) *ValidationCreate {
+	if s != nil {
+		vc.SetRegex(*s)
+	}
 	return vc
 }
 
@@ -52,9 +68,25 @@ func (vc *ValidationCreate) SetIP(s string) *ValidationCreate {
 	return vc
 }
 
+// SetNillableIP sets the "ip" field if the given value is not nil.
+func (vc *ValidationCreate) SetNillableIP(s *string) *ValidationCreate {
+	if s != nil {
+		vc.SetIP(*s)
+	}
+	return vc
+}
+
 // SetURL sets the "url" field.
 func (vc *ValidationCreate) SetURL(s string) *ValidationCreate {
 	vc.mutation.SetURL(s)
+	return vc
+}
+
+// SetNillableURL sets the "url" field if the given value is not nil.
+func (vc *ValidationCreate) SetNillableURL(s *string) *ValidationCreate {
+	if s != nil {
+		vc.SetURL(*s)
+	}
 	return vc
 }
 
@@ -64,9 +96,25 @@ func (vc *ValidationCreate) SetPort(i int) *ValidationCreate {
 	return vc
 }
 
+// SetNillablePort sets the "port" field if the given value is not nil.
+func (vc *ValidationCreate) SetNillablePort(i *int) *ValidationCreate {
+	if i != nil {
+		vc.SetPort(*i)
+	}
+	return vc
+}
+
 // SetHostname sets the "hostname" field.
 func (vc *ValidationCreate) SetHostname(s string) *ValidationCreate {
 	vc.mutation.SetHostname(s)
+	return vc
+}
+
+// SetNillableHostname sets the "hostname" field if the given value is not nil.
+func (vc *ValidationCreate) SetNillableHostname(s *string) *ValidationCreate {
+	if s != nil {
+		vc.SetHostname(*s)
+	}
 	return vc
 }
 
@@ -82,9 +130,25 @@ func (vc *ValidationCreate) SetPackageName(s string) *ValidationCreate {
 	return vc
 }
 
+// SetNillablePackageName sets the "package_name" field if the given value is not nil.
+func (vc *ValidationCreate) SetNillablePackageName(s *string) *ValidationCreate {
+	if s != nil {
+		vc.SetPackageName(*s)
+	}
+	return vc
+}
+
 // SetUsername sets the "username" field.
 func (vc *ValidationCreate) SetUsername(s string) *ValidationCreate {
 	vc.mutation.SetUsername(s)
+	return vc
+}
+
+// SetNillableUsername sets the "username" field if the given value is not nil.
+func (vc *ValidationCreate) SetNillableUsername(s *string) *ValidationCreate {
+	if s != nil {
+		vc.SetUsername(*s)
+	}
 	return vc
 }
 
@@ -94,9 +158,25 @@ func (vc *ValidationCreate) SetGroupName(s string) *ValidationCreate {
 	return vc
 }
 
+// SetNillableGroupName sets the "group_name" field if the given value is not nil.
+func (vc *ValidationCreate) SetNillableGroupName(s *string) *ValidationCreate {
+	if s != nil {
+		vc.SetGroupName(*s)
+	}
+	return vc
+}
+
 // SetFilePath sets the "file_path" field.
 func (vc *ValidationCreate) SetFilePath(s string) *ValidationCreate {
 	vc.mutation.SetFilePath(s)
+	return vc
+}
+
+// SetNillableFilePath sets the "file_path" field if the given value is not nil.
+func (vc *ValidationCreate) SetNillableFilePath(s *string) *ValidationCreate {
+	if s != nil {
+		vc.SetFilePath(*s)
+	}
 	return vc
 }
 
@@ -106,15 +186,39 @@ func (vc *ValidationCreate) SetSearchString(s string) *ValidationCreate {
 	return vc
 }
 
+// SetNillableSearchString sets the "search_string" field if the given value is not nil.
+func (vc *ValidationCreate) SetNillableSearchString(s *string) *ValidationCreate {
+	if s != nil {
+		vc.SetSearchString(*s)
+	}
+	return vc
+}
+
 // SetServiceName sets the "service_name" field.
 func (vc *ValidationCreate) SetServiceName(s string) *ValidationCreate {
 	vc.mutation.SetServiceName(s)
 	return vc
 }
 
+// SetNillableServiceName sets the "service_name" field if the given value is not nil.
+func (vc *ValidationCreate) SetNillableServiceName(s *string) *ValidationCreate {
+	if s != nil {
+		vc.SetServiceName(*s)
+	}
+	return vc
+}
+
 // SetFilePermission sets the "file_permission" field.
 func (vc *ValidationCreate) SetFilePermission(s string) *ValidationCreate {
 	vc.mutation.SetFilePermission(s)
+	return vc
+}
+
+// SetNillableFilePermission sets the "file_permission" field if the given value is not nil.
+func (vc *ValidationCreate) SetNillableFilePermission(s *string) *ValidationCreate {
+	if s != nil {
+		vc.SetFilePermission(*s)
+	}
 	return vc
 }
 
@@ -135,6 +239,14 @@ func (vc *ValidationCreate) SetNillableServiceStatus(vs *validation.ServiceStatu
 // SetProcessName sets the "process_name" field.
 func (vc *ValidationCreate) SetProcessName(s string) *ValidationCreate {
 	vc.mutation.SetProcessName(s)
+	return vc
+}
+
+// SetNillableProcessName sets the "process_name" field if the given value is not nil.
+func (vc *ValidationCreate) SetNillableProcessName(s *string) *ValidationCreate {
+	if s != nil {
+		vc.SetProcessName(*s)
+	}
 	return vc
 }
 
@@ -286,48 +398,6 @@ func (vc *ValidationCreate) check() error {
 			return &ValidationError{Name: "validation_type", err: fmt.Errorf(`ent: validator failed for field "Validation.validation_type": %w`, err)}
 		}
 	}
-	if _, ok := vc.mutation.Hash(); !ok {
-		return &ValidationError{Name: "hash", err: errors.New(`ent: missing required field "Validation.hash"`)}
-	}
-	if _, ok := vc.mutation.Regex(); !ok {
-		return &ValidationError{Name: "regex", err: errors.New(`ent: missing required field "Validation.regex"`)}
-	}
-	if _, ok := vc.mutation.IP(); !ok {
-		return &ValidationError{Name: "ip", err: errors.New(`ent: missing required field "Validation.ip"`)}
-	}
-	if _, ok := vc.mutation.URL(); !ok {
-		return &ValidationError{Name: "url", err: errors.New(`ent: missing required field "Validation.url"`)}
-	}
-	if _, ok := vc.mutation.Port(); !ok {
-		return &ValidationError{Name: "port", err: errors.New(`ent: missing required field "Validation.port"`)}
-	}
-	if _, ok := vc.mutation.Hostname(); !ok {
-		return &ValidationError{Name: "hostname", err: errors.New(`ent: missing required field "Validation.hostname"`)}
-	}
-	if _, ok := vc.mutation.Nameservers(); !ok {
-		return &ValidationError{Name: "nameservers", err: errors.New(`ent: missing required field "Validation.nameservers"`)}
-	}
-	if _, ok := vc.mutation.PackageName(); !ok {
-		return &ValidationError{Name: "package_name", err: errors.New(`ent: missing required field "Validation.package_name"`)}
-	}
-	if _, ok := vc.mutation.Username(); !ok {
-		return &ValidationError{Name: "username", err: errors.New(`ent: missing required field "Validation.username"`)}
-	}
-	if _, ok := vc.mutation.GroupName(); !ok {
-		return &ValidationError{Name: "group_name", err: errors.New(`ent: missing required field "Validation.group_name"`)}
-	}
-	if _, ok := vc.mutation.FilePath(); !ok {
-		return &ValidationError{Name: "file_path", err: errors.New(`ent: missing required field "Validation.file_path"`)}
-	}
-	if _, ok := vc.mutation.SearchString(); !ok {
-		return &ValidationError{Name: "search_string", err: errors.New(`ent: missing required field "Validation.search_string"`)}
-	}
-	if _, ok := vc.mutation.ServiceName(); !ok {
-		return &ValidationError{Name: "service_name", err: errors.New(`ent: missing required field "Validation.service_name"`)}
-	}
-	if _, ok := vc.mutation.FilePermission(); !ok {
-		return &ValidationError{Name: "file_permission", err: errors.New(`ent: missing required field "Validation.file_permission"`)}
-	}
 	if _, ok := vc.mutation.ServiceStatus(); !ok {
 		return &ValidationError{Name: "service_status", err: errors.New(`ent: missing required field "Validation.service_status"`)}
 	}
@@ -335,9 +405,6 @@ func (vc *ValidationCreate) check() error {
 		if err := validation.ServiceStatusValidator(v); err != nil {
 			return &ValidationError{Name: "service_status", err: fmt.Errorf(`ent: validator failed for field "Validation.service_status": %w`, err)}
 		}
-	}
-	if _, ok := vc.mutation.ProcessName(); !ok {
-		return &ValidationError{Name: "process_name", err: errors.New(`ent: missing required field "Validation.process_name"`)}
 	}
 	return nil
 }
