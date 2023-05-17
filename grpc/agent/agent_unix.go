@@ -191,7 +191,7 @@ func HostServiceState(service_name string, service_status string) (bool, error) 
 }
 
 func LinuxAPTInstalled(package_name string) (bool, error) {
-	cmd := exec.Command("dpkg", "-s", package_name)
+	cmd := exec.Command("apt", "policy", package_name)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		fmt.Println(err)
@@ -204,13 +204,12 @@ func LinuxAPTInstalled(package_name string) (bool, error) {
 		return false, err
 	}
 
-	// Check if the package status contains "install ok installed".
-	if strings.Contains(string(output), "install ok installed") {
-		return true, nil
-	} else {
+	// Check if the package status contains "Unable to locate package".
+	if strings.Contains(string(output), "Unable to locate package") {
 		return false, fmt.Errorf("APT package \"%s\" is not installed", package_name)
 	}
 
+	return true, nil
 }
 
 func LinuxYumInstalled(package_name string) (bool, error) {
