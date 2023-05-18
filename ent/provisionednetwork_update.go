@@ -220,34 +220,7 @@ func (pnu *ProvisionedNetworkUpdate) ClearPlan() *ProvisionedNetworkUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (pnu *ProvisionedNetworkUpdate) Save(ctx context.Context) (int, error) {
-	var (
-		err      error
-		affected int
-	)
-	if len(pnu.hooks) == 0 {
-		affected, err = pnu.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*ProvisionedNetworkMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			pnu.mutation = mutation
-			affected, err = pnu.sqlSave(ctx)
-			mutation.done = true
-			return affected, err
-		})
-		for i := len(pnu.hooks) - 1; i >= 0; i-- {
-			if pnu.hooks[i] == nil {
-				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = pnu.hooks[i](mut)
-		}
-		if _, err := mut.Mutate(ctx, pnu.mutation); err != nil {
-			return 0, err
-		}
-	}
-	return affected, err
+	return withHooks(ctx, pnu.sqlSave, pnu.mutation, pnu.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -273,16 +246,7 @@ func (pnu *ProvisionedNetworkUpdate) ExecX(ctx context.Context) {
 }
 
 func (pnu *ProvisionedNetworkUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   provisionednetwork.Table,
-			Columns: provisionednetwork.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: provisionednetwork.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewUpdateSpec(provisionednetwork.Table, provisionednetwork.Columns, sqlgraph.NewFieldSpec(provisionednetwork.FieldID, field.TypeUUID))
 	if ps := pnu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -291,25 +255,13 @@ func (pnu *ProvisionedNetworkUpdate) sqlSave(ctx context.Context) (n int, err er
 		}
 	}
 	if value, ok := pnu.mutation.Name(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: provisionednetwork.FieldName,
-		})
+		_spec.SetField(provisionednetwork.FieldName, field.TypeString, value)
 	}
 	if value, ok := pnu.mutation.Cidr(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: provisionednetwork.FieldCidr,
-		})
+		_spec.SetField(provisionednetwork.FieldCidr, field.TypeString, value)
 	}
 	if value, ok := pnu.mutation.Vars(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: provisionednetwork.FieldVars,
-		})
+		_spec.SetField(provisionednetwork.FieldVars, field.TypeJSON, value)
 	}
 	if pnu.mutation.StatusCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -319,10 +271,7 @@ func (pnu *ProvisionedNetworkUpdate) sqlSave(ctx context.Context) (n int, err er
 			Columns: []string{provisionednetwork.StatusColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: status.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(status.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -335,10 +284,7 @@ func (pnu *ProvisionedNetworkUpdate) sqlSave(ctx context.Context) (n int, err er
 			Columns: []string{provisionednetwork.StatusColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: status.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(status.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -354,10 +300,7 @@ func (pnu *ProvisionedNetworkUpdate) sqlSave(ctx context.Context) (n int, err er
 			Columns: []string{provisionednetwork.NetworkColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: network.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(network.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -370,10 +313,7 @@ func (pnu *ProvisionedNetworkUpdate) sqlSave(ctx context.Context) (n int, err er
 			Columns: []string{provisionednetwork.NetworkColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: network.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(network.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -389,10 +329,7 @@ func (pnu *ProvisionedNetworkUpdate) sqlSave(ctx context.Context) (n int, err er
 			Columns: []string{provisionednetwork.BuildColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: build.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(build.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -405,10 +342,7 @@ func (pnu *ProvisionedNetworkUpdate) sqlSave(ctx context.Context) (n int, err er
 			Columns: []string{provisionednetwork.BuildColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: build.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(build.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -424,10 +358,7 @@ func (pnu *ProvisionedNetworkUpdate) sqlSave(ctx context.Context) (n int, err er
 			Columns: []string{provisionednetwork.TeamColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: team.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -440,10 +371,7 @@ func (pnu *ProvisionedNetworkUpdate) sqlSave(ctx context.Context) (n int, err er
 			Columns: []string{provisionednetwork.TeamColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: team.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -459,10 +387,7 @@ func (pnu *ProvisionedNetworkUpdate) sqlSave(ctx context.Context) (n int, err er
 			Columns: []string{provisionednetwork.ProvisionedHostsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisionedhost.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisionedhost.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -475,10 +400,7 @@ func (pnu *ProvisionedNetworkUpdate) sqlSave(ctx context.Context) (n int, err er
 			Columns: []string{provisionednetwork.ProvisionedHostsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisionedhost.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisionedhost.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -494,10 +416,7 @@ func (pnu *ProvisionedNetworkUpdate) sqlSave(ctx context.Context) (n int, err er
 			Columns: []string{provisionednetwork.ProvisionedHostsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisionedhost.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisionedhost.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -513,10 +432,7 @@ func (pnu *ProvisionedNetworkUpdate) sqlSave(ctx context.Context) (n int, err er
 			Columns: []string{provisionednetwork.PlanColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: plan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(plan.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -529,10 +445,7 @@ func (pnu *ProvisionedNetworkUpdate) sqlSave(ctx context.Context) (n int, err er
 			Columns: []string{provisionednetwork.PlanColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: plan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(plan.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -548,6 +461,7 @@ func (pnu *ProvisionedNetworkUpdate) sqlSave(ctx context.Context) (n int, err er
 		}
 		return 0, err
 	}
+	pnu.mutation.done = true
 	return n, nil
 }
 
@@ -743,6 +657,12 @@ func (pnuo *ProvisionedNetworkUpdateOne) ClearPlan() *ProvisionedNetworkUpdateOn
 	return pnuo
 }
 
+// Where appends a list predicates to the ProvisionedNetworkUpdate builder.
+func (pnuo *ProvisionedNetworkUpdateOne) Where(ps ...predicate.ProvisionedNetwork) *ProvisionedNetworkUpdateOne {
+	pnuo.mutation.Where(ps...)
+	return pnuo
+}
+
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
 func (pnuo *ProvisionedNetworkUpdateOne) Select(field string, fields ...string) *ProvisionedNetworkUpdateOne {
@@ -752,40 +672,7 @@ func (pnuo *ProvisionedNetworkUpdateOne) Select(field string, fields ...string) 
 
 // Save executes the query and returns the updated ProvisionedNetwork entity.
 func (pnuo *ProvisionedNetworkUpdateOne) Save(ctx context.Context) (*ProvisionedNetwork, error) {
-	var (
-		err  error
-		node *ProvisionedNetwork
-	)
-	if len(pnuo.hooks) == 0 {
-		node, err = pnuo.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*ProvisionedNetworkMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			pnuo.mutation = mutation
-			node, err = pnuo.sqlSave(ctx)
-			mutation.done = true
-			return node, err
-		})
-		for i := len(pnuo.hooks) - 1; i >= 0; i-- {
-			if pnuo.hooks[i] == nil {
-				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = pnuo.hooks[i](mut)
-		}
-		v, err := mut.Mutate(ctx, pnuo.mutation)
-		if err != nil {
-			return nil, err
-		}
-		nv, ok := v.(*ProvisionedNetwork)
-		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from ProvisionedNetworkMutation", v)
-		}
-		node = nv
-	}
-	return node, err
+	return withHooks(ctx, pnuo.sqlSave, pnuo.mutation, pnuo.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -811,16 +698,7 @@ func (pnuo *ProvisionedNetworkUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (pnuo *ProvisionedNetworkUpdateOne) sqlSave(ctx context.Context) (_node *ProvisionedNetwork, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   provisionednetwork.Table,
-			Columns: provisionednetwork.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: provisionednetwork.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewUpdateSpec(provisionednetwork.Table, provisionednetwork.Columns, sqlgraph.NewFieldSpec(provisionednetwork.FieldID, field.TypeUUID))
 	id, ok := pnuo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "ProvisionedNetwork.id" for update`)}
@@ -846,25 +724,13 @@ func (pnuo *ProvisionedNetworkUpdateOne) sqlSave(ctx context.Context) (_node *Pr
 		}
 	}
 	if value, ok := pnuo.mutation.Name(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: provisionednetwork.FieldName,
-		})
+		_spec.SetField(provisionednetwork.FieldName, field.TypeString, value)
 	}
 	if value, ok := pnuo.mutation.Cidr(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: provisionednetwork.FieldCidr,
-		})
+		_spec.SetField(provisionednetwork.FieldCidr, field.TypeString, value)
 	}
 	if value, ok := pnuo.mutation.Vars(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: provisionednetwork.FieldVars,
-		})
+		_spec.SetField(provisionednetwork.FieldVars, field.TypeJSON, value)
 	}
 	if pnuo.mutation.StatusCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -874,10 +740,7 @@ func (pnuo *ProvisionedNetworkUpdateOne) sqlSave(ctx context.Context) (_node *Pr
 			Columns: []string{provisionednetwork.StatusColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: status.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(status.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -890,10 +753,7 @@ func (pnuo *ProvisionedNetworkUpdateOne) sqlSave(ctx context.Context) (_node *Pr
 			Columns: []string{provisionednetwork.StatusColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: status.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(status.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -909,10 +769,7 @@ func (pnuo *ProvisionedNetworkUpdateOne) sqlSave(ctx context.Context) (_node *Pr
 			Columns: []string{provisionednetwork.NetworkColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: network.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(network.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -925,10 +782,7 @@ func (pnuo *ProvisionedNetworkUpdateOne) sqlSave(ctx context.Context) (_node *Pr
 			Columns: []string{provisionednetwork.NetworkColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: network.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(network.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -944,10 +798,7 @@ func (pnuo *ProvisionedNetworkUpdateOne) sqlSave(ctx context.Context) (_node *Pr
 			Columns: []string{provisionednetwork.BuildColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: build.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(build.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -960,10 +811,7 @@ func (pnuo *ProvisionedNetworkUpdateOne) sqlSave(ctx context.Context) (_node *Pr
 			Columns: []string{provisionednetwork.BuildColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: build.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(build.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -979,10 +827,7 @@ func (pnuo *ProvisionedNetworkUpdateOne) sqlSave(ctx context.Context) (_node *Pr
 			Columns: []string{provisionednetwork.TeamColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: team.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -995,10 +840,7 @@ func (pnuo *ProvisionedNetworkUpdateOne) sqlSave(ctx context.Context) (_node *Pr
 			Columns: []string{provisionednetwork.TeamColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: team.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1014,10 +856,7 @@ func (pnuo *ProvisionedNetworkUpdateOne) sqlSave(ctx context.Context) (_node *Pr
 			Columns: []string{provisionednetwork.ProvisionedHostsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisionedhost.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisionedhost.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1030,10 +869,7 @@ func (pnuo *ProvisionedNetworkUpdateOne) sqlSave(ctx context.Context) (_node *Pr
 			Columns: []string{provisionednetwork.ProvisionedHostsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisionedhost.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisionedhost.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1049,10 +885,7 @@ func (pnuo *ProvisionedNetworkUpdateOne) sqlSave(ctx context.Context) (_node *Pr
 			Columns: []string{provisionednetwork.ProvisionedHostsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisionedhost.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisionedhost.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1068,10 +901,7 @@ func (pnuo *ProvisionedNetworkUpdateOne) sqlSave(ctx context.Context) (_node *Pr
 			Columns: []string{provisionednetwork.PlanColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: plan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(plan.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1084,10 +914,7 @@ func (pnuo *ProvisionedNetworkUpdateOne) sqlSave(ctx context.Context) (_node *Pr
 			Columns: []string{provisionednetwork.PlanColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: plan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(plan.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1106,5 +933,6 @@ func (pnuo *ProvisionedNetworkUpdateOne) sqlSave(ctx context.Context) (_node *Pr
 		}
 		return nil, err
 	}
+	pnuo.mutation.done = true
 	return _node, nil
 }

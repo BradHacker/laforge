@@ -4,7 +4,6 @@ package ent
 
 import (
 	"context"
-	"fmt"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -28,34 +27,7 @@ func (vd *ValidationDelete) Where(ps ...predicate.Validation) *ValidationDelete 
 
 // Exec executes the deletion query and returns how many vertices were deleted.
 func (vd *ValidationDelete) Exec(ctx context.Context) (int, error) {
-	var (
-		err      error
-		affected int
-	)
-	if len(vd.hooks) == 0 {
-		affected, err = vd.sqlExec(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*ValidationMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			vd.mutation = mutation
-			affected, err = vd.sqlExec(ctx)
-			mutation.done = true
-			return affected, err
-		})
-		for i := len(vd.hooks) - 1; i >= 0; i-- {
-			if vd.hooks[i] == nil {
-				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = vd.hooks[i](mut)
-		}
-		if _, err := mut.Mutate(ctx, vd.mutation); err != nil {
-			return 0, err
-		}
-	}
-	return affected, err
+	return withHooks(ctx, vd.sqlExec, vd.mutation, vd.hooks)
 }
 
 // ExecX is like Exec, but panics if an error occurs.
@@ -68,15 +40,7 @@ func (vd *ValidationDelete) ExecX(ctx context.Context) int {
 }
 
 func (vd *ValidationDelete) sqlExec(ctx context.Context) (int, error) {
-	_spec := &sqlgraph.DeleteSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table: validation.Table,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: validation.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewDeleteSpec(validation.Table, sqlgraph.NewFieldSpec(validation.FieldID, field.TypeUUID))
 	if ps := vd.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -88,12 +52,19 @@ func (vd *ValidationDelete) sqlExec(ctx context.Context) (int, error) {
 	if err != nil && sqlgraph.IsConstraintError(err) {
 		err = &ConstraintError{msg: err.Error(), wrap: err}
 	}
+	vd.mutation.done = true
 	return affected, err
 }
 
 // ValidationDeleteOne is the builder for deleting a single Validation entity.
 type ValidationDeleteOne struct {
 	vd *ValidationDelete
+}
+
+// Where appends a list predicates to the ValidationDelete builder.
+func (vdo *ValidationDeleteOne) Where(ps ...predicate.Validation) *ValidationDeleteOne {
+	vdo.vd.mutation.Where(ps...)
+	return vdo
 }
 
 // Exec executes the deletion query.
@@ -111,5 +82,7 @@ func (vdo *ValidationDeleteOne) Exec(ctx context.Context) error {
 
 // ExecX is like Exec, but panics if an error occurs.
 func (vdo *ValidationDeleteOne) ExecX(ctx context.Context) {
-	vdo.vd.ExecX(ctx)
+	if err := vdo.Exec(ctx); err != nil {
+		panic(err)
+	}
 }

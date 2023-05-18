@@ -74,40 +74,7 @@ func (du *DiskUpdate) ClearHost() *DiskUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (du *DiskUpdate) Save(ctx context.Context) (int, error) {
-	var (
-		err      error
-		affected int
-	)
-	if len(du.hooks) == 0 {
-		if err = du.check(); err != nil {
-			return 0, err
-		}
-		affected, err = du.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*DiskMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = du.check(); err != nil {
-				return 0, err
-			}
-			du.mutation = mutation
-			affected, err = du.sqlSave(ctx)
-			mutation.done = true
-			return affected, err
-		})
-		for i := len(du.hooks) - 1; i >= 0; i-- {
-			if du.hooks[i] == nil {
-				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = du.hooks[i](mut)
-		}
-		if _, err := mut.Mutate(ctx, du.mutation); err != nil {
-			return 0, err
-		}
-	}
-	return affected, err
+	return withHooks(ctx, du.sqlSave, du.mutation, du.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -143,16 +110,10 @@ func (du *DiskUpdate) check() error {
 }
 
 func (du *DiskUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   disk.Table,
-			Columns: disk.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: disk.FieldID,
-			},
-		},
+	if err := du.check(); err != nil {
+		return n, err
 	}
+	_spec := sqlgraph.NewUpdateSpec(disk.Table, disk.Columns, sqlgraph.NewFieldSpec(disk.FieldID, field.TypeUUID))
 	if ps := du.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -161,18 +122,10 @@ func (du *DiskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 	}
 	if value, ok := du.mutation.Size(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: disk.FieldSize,
-		})
+		_spec.SetField(disk.FieldSize, field.TypeInt, value)
 	}
 	if value, ok := du.mutation.AddedSize(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: disk.FieldSize,
-		})
+		_spec.AddField(disk.FieldSize, field.TypeInt, value)
 	}
 	if du.mutation.HostCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -182,10 +135,7 @@ func (du *DiskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{disk.HostColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: host.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(host.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -198,10 +148,7 @@ func (du *DiskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{disk.HostColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: host.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(host.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -217,6 +164,7 @@ func (du *DiskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		return 0, err
 	}
+	du.mutation.done = true
 	return n, nil
 }
 
@@ -271,6 +219,12 @@ func (duo *DiskUpdateOne) ClearHost() *DiskUpdateOne {
 	return duo
 }
 
+// Where appends a list predicates to the DiskUpdate builder.
+func (duo *DiskUpdateOne) Where(ps ...predicate.Disk) *DiskUpdateOne {
+	duo.mutation.Where(ps...)
+	return duo
+}
+
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
 func (duo *DiskUpdateOne) Select(field string, fields ...string) *DiskUpdateOne {
@@ -280,46 +234,7 @@ func (duo *DiskUpdateOne) Select(field string, fields ...string) *DiskUpdateOne 
 
 // Save executes the query and returns the updated Disk entity.
 func (duo *DiskUpdateOne) Save(ctx context.Context) (*Disk, error) {
-	var (
-		err  error
-		node *Disk
-	)
-	if len(duo.hooks) == 0 {
-		if err = duo.check(); err != nil {
-			return nil, err
-		}
-		node, err = duo.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*DiskMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = duo.check(); err != nil {
-				return nil, err
-			}
-			duo.mutation = mutation
-			node, err = duo.sqlSave(ctx)
-			mutation.done = true
-			return node, err
-		})
-		for i := len(duo.hooks) - 1; i >= 0; i-- {
-			if duo.hooks[i] == nil {
-				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = duo.hooks[i](mut)
-		}
-		v, err := mut.Mutate(ctx, duo.mutation)
-		if err != nil {
-			return nil, err
-		}
-		nv, ok := v.(*Disk)
-		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from DiskMutation", v)
-		}
-		node = nv
-	}
-	return node, err
+	return withHooks(ctx, duo.sqlSave, duo.mutation, duo.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -355,16 +270,10 @@ func (duo *DiskUpdateOne) check() error {
 }
 
 func (duo *DiskUpdateOne) sqlSave(ctx context.Context) (_node *Disk, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   disk.Table,
-			Columns: disk.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: disk.FieldID,
-			},
-		},
+	if err := duo.check(); err != nil {
+		return _node, err
 	}
+	_spec := sqlgraph.NewUpdateSpec(disk.Table, disk.Columns, sqlgraph.NewFieldSpec(disk.FieldID, field.TypeUUID))
 	id, ok := duo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Disk.id" for update`)}
@@ -390,18 +299,10 @@ func (duo *DiskUpdateOne) sqlSave(ctx context.Context) (_node *Disk, err error) 
 		}
 	}
 	if value, ok := duo.mutation.Size(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: disk.FieldSize,
-		})
+		_spec.SetField(disk.FieldSize, field.TypeInt, value)
 	}
 	if value, ok := duo.mutation.AddedSize(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: disk.FieldSize,
-		})
+		_spec.AddField(disk.FieldSize, field.TypeInt, value)
 	}
 	if duo.mutation.HostCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -411,10 +312,7 @@ func (duo *DiskUpdateOne) sqlSave(ctx context.Context) (_node *Disk, err error) 
 			Columns: []string{disk.HostColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: host.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(host.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -427,10 +325,7 @@ func (duo *DiskUpdateOne) sqlSave(ctx context.Context) (_node *Disk, err error) 
 			Columns: []string{disk.HostColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: host.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(host.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -449,5 +344,6 @@ func (duo *DiskUpdateOne) sqlSave(ctx context.Context) (_node *Disk, err error) 
 		}
 		return nil, err
 	}
+	duo.mutation.done = true
 	return _node, nil
 }

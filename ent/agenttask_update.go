@@ -227,40 +227,7 @@ func (atu *AgentTaskUpdate) ClearValidation() *AgentTaskUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (atu *AgentTaskUpdate) Save(ctx context.Context) (int, error) {
-	var (
-		err      error
-		affected int
-	)
-	if len(atu.hooks) == 0 {
-		if err = atu.check(); err != nil {
-			return 0, err
-		}
-		affected, err = atu.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*AgentTaskMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = atu.check(); err != nil {
-				return 0, err
-			}
-			atu.mutation = mutation
-			affected, err = atu.sqlSave(ctx)
-			mutation.done = true
-			return affected, err
-		})
-		for i := len(atu.hooks) - 1; i >= 0; i-- {
-			if atu.hooks[i] == nil {
-				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = atu.hooks[i](mut)
-		}
-		if _, err := mut.Mutate(ctx, atu.mutation); err != nil {
-			return 0, err
-		}
-	}
-	return affected, err
+	return withHooks(ctx, atu.sqlSave, atu.mutation, atu.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -304,16 +271,10 @@ func (atu *AgentTaskUpdate) check() error {
 }
 
 func (atu *AgentTaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   agenttask.Table,
-			Columns: agenttask.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: agenttask.FieldID,
-			},
-		},
+	if err := atu.check(); err != nil {
+		return n, err
 	}
+	_spec := sqlgraph.NewUpdateSpec(agenttask.Table, agenttask.Columns, sqlgraph.NewFieldSpec(agenttask.FieldID, field.TypeUUID))
 	if ps := atu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -322,53 +283,25 @@ func (atu *AgentTaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 	}
 	if value, ok := atu.mutation.Command(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeEnum,
-			Value:  value,
-			Column: agenttask.FieldCommand,
-		})
+		_spec.SetField(agenttask.FieldCommand, field.TypeEnum, value)
 	}
 	if value, ok := atu.mutation.Args(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: agenttask.FieldArgs,
-		})
+		_spec.SetField(agenttask.FieldArgs, field.TypeString, value)
 	}
 	if value, ok := atu.mutation.Number(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: agenttask.FieldNumber,
-		})
+		_spec.SetField(agenttask.FieldNumber, field.TypeInt, value)
 	}
 	if value, ok := atu.mutation.AddedNumber(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: agenttask.FieldNumber,
-		})
+		_spec.AddField(agenttask.FieldNumber, field.TypeInt, value)
 	}
 	if value, ok := atu.mutation.Output(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: agenttask.FieldOutput,
-		})
+		_spec.SetField(agenttask.FieldOutput, field.TypeString, value)
 	}
 	if value, ok := atu.mutation.State(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeEnum,
-			Value:  value,
-			Column: agenttask.FieldState,
-		})
+		_spec.SetField(agenttask.FieldState, field.TypeEnum, value)
 	}
 	if value, ok := atu.mutation.ErrorMessage(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: agenttask.FieldErrorMessage,
-		})
+		_spec.SetField(agenttask.FieldErrorMessage, field.TypeString, value)
 	}
 	if atu.mutation.ProvisioningStepCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -378,10 +311,7 @@ func (atu *AgentTaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{agenttask.ProvisioningStepColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisioningstep.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisioningstep.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -394,10 +324,7 @@ func (atu *AgentTaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{agenttask.ProvisioningStepColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisioningstep.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisioningstep.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -413,10 +340,7 @@ func (atu *AgentTaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{agenttask.ProvisioningScheduledStepColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisioningscheduledstep.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisioningscheduledstep.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -429,10 +353,7 @@ func (atu *AgentTaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{agenttask.ProvisioningScheduledStepColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisioningscheduledstep.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisioningscheduledstep.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -448,10 +369,7 @@ func (atu *AgentTaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{agenttask.ProvisionedHostColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisionedhost.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisionedhost.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -464,10 +382,7 @@ func (atu *AgentTaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{agenttask.ProvisionedHostColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisionedhost.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisionedhost.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -483,10 +398,7 @@ func (atu *AgentTaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{agenttask.AdhocPlansColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: adhocplan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(adhocplan.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -499,10 +411,7 @@ func (atu *AgentTaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{agenttask.AdhocPlansColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: adhocplan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(adhocplan.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -518,10 +427,7 @@ func (atu *AgentTaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{agenttask.AdhocPlansColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: adhocplan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(adhocplan.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -537,10 +443,7 @@ func (atu *AgentTaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{agenttask.ValidationColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: validation.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(validation.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -553,10 +456,7 @@ func (atu *AgentTaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{agenttask.ValidationColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: validation.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(validation.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -572,6 +472,7 @@ func (atu *AgentTaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		return 0, err
 	}
+	atu.mutation.done = true
 	return n, nil
 }
 
@@ -775,6 +676,12 @@ func (atuo *AgentTaskUpdateOne) ClearValidation() *AgentTaskUpdateOne {
 	return atuo
 }
 
+// Where appends a list predicates to the AgentTaskUpdate builder.
+func (atuo *AgentTaskUpdateOne) Where(ps ...predicate.AgentTask) *AgentTaskUpdateOne {
+	atuo.mutation.Where(ps...)
+	return atuo
+}
+
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
 func (atuo *AgentTaskUpdateOne) Select(field string, fields ...string) *AgentTaskUpdateOne {
@@ -784,46 +691,7 @@ func (atuo *AgentTaskUpdateOne) Select(field string, fields ...string) *AgentTas
 
 // Save executes the query and returns the updated AgentTask entity.
 func (atuo *AgentTaskUpdateOne) Save(ctx context.Context) (*AgentTask, error) {
-	var (
-		err  error
-		node *AgentTask
-	)
-	if len(atuo.hooks) == 0 {
-		if err = atuo.check(); err != nil {
-			return nil, err
-		}
-		node, err = atuo.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*AgentTaskMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = atuo.check(); err != nil {
-				return nil, err
-			}
-			atuo.mutation = mutation
-			node, err = atuo.sqlSave(ctx)
-			mutation.done = true
-			return node, err
-		})
-		for i := len(atuo.hooks) - 1; i >= 0; i-- {
-			if atuo.hooks[i] == nil {
-				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = atuo.hooks[i](mut)
-		}
-		v, err := mut.Mutate(ctx, atuo.mutation)
-		if err != nil {
-			return nil, err
-		}
-		nv, ok := v.(*AgentTask)
-		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from AgentTaskMutation", v)
-		}
-		node = nv
-	}
-	return node, err
+	return withHooks(ctx, atuo.sqlSave, atuo.mutation, atuo.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -867,16 +735,10 @@ func (atuo *AgentTaskUpdateOne) check() error {
 }
 
 func (atuo *AgentTaskUpdateOne) sqlSave(ctx context.Context) (_node *AgentTask, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   agenttask.Table,
-			Columns: agenttask.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: agenttask.FieldID,
-			},
-		},
+	if err := atuo.check(); err != nil {
+		return _node, err
 	}
+	_spec := sqlgraph.NewUpdateSpec(agenttask.Table, agenttask.Columns, sqlgraph.NewFieldSpec(agenttask.FieldID, field.TypeUUID))
 	id, ok := atuo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "AgentTask.id" for update`)}
@@ -902,53 +764,25 @@ func (atuo *AgentTaskUpdateOne) sqlSave(ctx context.Context) (_node *AgentTask, 
 		}
 	}
 	if value, ok := atuo.mutation.Command(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeEnum,
-			Value:  value,
-			Column: agenttask.FieldCommand,
-		})
+		_spec.SetField(agenttask.FieldCommand, field.TypeEnum, value)
 	}
 	if value, ok := atuo.mutation.Args(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: agenttask.FieldArgs,
-		})
+		_spec.SetField(agenttask.FieldArgs, field.TypeString, value)
 	}
 	if value, ok := atuo.mutation.Number(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: agenttask.FieldNumber,
-		})
+		_spec.SetField(agenttask.FieldNumber, field.TypeInt, value)
 	}
 	if value, ok := atuo.mutation.AddedNumber(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: agenttask.FieldNumber,
-		})
+		_spec.AddField(agenttask.FieldNumber, field.TypeInt, value)
 	}
 	if value, ok := atuo.mutation.Output(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: agenttask.FieldOutput,
-		})
+		_spec.SetField(agenttask.FieldOutput, field.TypeString, value)
 	}
 	if value, ok := atuo.mutation.State(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeEnum,
-			Value:  value,
-			Column: agenttask.FieldState,
-		})
+		_spec.SetField(agenttask.FieldState, field.TypeEnum, value)
 	}
 	if value, ok := atuo.mutation.ErrorMessage(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: agenttask.FieldErrorMessage,
-		})
+		_spec.SetField(agenttask.FieldErrorMessage, field.TypeString, value)
 	}
 	if atuo.mutation.ProvisioningStepCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -958,10 +792,7 @@ func (atuo *AgentTaskUpdateOne) sqlSave(ctx context.Context) (_node *AgentTask, 
 			Columns: []string{agenttask.ProvisioningStepColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisioningstep.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisioningstep.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -974,10 +805,7 @@ func (atuo *AgentTaskUpdateOne) sqlSave(ctx context.Context) (_node *AgentTask, 
 			Columns: []string{agenttask.ProvisioningStepColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisioningstep.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisioningstep.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -993,10 +821,7 @@ func (atuo *AgentTaskUpdateOne) sqlSave(ctx context.Context) (_node *AgentTask, 
 			Columns: []string{agenttask.ProvisioningScheduledStepColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisioningscheduledstep.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisioningscheduledstep.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1009,10 +834,7 @@ func (atuo *AgentTaskUpdateOne) sqlSave(ctx context.Context) (_node *AgentTask, 
 			Columns: []string{agenttask.ProvisioningScheduledStepColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisioningscheduledstep.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisioningscheduledstep.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1028,10 +850,7 @@ func (atuo *AgentTaskUpdateOne) sqlSave(ctx context.Context) (_node *AgentTask, 
 			Columns: []string{agenttask.ProvisionedHostColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisionedhost.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisionedhost.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1044,10 +863,7 @@ func (atuo *AgentTaskUpdateOne) sqlSave(ctx context.Context) (_node *AgentTask, 
 			Columns: []string{agenttask.ProvisionedHostColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisionedhost.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisionedhost.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1063,10 +879,7 @@ func (atuo *AgentTaskUpdateOne) sqlSave(ctx context.Context) (_node *AgentTask, 
 			Columns: []string{agenttask.AdhocPlansColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: adhocplan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(adhocplan.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1079,10 +892,7 @@ func (atuo *AgentTaskUpdateOne) sqlSave(ctx context.Context) (_node *AgentTask, 
 			Columns: []string{agenttask.AdhocPlansColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: adhocplan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(adhocplan.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1098,10 +908,7 @@ func (atuo *AgentTaskUpdateOne) sqlSave(ctx context.Context) (_node *AgentTask, 
 			Columns: []string{agenttask.AdhocPlansColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: adhocplan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(adhocplan.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1117,10 +924,7 @@ func (atuo *AgentTaskUpdateOne) sqlSave(ctx context.Context) (_node *AgentTask, 
 			Columns: []string{agenttask.ValidationColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: validation.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(validation.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1133,10 +937,7 @@ func (atuo *AgentTaskUpdateOne) sqlSave(ctx context.Context) (_node *AgentTask, 
 			Columns: []string{agenttask.ValidationColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: validation.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(validation.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1155,5 +956,6 @@ func (atuo *AgentTaskUpdateOne) sqlSave(ctx context.Context) (_node *AgentTask, 
 		}
 		return nil, err
 	}
+	atuo.mutation.done = true
 	return _node, nil
 }

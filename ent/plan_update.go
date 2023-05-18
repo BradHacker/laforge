@@ -337,40 +337,7 @@ func (pu *PlanUpdate) RemovePlanDiffs(p ...*PlanDiff) *PlanUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (pu *PlanUpdate) Save(ctx context.Context) (int, error) {
-	var (
-		err      error
-		affected int
-	)
-	if len(pu.hooks) == 0 {
-		if err = pu.check(); err != nil {
-			return 0, err
-		}
-		affected, err = pu.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*PlanMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = pu.check(); err != nil {
-				return 0, err
-			}
-			pu.mutation = mutation
-			affected, err = pu.sqlSave(ctx)
-			mutation.done = true
-			return affected, err
-		})
-		for i := len(pu.hooks) - 1; i >= 0; i-- {
-			if pu.hooks[i] == nil {
-				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = pu.hooks[i](mut)
-		}
-		if _, err := mut.Mutate(ctx, pu.mutation); err != nil {
-			return 0, err
-		}
-	}
-	return affected, err
+	return withHooks(ctx, pu.sqlSave, pu.mutation, pu.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -409,16 +376,10 @@ func (pu *PlanUpdate) check() error {
 }
 
 func (pu *PlanUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   plan.Table,
-			Columns: plan.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: plan.FieldID,
-			},
-		},
+	if err := pu.check(); err != nil {
+		return n, err
 	}
+	_spec := sqlgraph.NewUpdateSpec(plan.Table, plan.Columns, sqlgraph.NewFieldSpec(plan.FieldID, field.TypeUUID))
 	if ps := pu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -427,25 +388,13 @@ func (pu *PlanUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 	}
 	if value, ok := pu.mutation.StepNumber(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: plan.FieldStepNumber,
-		})
+		_spec.SetField(plan.FieldStepNumber, field.TypeInt, value)
 	}
 	if value, ok := pu.mutation.AddedStepNumber(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: plan.FieldStepNumber,
-		})
+		_spec.AddField(plan.FieldStepNumber, field.TypeInt, value)
 	}
 	if value, ok := pu.mutation.GetType(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeEnum,
-			Value:  value,
-			Column: plan.FieldType,
-		})
+		_spec.SetField(plan.FieldType, field.TypeEnum, value)
 	}
 	if pu.mutation.PrevPlansCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -455,10 +404,7 @@ func (pu *PlanUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: plan.PrevPlansPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: plan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(plan.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -471,10 +417,7 @@ func (pu *PlanUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: plan.PrevPlansPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: plan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(plan.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -490,10 +433,7 @@ func (pu *PlanUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: plan.PrevPlansPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: plan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(plan.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -509,10 +449,7 @@ func (pu *PlanUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: plan.NextPlansPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: plan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(plan.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -525,10 +462,7 @@ func (pu *PlanUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: plan.NextPlansPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: plan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(plan.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -544,10 +478,7 @@ func (pu *PlanUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: plan.NextPlansPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: plan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(plan.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -563,10 +494,7 @@ func (pu *PlanUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{plan.BuildColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: build.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(build.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -579,10 +507,7 @@ func (pu *PlanUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{plan.BuildColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: build.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(build.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -598,10 +523,7 @@ func (pu *PlanUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{plan.TeamColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: team.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -614,10 +536,7 @@ func (pu *PlanUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{plan.TeamColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: team.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -633,10 +552,7 @@ func (pu *PlanUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{plan.ProvisionedNetworkColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisionednetwork.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisionednetwork.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -649,10 +565,7 @@ func (pu *PlanUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{plan.ProvisionedNetworkColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisionednetwork.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisionednetwork.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -668,10 +581,7 @@ func (pu *PlanUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{plan.ProvisionedHostColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisionedhost.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisionedhost.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -684,10 +594,7 @@ func (pu *PlanUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{plan.ProvisionedHostColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisionedhost.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisionedhost.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -703,10 +610,7 @@ func (pu *PlanUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{plan.ProvisioningStepColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisioningstep.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisioningstep.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -719,10 +623,7 @@ func (pu *PlanUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{plan.ProvisioningStepColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisioningstep.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisioningstep.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -738,10 +639,7 @@ func (pu *PlanUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{plan.ProvisioningScheduledStepColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisioningscheduledstep.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisioningscheduledstep.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -754,10 +652,7 @@ func (pu *PlanUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{plan.ProvisioningScheduledStepColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisioningscheduledstep.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisioningscheduledstep.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -773,10 +668,7 @@ func (pu *PlanUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{plan.StatusColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: status.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(status.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -789,10 +681,7 @@ func (pu *PlanUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{plan.StatusColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: status.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(status.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -808,10 +697,7 @@ func (pu *PlanUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{plan.PlanDiffsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: plandiff.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(plandiff.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -824,10 +710,7 @@ func (pu *PlanUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{plan.PlanDiffsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: plandiff.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(plandiff.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -843,10 +726,7 @@ func (pu *PlanUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{plan.PlanDiffsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: plandiff.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(plandiff.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -862,6 +742,7 @@ func (pu *PlanUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		return 0, err
 	}
+	pu.mutation.done = true
 	return n, nil
 }
 
@@ -1172,6 +1053,12 @@ func (puo *PlanUpdateOne) RemovePlanDiffs(p ...*PlanDiff) *PlanUpdateOne {
 	return puo.RemovePlanDiffIDs(ids...)
 }
 
+// Where appends a list predicates to the PlanUpdate builder.
+func (puo *PlanUpdateOne) Where(ps ...predicate.Plan) *PlanUpdateOne {
+	puo.mutation.Where(ps...)
+	return puo
+}
+
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
 func (puo *PlanUpdateOne) Select(field string, fields ...string) *PlanUpdateOne {
@@ -1181,46 +1068,7 @@ func (puo *PlanUpdateOne) Select(field string, fields ...string) *PlanUpdateOne 
 
 // Save executes the query and returns the updated Plan entity.
 func (puo *PlanUpdateOne) Save(ctx context.Context) (*Plan, error) {
-	var (
-		err  error
-		node *Plan
-	)
-	if len(puo.hooks) == 0 {
-		if err = puo.check(); err != nil {
-			return nil, err
-		}
-		node, err = puo.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*PlanMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = puo.check(); err != nil {
-				return nil, err
-			}
-			puo.mutation = mutation
-			node, err = puo.sqlSave(ctx)
-			mutation.done = true
-			return node, err
-		})
-		for i := len(puo.hooks) - 1; i >= 0; i-- {
-			if puo.hooks[i] == nil {
-				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = puo.hooks[i](mut)
-		}
-		v, err := mut.Mutate(ctx, puo.mutation)
-		if err != nil {
-			return nil, err
-		}
-		nv, ok := v.(*Plan)
-		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from PlanMutation", v)
-		}
-		node = nv
-	}
-	return node, err
+	return withHooks(ctx, puo.sqlSave, puo.mutation, puo.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -1259,16 +1107,10 @@ func (puo *PlanUpdateOne) check() error {
 }
 
 func (puo *PlanUpdateOne) sqlSave(ctx context.Context) (_node *Plan, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   plan.Table,
-			Columns: plan.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: plan.FieldID,
-			},
-		},
+	if err := puo.check(); err != nil {
+		return _node, err
 	}
+	_spec := sqlgraph.NewUpdateSpec(plan.Table, plan.Columns, sqlgraph.NewFieldSpec(plan.FieldID, field.TypeUUID))
 	id, ok := puo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Plan.id" for update`)}
@@ -1294,25 +1136,13 @@ func (puo *PlanUpdateOne) sqlSave(ctx context.Context) (_node *Plan, err error) 
 		}
 	}
 	if value, ok := puo.mutation.StepNumber(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: plan.FieldStepNumber,
-		})
+		_spec.SetField(plan.FieldStepNumber, field.TypeInt, value)
 	}
 	if value, ok := puo.mutation.AddedStepNumber(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: plan.FieldStepNumber,
-		})
+		_spec.AddField(plan.FieldStepNumber, field.TypeInt, value)
 	}
 	if value, ok := puo.mutation.GetType(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeEnum,
-			Value:  value,
-			Column: plan.FieldType,
-		})
+		_spec.SetField(plan.FieldType, field.TypeEnum, value)
 	}
 	if puo.mutation.PrevPlansCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1322,10 +1152,7 @@ func (puo *PlanUpdateOne) sqlSave(ctx context.Context) (_node *Plan, err error) 
 			Columns: plan.PrevPlansPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: plan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(plan.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1338,10 +1165,7 @@ func (puo *PlanUpdateOne) sqlSave(ctx context.Context) (_node *Plan, err error) 
 			Columns: plan.PrevPlansPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: plan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(plan.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1357,10 +1181,7 @@ func (puo *PlanUpdateOne) sqlSave(ctx context.Context) (_node *Plan, err error) 
 			Columns: plan.PrevPlansPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: plan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(plan.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1376,10 +1197,7 @@ func (puo *PlanUpdateOne) sqlSave(ctx context.Context) (_node *Plan, err error) 
 			Columns: plan.NextPlansPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: plan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(plan.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1392,10 +1210,7 @@ func (puo *PlanUpdateOne) sqlSave(ctx context.Context) (_node *Plan, err error) 
 			Columns: plan.NextPlansPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: plan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(plan.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1411,10 +1226,7 @@ func (puo *PlanUpdateOne) sqlSave(ctx context.Context) (_node *Plan, err error) 
 			Columns: plan.NextPlansPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: plan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(plan.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1430,10 +1242,7 @@ func (puo *PlanUpdateOne) sqlSave(ctx context.Context) (_node *Plan, err error) 
 			Columns: []string{plan.BuildColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: build.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(build.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1446,10 +1255,7 @@ func (puo *PlanUpdateOne) sqlSave(ctx context.Context) (_node *Plan, err error) 
 			Columns: []string{plan.BuildColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: build.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(build.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1465,10 +1271,7 @@ func (puo *PlanUpdateOne) sqlSave(ctx context.Context) (_node *Plan, err error) 
 			Columns: []string{plan.TeamColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: team.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1481,10 +1284,7 @@ func (puo *PlanUpdateOne) sqlSave(ctx context.Context) (_node *Plan, err error) 
 			Columns: []string{plan.TeamColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: team.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1500,10 +1300,7 @@ func (puo *PlanUpdateOne) sqlSave(ctx context.Context) (_node *Plan, err error) 
 			Columns: []string{plan.ProvisionedNetworkColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisionednetwork.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisionednetwork.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1516,10 +1313,7 @@ func (puo *PlanUpdateOne) sqlSave(ctx context.Context) (_node *Plan, err error) 
 			Columns: []string{plan.ProvisionedNetworkColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisionednetwork.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisionednetwork.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1535,10 +1329,7 @@ func (puo *PlanUpdateOne) sqlSave(ctx context.Context) (_node *Plan, err error) 
 			Columns: []string{plan.ProvisionedHostColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisionedhost.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisionedhost.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1551,10 +1342,7 @@ func (puo *PlanUpdateOne) sqlSave(ctx context.Context) (_node *Plan, err error) 
 			Columns: []string{plan.ProvisionedHostColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisionedhost.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisionedhost.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1570,10 +1358,7 @@ func (puo *PlanUpdateOne) sqlSave(ctx context.Context) (_node *Plan, err error) 
 			Columns: []string{plan.ProvisioningStepColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisioningstep.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisioningstep.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1586,10 +1371,7 @@ func (puo *PlanUpdateOne) sqlSave(ctx context.Context) (_node *Plan, err error) 
 			Columns: []string{plan.ProvisioningStepColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisioningstep.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisioningstep.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1605,10 +1387,7 @@ func (puo *PlanUpdateOne) sqlSave(ctx context.Context) (_node *Plan, err error) 
 			Columns: []string{plan.ProvisioningScheduledStepColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisioningscheduledstep.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisioningscheduledstep.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1621,10 +1400,7 @@ func (puo *PlanUpdateOne) sqlSave(ctx context.Context) (_node *Plan, err error) 
 			Columns: []string{plan.ProvisioningScheduledStepColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisioningscheduledstep.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisioningscheduledstep.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1640,10 +1416,7 @@ func (puo *PlanUpdateOne) sqlSave(ctx context.Context) (_node *Plan, err error) 
 			Columns: []string{plan.StatusColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: status.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(status.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1656,10 +1429,7 @@ func (puo *PlanUpdateOne) sqlSave(ctx context.Context) (_node *Plan, err error) 
 			Columns: []string{plan.StatusColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: status.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(status.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1675,10 +1445,7 @@ func (puo *PlanUpdateOne) sqlSave(ctx context.Context) (_node *Plan, err error) 
 			Columns: []string{plan.PlanDiffsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: plandiff.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(plandiff.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1691,10 +1458,7 @@ func (puo *PlanUpdateOne) sqlSave(ctx context.Context) (_node *Plan, err error) 
 			Columns: []string{plan.PlanDiffsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: plandiff.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(plandiff.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1710,10 +1474,7 @@ func (puo *PlanUpdateOne) sqlSave(ctx context.Context) (_node *Plan, err error) 
 			Columns: []string{plan.PlanDiffsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: plandiff.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(plandiff.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1732,5 +1493,6 @@ func (puo *PlanUpdateOne) sqlSave(ctx context.Context) (_node *Plan, err error) 
 		}
 		return nil, err
 	}
+	puo.mutation.done = true
 	return _node, nil
 }

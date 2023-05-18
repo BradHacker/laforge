@@ -1197,7 +1197,7 @@ func execStep(client *ent.Client, laforgeConfig *utils.ServerConfig, logger *log
 func createValidation(client *ent.Client, logger *logging.Logger, ctx context.Context, validationHCLID string, taskCount int, entProvisionedHost *ent.ProvisionedHost, entStep *ent.ProvisioningStep) error {
 	entValidation, err := client.Validation.Query().
 		Where(
-			validation.HclIDEQ(
+			validation.HCLID(
 				validationHCLID,
 			),
 		).

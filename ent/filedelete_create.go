@@ -21,9 +21,9 @@ type FileDeleteCreate struct {
 	hooks    []Hook
 }
 
-// SetHclID sets the "hcl_id" field.
-func (fdc *FileDeleteCreate) SetHclID(s string) *FileDeleteCreate {
-	fdc.mutation.SetHclID(s)
+// SetHCLID sets the "hcl_id" field.
+func (fdc *FileDeleteCreate) SetHCLID(s string) *FileDeleteCreate {
+	fdc.mutation.SetHCLID(s)
 	return fdc
 }
 
@@ -85,50 +85,8 @@ func (fdc *FileDeleteCreate) Mutation() *FileDeleteMutation {
 
 // Save creates the FileDelete in the database.
 func (fdc *FileDeleteCreate) Save(ctx context.Context) (*FileDelete, error) {
-	var (
-		err  error
-		node *FileDelete
-	)
 	fdc.defaults()
-	if len(fdc.hooks) == 0 {
-		if err = fdc.check(); err != nil {
-			return nil, err
-		}
-		node, err = fdc.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*FileDeleteMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = fdc.check(); err != nil {
-				return nil, err
-			}
-			fdc.mutation = mutation
-			if node, err = fdc.sqlSave(ctx); err != nil {
-				return nil, err
-			}
-			mutation.id = &node.ID
-			mutation.done = true
-			return node, err
-		})
-		for i := len(fdc.hooks) - 1; i >= 0; i-- {
-			if fdc.hooks[i] == nil {
-				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = fdc.hooks[i](mut)
-		}
-		v, err := mut.Mutate(ctx, fdc.mutation)
-		if err != nil {
-			return nil, err
-		}
-		nv, ok := v.(*FileDelete)
-		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from FileDeleteMutation", v)
-		}
-		node = nv
-	}
-	return node, err
+	return withHooks(ctx, fdc.sqlSave, fdc.mutation, fdc.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
@@ -163,7 +121,7 @@ func (fdc *FileDeleteCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (fdc *FileDeleteCreate) check() error {
-	if _, ok := fdc.mutation.HclID(); !ok {
+	if _, ok := fdc.mutation.HCLID(); !ok {
 		return &ValidationError{Name: "hcl_id", err: errors.New(`ent: missing required field "FileDelete.hcl_id"`)}
 	}
 	if _, ok := fdc.mutation.Path(); !ok {
@@ -179,6 +137,9 @@ func (fdc *FileDeleteCreate) check() error {
 }
 
 func (fdc *FileDeleteCreate) sqlSave(ctx context.Context) (*FileDelete, error) {
+	if err := fdc.check(); err != nil {
+		return nil, err
+	}
 	_node, _spec := fdc.createSpec()
 	if err := sqlgraph.CreateNode(ctx, fdc.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
@@ -193,54 +154,34 @@ func (fdc *FileDeleteCreate) sqlSave(ctx context.Context) (*FileDelete, error) {
 			return nil, err
 		}
 	}
+	fdc.mutation.id = &_node.ID
+	fdc.mutation.done = true
 	return _node, nil
 }
 
 func (fdc *FileDeleteCreate) createSpec() (*FileDelete, *sqlgraph.CreateSpec) {
 	var (
 		_node = &FileDelete{config: fdc.config}
-		_spec = &sqlgraph.CreateSpec{
-			Table: filedelete.Table,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: filedelete.FieldID,
-			},
-		}
+		_spec = sqlgraph.NewCreateSpec(filedelete.Table, sqlgraph.NewFieldSpec(filedelete.FieldID, field.TypeUUID))
 	)
 	if id, ok := fdc.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
-	if value, ok := fdc.mutation.HclID(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: filedelete.FieldHclID,
-		})
-		_node.HclID = value
+	if value, ok := fdc.mutation.HCLID(); ok {
+		_spec.SetField(filedelete.FieldHCLID, field.TypeString, value)
+		_node.HCLID = value
 	}
 	if value, ok := fdc.mutation.Path(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: filedelete.FieldPath,
-		})
+		_spec.SetField(filedelete.FieldPath, field.TypeString, value)
 		_node.Path = value
 	}
 	if value, ok := fdc.mutation.Tags(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: filedelete.FieldTags,
-		})
+		_spec.SetField(filedelete.FieldTags, field.TypeJSON, value)
 		_node.Tags = value
 	}
 	if value, ok := fdc.mutation.Validations(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: filedelete.FieldValidations,
-		})
+		_spec.SetField(filedelete.FieldValidations, field.TypeJSON, value)
 		_node.Validations = value
 	}
 	if nodes := fdc.mutation.EnvironmentIDs(); len(nodes) > 0 {
@@ -251,10 +192,7 @@ func (fdc *FileDeleteCreate) createSpec() (*FileDelete, *sqlgraph.CreateSpec) {
 			Columns: []string{filedelete.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -290,8 +228,8 @@ func (fdcb *FileDeleteCreateBulk) Save(ctx context.Context) ([]*FileDelete, erro
 					return nil, err
 				}
 				builder.mutation = mutation
-				nodes[i], specs[i] = builder.createSpec()
 				var err error
+				nodes[i], specs[i] = builder.createSpec()
 				if i < len(mutators)-1 {
 					_, err = mutators[i+1].Mutate(root, fdcb.builders[i+1].mutation)
 				} else {

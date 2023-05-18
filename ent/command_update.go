@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 	"github.com/gen0cide/laforge/ent/command"
 	"github.com/gen0cide/laforge/ent/environment"
@@ -30,9 +31,9 @@ func (cu *CommandUpdate) Where(ps ...predicate.Command) *CommandUpdate {
 	return cu
 }
 
-// SetHclID sets the "hcl_id" field.
-func (cu *CommandUpdate) SetHclID(s string) *CommandUpdate {
-	cu.mutation.SetHclID(s)
+// SetHCLID sets the "hcl_id" field.
+func (cu *CommandUpdate) SetHCLID(s string) *CommandUpdate {
+	cu.mutation.SetHCLID(s)
 	return cu
 }
 
@@ -57,6 +58,12 @@ func (cu *CommandUpdate) SetProgram(s string) *CommandUpdate {
 // SetArgs sets the "args" field.
 func (cu *CommandUpdate) SetArgs(s []string) *CommandUpdate {
 	cu.mutation.SetArgs(s)
+	return cu
+}
+
+// AppendArgs appends s to the "args" field.
+func (cu *CommandUpdate) AppendArgs(s []string) *CommandUpdate {
+	cu.mutation.AppendArgs(s)
 	return cu
 }
 
@@ -113,6 +120,12 @@ func (cu *CommandUpdate) SetTags(m map[string]string) *CommandUpdate {
 // SetValidations sets the "validations" field.
 func (cu *CommandUpdate) SetValidations(s []string) *CommandUpdate {
 	cu.mutation.SetValidations(s)
+	return cu
+}
+
+// AppendValidations appends s to the "validations" field.
+func (cu *CommandUpdate) AppendValidations(s []string) *CommandUpdate {
+	cu.mutation.AppendValidations(s)
 	return cu
 }
 
@@ -184,40 +197,7 @@ func (cu *CommandUpdate) ClearEnvironment() *CommandUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (cu *CommandUpdate) Save(ctx context.Context) (int, error) {
-	var (
-		err      error
-		affected int
-	)
-	if len(cu.hooks) == 0 {
-		if err = cu.check(); err != nil {
-			return 0, err
-		}
-		affected, err = cu.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*CommandMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = cu.check(); err != nil {
-				return 0, err
-			}
-			cu.mutation = mutation
-			affected, err = cu.sqlSave(ctx)
-			mutation.done = true
-			return affected, err
-		})
-		for i := len(cu.hooks) - 1; i >= 0; i-- {
-			if cu.hooks[i] == nil {
-				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = cu.hooks[i](mut)
-		}
-		if _, err := mut.Mutate(ctx, cu.mutation); err != nil {
-			return 0, err
-		}
-	}
-	return affected, err
+	return withHooks(ctx, cu.sqlSave, cu.mutation, cu.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -258,16 +238,10 @@ func (cu *CommandUpdate) check() error {
 }
 
 func (cu *CommandUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   command.Table,
-			Columns: command.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: command.FieldID,
-			},
-		},
+	if err := cu.check(); err != nil {
+		return n, err
 	}
+	_spec := sqlgraph.NewUpdateSpec(command.Table, command.Columns, sqlgraph.NewFieldSpec(command.FieldID, field.TypeUUID))
 	if ps := cu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -275,102 +249,56 @@ func (cu *CommandUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := cu.mutation.HclID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: command.FieldHclID,
-		})
+	if value, ok := cu.mutation.HCLID(); ok {
+		_spec.SetField(command.FieldHCLID, field.TypeString, value)
 	}
 	if value, ok := cu.mutation.Name(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: command.FieldName,
-		})
+		_spec.SetField(command.FieldName, field.TypeString, value)
 	}
 	if value, ok := cu.mutation.Description(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: command.FieldDescription,
-		})
+		_spec.SetField(command.FieldDescription, field.TypeString, value)
 	}
 	if value, ok := cu.mutation.Program(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: command.FieldProgram,
-		})
+		_spec.SetField(command.FieldProgram, field.TypeString, value)
 	}
 	if value, ok := cu.mutation.Args(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: command.FieldArgs,
+		_spec.SetField(command.FieldArgs, field.TypeJSON, value)
+	}
+	if value, ok := cu.mutation.AppendedArgs(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, command.FieldArgs, value)
 		})
 	}
 	if value, ok := cu.mutation.IgnoreErrors(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeBool,
-			Value:  value,
-			Column: command.FieldIgnoreErrors,
-		})
+		_spec.SetField(command.FieldIgnoreErrors, field.TypeBool, value)
 	}
 	if value, ok := cu.mutation.Disabled(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeBool,
-			Value:  value,
-			Column: command.FieldDisabled,
-		})
+		_spec.SetField(command.FieldDisabled, field.TypeBool, value)
 	}
 	if value, ok := cu.mutation.Cooldown(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: command.FieldCooldown,
-		})
+		_spec.SetField(command.FieldCooldown, field.TypeInt, value)
 	}
 	if value, ok := cu.mutation.AddedCooldown(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: command.FieldCooldown,
-		})
+		_spec.AddField(command.FieldCooldown, field.TypeInt, value)
 	}
 	if value, ok := cu.mutation.Timeout(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: command.FieldTimeout,
-		})
+		_spec.SetField(command.FieldTimeout, field.TypeInt, value)
 	}
 	if value, ok := cu.mutation.AddedTimeout(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: command.FieldTimeout,
-		})
+		_spec.AddField(command.FieldTimeout, field.TypeInt, value)
 	}
 	if value, ok := cu.mutation.Vars(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: command.FieldVars,
-		})
+		_spec.SetField(command.FieldVars, field.TypeJSON, value)
 	}
 	if value, ok := cu.mutation.Tags(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: command.FieldTags,
-		})
+		_spec.SetField(command.FieldTags, field.TypeJSON, value)
 	}
 	if value, ok := cu.mutation.Validations(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: command.FieldValidations,
+		_spec.SetField(command.FieldValidations, field.TypeJSON, value)
+	}
+	if value, ok := cu.mutation.AppendedValidations(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, command.FieldValidations, value)
 		})
 	}
 	if cu.mutation.UsersCleared() {
@@ -381,10 +309,7 @@ func (cu *CommandUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{command.UsersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -397,10 +322,7 @@ func (cu *CommandUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{command.UsersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -416,10 +338,7 @@ func (cu *CommandUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{command.UsersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -435,10 +354,7 @@ func (cu *CommandUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{command.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -451,10 +367,7 @@ func (cu *CommandUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{command.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -470,6 +383,7 @@ func (cu *CommandUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		return 0, err
 	}
+	cu.mutation.done = true
 	return n, nil
 }
 
@@ -481,9 +395,9 @@ type CommandUpdateOne struct {
 	mutation *CommandMutation
 }
 
-// SetHclID sets the "hcl_id" field.
-func (cuo *CommandUpdateOne) SetHclID(s string) *CommandUpdateOne {
-	cuo.mutation.SetHclID(s)
+// SetHCLID sets the "hcl_id" field.
+func (cuo *CommandUpdateOne) SetHCLID(s string) *CommandUpdateOne {
+	cuo.mutation.SetHCLID(s)
 	return cuo
 }
 
@@ -508,6 +422,12 @@ func (cuo *CommandUpdateOne) SetProgram(s string) *CommandUpdateOne {
 // SetArgs sets the "args" field.
 func (cuo *CommandUpdateOne) SetArgs(s []string) *CommandUpdateOne {
 	cuo.mutation.SetArgs(s)
+	return cuo
+}
+
+// AppendArgs appends s to the "args" field.
+func (cuo *CommandUpdateOne) AppendArgs(s []string) *CommandUpdateOne {
+	cuo.mutation.AppendArgs(s)
 	return cuo
 }
 
@@ -564,6 +484,12 @@ func (cuo *CommandUpdateOne) SetTags(m map[string]string) *CommandUpdateOne {
 // SetValidations sets the "validations" field.
 func (cuo *CommandUpdateOne) SetValidations(s []string) *CommandUpdateOne {
 	cuo.mutation.SetValidations(s)
+	return cuo
+}
+
+// AppendValidations appends s to the "validations" field.
+func (cuo *CommandUpdateOne) AppendValidations(s []string) *CommandUpdateOne {
+	cuo.mutation.AppendValidations(s)
 	return cuo
 }
 
@@ -633,6 +559,12 @@ func (cuo *CommandUpdateOne) ClearEnvironment() *CommandUpdateOne {
 	return cuo
 }
 
+// Where appends a list predicates to the CommandUpdate builder.
+func (cuo *CommandUpdateOne) Where(ps ...predicate.Command) *CommandUpdateOne {
+	cuo.mutation.Where(ps...)
+	return cuo
+}
+
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
 func (cuo *CommandUpdateOne) Select(field string, fields ...string) *CommandUpdateOne {
@@ -642,46 +574,7 @@ func (cuo *CommandUpdateOne) Select(field string, fields ...string) *CommandUpda
 
 // Save executes the query and returns the updated Command entity.
 func (cuo *CommandUpdateOne) Save(ctx context.Context) (*Command, error) {
-	var (
-		err  error
-		node *Command
-	)
-	if len(cuo.hooks) == 0 {
-		if err = cuo.check(); err != nil {
-			return nil, err
-		}
-		node, err = cuo.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*CommandMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = cuo.check(); err != nil {
-				return nil, err
-			}
-			cuo.mutation = mutation
-			node, err = cuo.sqlSave(ctx)
-			mutation.done = true
-			return node, err
-		})
-		for i := len(cuo.hooks) - 1; i >= 0; i-- {
-			if cuo.hooks[i] == nil {
-				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = cuo.hooks[i](mut)
-		}
-		v, err := mut.Mutate(ctx, cuo.mutation)
-		if err != nil {
-			return nil, err
-		}
-		nv, ok := v.(*Command)
-		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from CommandMutation", v)
-		}
-		node = nv
-	}
-	return node, err
+	return withHooks(ctx, cuo.sqlSave, cuo.mutation, cuo.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -722,16 +615,10 @@ func (cuo *CommandUpdateOne) check() error {
 }
 
 func (cuo *CommandUpdateOne) sqlSave(ctx context.Context) (_node *Command, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   command.Table,
-			Columns: command.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: command.FieldID,
-			},
-		},
+	if err := cuo.check(); err != nil {
+		return _node, err
 	}
+	_spec := sqlgraph.NewUpdateSpec(command.Table, command.Columns, sqlgraph.NewFieldSpec(command.FieldID, field.TypeUUID))
 	id, ok := cuo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Command.id" for update`)}
@@ -756,102 +643,56 @@ func (cuo *CommandUpdateOne) sqlSave(ctx context.Context) (_node *Command, err e
 			}
 		}
 	}
-	if value, ok := cuo.mutation.HclID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: command.FieldHclID,
-		})
+	if value, ok := cuo.mutation.HCLID(); ok {
+		_spec.SetField(command.FieldHCLID, field.TypeString, value)
 	}
 	if value, ok := cuo.mutation.Name(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: command.FieldName,
-		})
+		_spec.SetField(command.FieldName, field.TypeString, value)
 	}
 	if value, ok := cuo.mutation.Description(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: command.FieldDescription,
-		})
+		_spec.SetField(command.FieldDescription, field.TypeString, value)
 	}
 	if value, ok := cuo.mutation.Program(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: command.FieldProgram,
-		})
+		_spec.SetField(command.FieldProgram, field.TypeString, value)
 	}
 	if value, ok := cuo.mutation.Args(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: command.FieldArgs,
+		_spec.SetField(command.FieldArgs, field.TypeJSON, value)
+	}
+	if value, ok := cuo.mutation.AppendedArgs(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, command.FieldArgs, value)
 		})
 	}
 	if value, ok := cuo.mutation.IgnoreErrors(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeBool,
-			Value:  value,
-			Column: command.FieldIgnoreErrors,
-		})
+		_spec.SetField(command.FieldIgnoreErrors, field.TypeBool, value)
 	}
 	if value, ok := cuo.mutation.Disabled(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeBool,
-			Value:  value,
-			Column: command.FieldDisabled,
-		})
+		_spec.SetField(command.FieldDisabled, field.TypeBool, value)
 	}
 	if value, ok := cuo.mutation.Cooldown(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: command.FieldCooldown,
-		})
+		_spec.SetField(command.FieldCooldown, field.TypeInt, value)
 	}
 	if value, ok := cuo.mutation.AddedCooldown(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: command.FieldCooldown,
-		})
+		_spec.AddField(command.FieldCooldown, field.TypeInt, value)
 	}
 	if value, ok := cuo.mutation.Timeout(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: command.FieldTimeout,
-		})
+		_spec.SetField(command.FieldTimeout, field.TypeInt, value)
 	}
 	if value, ok := cuo.mutation.AddedTimeout(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: command.FieldTimeout,
-		})
+		_spec.AddField(command.FieldTimeout, field.TypeInt, value)
 	}
 	if value, ok := cuo.mutation.Vars(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: command.FieldVars,
-		})
+		_spec.SetField(command.FieldVars, field.TypeJSON, value)
 	}
 	if value, ok := cuo.mutation.Tags(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: command.FieldTags,
-		})
+		_spec.SetField(command.FieldTags, field.TypeJSON, value)
 	}
 	if value, ok := cuo.mutation.Validations(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: command.FieldValidations,
+		_spec.SetField(command.FieldValidations, field.TypeJSON, value)
+	}
+	if value, ok := cuo.mutation.AppendedValidations(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, command.FieldValidations, value)
 		})
 	}
 	if cuo.mutation.UsersCleared() {
@@ -862,10 +703,7 @@ func (cuo *CommandUpdateOne) sqlSave(ctx context.Context) (_node *Command, err e
 			Columns: []string{command.UsersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -878,10 +716,7 @@ func (cuo *CommandUpdateOne) sqlSave(ctx context.Context) (_node *Command, err e
 			Columns: []string{command.UsersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -897,10 +732,7 @@ func (cuo *CommandUpdateOne) sqlSave(ctx context.Context) (_node *Command, err e
 			Columns: []string{command.UsersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -916,10 +748,7 @@ func (cuo *CommandUpdateOne) sqlSave(ctx context.Context) (_node *Command, err e
 			Columns: []string{command.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -932,10 +761,7 @@ func (cuo *CommandUpdateOne) sqlSave(ctx context.Context) (_node *Command, err e
 			Columns: []string{command.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -954,5 +780,6 @@ func (cuo *CommandUpdateOne) sqlSave(ctx context.Context) (_node *Command, err e
 		}
 		return nil, err
 	}
+	cuo.mutation.done = true
 	return _node, nil
 }

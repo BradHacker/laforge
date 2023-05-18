@@ -143,7 +143,7 @@ type ComplexityRoot struct {
 		AbsPath      func(childComplexity int) int
 		Description  func(childComplexity int) int
 		Environment  func(childComplexity int) int
-		HclID        func(childComplexity int) int
+		HCLID        func(childComplexity int) int
 		ID           func(childComplexity int) int
 		Inventory    func(childComplexity int) int
 		Method       func(childComplexity int) int
@@ -215,7 +215,7 @@ type ComplexityRoot struct {
 		Description  func(childComplexity int) int
 		Disabled     func(childComplexity int) int
 		Environment  func(childComplexity int) int
-		HclID        func(childComplexity int) int
+		HCLID        func(childComplexity int) int
 		ID           func(childComplexity int) int
 		IgnoreErrors func(childComplexity int) int
 		Name         func(childComplexity int) int
@@ -231,7 +231,7 @@ type ComplexityRoot struct {
 		Config       func(childComplexity int) int
 		DNS          func(childComplexity int) int
 		Environment  func(childComplexity int) int
-		HclID        func(childComplexity int) int
+		HCLID        func(childComplexity int) int
 		ID           func(childComplexity int) int
 		RootPassword func(childComplexity int) int
 		StartTime    func(childComplexity int) int
@@ -244,7 +244,7 @@ type ComplexityRoot struct {
 		Config       func(childComplexity int) int
 		DNSServers   func(childComplexity int) int
 		Environments func(childComplexity int) int
-		HclID        func(childComplexity int) int
+		HCLID        func(childComplexity int) int
 		ID           func(childComplexity int) int
 		NtpServers   func(childComplexity int) int
 		RootDomain   func(childComplexity int) int
@@ -254,7 +254,7 @@ type ComplexityRoot struct {
 	DNSRecord struct {
 		Disabled    func(childComplexity int) int
 		Environment func(childComplexity int) int
-		HclID       func(childComplexity int) int
+		HCLID       func(childComplexity int) int
 		ID          func(childComplexity int) int
 		Name        func(childComplexity int) int
 		Tags        func(childComplexity int) int
@@ -292,7 +292,7 @@ type ComplexityRoot struct {
 		FileDownloads    func(childComplexity int) int
 		FileExtracts     func(childComplexity int) int
 		Findings         func(childComplexity int) int
-		HclID            func(childComplexity int) int
+		HCLID            func(childComplexity int) int
 		HostDependencies func(childComplexity int) int
 		Hosts            func(childComplexity int) int
 		ID               func(childComplexity int) int
@@ -312,7 +312,7 @@ type ComplexityRoot struct {
 
 	FileDelete struct {
 		Environment func(childComplexity int) int
-		HclID       func(childComplexity int) int
+		HCLID       func(childComplexity int) int
 		ID          func(childComplexity int) int
 		Path        func(childComplexity int) int
 		Tags        func(childComplexity int) int
@@ -323,7 +323,7 @@ type ComplexityRoot struct {
 		Destination func(childComplexity int) int
 		Disabled    func(childComplexity int) int
 		Environment func(childComplexity int) int
-		HclID       func(childComplexity int) int
+		HCLID       func(childComplexity int) int
 		ID          func(childComplexity int) int
 		Md5         func(childComplexity int) int
 		Perms       func(childComplexity int) int
@@ -336,7 +336,7 @@ type ComplexityRoot struct {
 	FileExtract struct {
 		Destination func(childComplexity int) int
 		Environment func(childComplexity int) int
-		HclID       func(childComplexity int) int
+		HCLID       func(childComplexity int) int
 		ID          func(childComplexity int) int
 		Source      func(childComplexity int) int
 		Tags        func(childComplexity int) int
@@ -379,7 +379,7 @@ type ComplexityRoot struct {
 		Environment                func(childComplexity int) int
 		ExposedTCPPorts            func(childComplexity int) int
 		ExposedUDPPorts            func(childComplexity int) int
-		HclID                      func(childComplexity int) int
+		HCLID                      func(childComplexity int) int
 		Hostname                   func(childComplexity int) int
 		ID                         func(childComplexity int) int
 		IncludedNetworks           func(childComplexity int) int
@@ -411,7 +411,7 @@ type ComplexityRoot struct {
 		Email       func(childComplexity int) int
 		Environment func(childComplexity int) int
 		FirstName   func(childComplexity int) int
-		HclID       func(childComplexity int) int
+		HCLID       func(childComplexity int) int
 		ID          func(childComplexity int) int
 		LastName    func(childComplexity int) int
 		Password    func(childComplexity int) int
@@ -461,7 +461,7 @@ type ComplexityRoot struct {
 	Network struct {
 		Cidr             func(childComplexity int) int
 		Environment      func(childComplexity int) int
-		HclID            func(childComplexity int) int
+		HCLID            func(childComplexity int) int
 		HostDependencies func(childComplexity int) int
 		ID               func(childComplexity int) int
 		IncludedNetworks func(childComplexity int) int
@@ -633,7 +633,7 @@ type ComplexityRoot struct {
 	ScheduledStep struct {
 		Description func(childComplexity int) int
 		Environment func(childComplexity int) int
-		HclID       func(childComplexity int) int
+		HCLID       func(childComplexity int) int
 		ID          func(childComplexity int) int
 		Name        func(childComplexity int) int
 		RunAt       func(childComplexity int) int
@@ -650,7 +650,7 @@ type ComplexityRoot struct {
 		Disabled     func(childComplexity int) int
 		Environment  func(childComplexity int) int
 		Findings     func(childComplexity int) int
-		HclID        func(childComplexity int) int
+		HCLID        func(childComplexity int) int
 		ID           func(childComplexity int) int
 		IgnoreErrors func(childComplexity int) int
 		Language     func(childComplexity int) int
@@ -750,7 +750,7 @@ type ComplexityRoot struct {
 	User struct {
 		Email        func(childComplexity int) int
 		Environments func(childComplexity int) int
-		HclID        func(childComplexity int) int
+		HCLID        func(childComplexity int) int
 		ID           func(childComplexity int) int
 		Name         func(childComplexity int) int
 		Tag          func(childComplexity int) int
@@ -1333,11 +1333,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.Ansible.Environment(childComplexity), true
 
 	case "Ansible.hclId":
-		if e.complexity.Ansible.HclID == nil {
+		if e.complexity.Ansible.HCLID == nil {
 			break
 		}
 
-		return e.complexity.Ansible.HclID(childComplexity), true
+		return e.complexity.Ansible.HCLID(childComplexity), true
 
 	case "Ansible.id":
 		if e.complexity.Ansible.ID == nil {
@@ -1711,11 +1711,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.Command.Environment(childComplexity), true
 
 	case "Command.hclId":
-		if e.complexity.Command.HclID == nil {
+		if e.complexity.Command.HCLID == nil {
 			break
 		}
 
-		return e.complexity.Command.HclID(childComplexity), true
+		return e.complexity.Command.HCLID(childComplexity), true
 
 	case "Command.id":
 		if e.complexity.Command.ID == nil {
@@ -1802,11 +1802,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.Competition.Environment(childComplexity), true
 
 	case "Competition.hclId":
-		if e.complexity.Competition.HclID == nil {
+		if e.complexity.Competition.HCLID == nil {
 			break
 		}
 
-		return e.complexity.Competition.HclID(childComplexity), true
+		return e.complexity.Competition.HCLID(childComplexity), true
 
 	case "Competition.id":
 		if e.complexity.Competition.ID == nil {
@@ -1872,11 +1872,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.DNS.Environments(childComplexity), true
 
 	case "DNS.hclId":
-		if e.complexity.DNS.HclID == nil {
+		if e.complexity.DNS.HCLID == nil {
 			break
 		}
 
-		return e.complexity.DNS.HclID(childComplexity), true
+		return e.complexity.DNS.HCLID(childComplexity), true
 
 	case "DNS.id":
 		if e.complexity.DNS.ID == nil {
@@ -1921,11 +1921,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.DNSRecord.Environment(childComplexity), true
 
 	case "DNSRecord.hclId":
-		if e.complexity.DNSRecord.HclID == nil {
+		if e.complexity.DNSRecord.HCLID == nil {
 			break
 		}
 
-		return e.complexity.DNSRecord.HclID(childComplexity), true
+		return e.complexity.DNSRecord.HCLID(childComplexity), true
 
 	case "DNSRecord.id":
 		if e.complexity.DNSRecord.ID == nil {
@@ -2124,11 +2124,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.Environment.Findings(childComplexity), true
 
 	case "Environment.hclId":
-		if e.complexity.Environment.HclID == nil {
+		if e.complexity.Environment.HCLID == nil {
 			break
 		}
 
-		return e.complexity.Environment.HclID(childComplexity), true
+		return e.complexity.Environment.HCLID(childComplexity), true
 
 	case "Environment.HostDependencies":
 		if e.complexity.Environment.HostDependencies == nil {
@@ -2243,11 +2243,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.FileDelete.Environment(childComplexity), true
 
 	case "FileDelete.hclId":
-		if e.complexity.FileDelete.HclID == nil {
+		if e.complexity.FileDelete.HCLID == nil {
 			break
 		}
 
-		return e.complexity.FileDelete.HclID(childComplexity), true
+		return e.complexity.FileDelete.HCLID(childComplexity), true
 
 	case "FileDelete.id":
 		if e.complexity.FileDelete.ID == nil {
@@ -2299,11 +2299,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.FileDownload.Environment(childComplexity), true
 
 	case "FileDownload.hclId":
-		if e.complexity.FileDownload.HclID == nil {
+		if e.complexity.FileDownload.HCLID == nil {
 			break
 		}
 
-		return e.complexity.FileDownload.HclID(childComplexity), true
+		return e.complexity.FileDownload.HCLID(childComplexity), true
 
 	case "FileDownload.id":
 		if e.complexity.FileDownload.ID == nil {
@@ -2369,11 +2369,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.FileExtract.Environment(childComplexity), true
 
 	case "FileExtract.hclId":
-		if e.complexity.FileExtract.HclID == nil {
+		if e.complexity.FileExtract.HCLID == nil {
 			break
 		}
 
-		return e.complexity.FileExtract.HclID(childComplexity), true
+		return e.complexity.FileExtract.HCLID(childComplexity), true
 
 	case "FileExtract.id":
 		if e.complexity.FileExtract.ID == nil {
@@ -2586,11 +2586,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.Host.ExposedUDPPorts(childComplexity), true
 
 	case "Host.hclId":
-		if e.complexity.Host.HclID == nil {
+		if e.complexity.Host.HCLID == nil {
 			break
 		}
 
-		return e.complexity.Host.HclID(childComplexity), true
+		return e.complexity.Host.HCLID(childComplexity), true
 
 	case "Host.hostname":
 		if e.complexity.Host.Hostname == nil {
@@ -2768,11 +2768,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.Identity.FirstName(childComplexity), true
 
 	case "Identity.hclid":
-		if e.complexity.Identity.HclID == nil {
+		if e.complexity.Identity.HCLID == nil {
 			break
 		}
 
-		return e.complexity.Identity.HclID(childComplexity), true
+		return e.complexity.Identity.HCLID(childComplexity), true
 
 	case "Identity.id":
 		if e.complexity.Identity.ID == nil {
@@ -3134,11 +3134,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.Network.Environment(childComplexity), true
 
 	case "Network.hclId":
-		if e.complexity.Network.HclID == nil {
+		if e.complexity.Network.HCLID == nil {
 			break
 		}
 
-		return e.complexity.Network.HclID(childComplexity), true
+		return e.complexity.Network.HCLID(childComplexity), true
 
 	case "Network.HostDependencies":
 		if e.complexity.Network.HostDependencies == nil {
@@ -4202,11 +4202,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.ScheduledStep.Environment(childComplexity), true
 
 	case "ScheduledStep.hclId":
-		if e.complexity.ScheduledStep.HclID == nil {
+		if e.complexity.ScheduledStep.HCLID == nil {
 			break
 		}
 
-		return e.complexity.ScheduledStep.HclID(childComplexity), true
+		return e.complexity.ScheduledStep.HCLID(childComplexity), true
 
 	case "ScheduledStep.id":
 		if e.complexity.ScheduledStep.ID == nil {
@@ -4300,11 +4300,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.Script.Findings(childComplexity), true
 
 	case "Script.hclId":
-		if e.complexity.Script.HclID == nil {
+		if e.complexity.Script.HCLID == nil {
 			break
 		}
 
-		return e.complexity.Script.HclID(childComplexity), true
+		return e.complexity.Script.HCLID(childComplexity), true
 
 	case "Script.id":
 		if e.complexity.Script.ID == nil {
@@ -4816,11 +4816,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.User.Environments(childComplexity), true
 
 	case "User.hclId":
-		if e.complexity.User.HclID == nil {
+		if e.complexity.User.HCLID == nil {
 			break
 		}
 
-		return e.complexity.User.HclID(childComplexity), true
+		return e.complexity.User.HCLID(childComplexity), true
 
 	case "User.id":
 		if e.complexity.User.ID == nil {
@@ -8955,7 +8955,7 @@ func (ec *executionContext) _Ansible_hclId(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.HclID, nil
+		return obj.HCLID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11736,7 +11736,7 @@ func (ec *executionContext) _Command_hclId(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.HclID, nil
+		return obj.HCLID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12440,7 +12440,7 @@ func (ec *executionContext) _Competition_hclId(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.HclID, nil
+		return obj.HCLID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13000,7 +13000,7 @@ func (ec *executionContext) _DNS_hclId(ctx context.Context, field graphql.Collec
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.HclID, nil
+		return obj.HCLID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13487,7 +13487,7 @@ func (ec *executionContext) _DNSRecord_hclId(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.HclID, nil
+		return obj.HCLID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -14269,7 +14269,7 @@ func (ec *executionContext) _Environment_hclId(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.HclID, nil
+		return obj.HCLID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16149,7 +16149,7 @@ func (ec *executionContext) _FileDelete_hclId(ctx context.Context, field graphql
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.HclID, nil
+		return obj.HCLID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16441,7 +16441,7 @@ func (ec *executionContext) _FileDownload_hclId(ctx context.Context, field graph
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.HclID, nil
+		return obj.HCLID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -17041,7 +17041,7 @@ func (ec *executionContext) _FileExtract_hclId(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.HclID, nil
+		return obj.HCLID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18507,7 +18507,7 @@ func (ec *executionContext) _Host_hclId(ctx context.Context, field graphql.Colle
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.HclID, nil
+		return obj.HCLID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -20050,7 +20050,7 @@ func (ec *executionContext) _Identity_hclid(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.HclID, nil
+		return obj.HCLID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -23175,7 +23175,7 @@ func (ec *executionContext) _Network_hclId(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.HclID, nil
+		return obj.HCLID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -32481,7 +32481,7 @@ func (ec *executionContext) _ScheduledStep_hclId(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.HclID, nil
+		return obj.HCLID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -32934,7 +32934,7 @@ func (ec *executionContext) _Script_hclId(ctx context.Context, field graphql.Col
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.HclID, nil
+		return obj.HCLID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -37485,7 +37485,7 @@ func (ec *executionContext) _User_hclId(ctx context.Context, field graphql.Colle
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.HclID, nil
+		return obj.HCLID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)

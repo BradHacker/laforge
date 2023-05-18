@@ -7,6 +7,8 @@ import (
 	"io"
 	"strconv"
 
+	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
 )
 
@@ -15,8 +17,8 @@ const (
 	Label = "validation"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldHclID holds the string denoting the hcl_id field in the database.
-	FieldHclID = "hcl_id"
+	// FieldHCLID holds the string denoting the hcl_id field in the database.
+	FieldHCLID = "hcl_id"
 	// FieldValidationType holds the string denoting the validation_type field in the database.
 	FieldValidationType = "validation_type"
 	// FieldHash holds the string denoting the hash field in the database.
@@ -76,7 +78,7 @@ const (
 // Columns holds all SQL columns for validation fields.
 var Columns = []string{
 	FieldID,
-	FieldHclID,
+	FieldHCLID,
 	FieldValidationType,
 	FieldHash,
 	FieldRegex,
@@ -191,37 +193,165 @@ func ServiceStatusValidator(ss ServiceStatus) error {
 	}
 }
 
+// OrderOption defines the ordering options for the Validation queries.
+type OrderOption func(*sql.Selector)
+
+// ByID orders the results by the id field.
+func ByID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByHCLID orders the results by the hcl_id field.
+func ByHCLID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldHCLID, opts...).ToFunc()
+}
+
+// ByValidationType orders the results by the validation_type field.
+func ByValidationType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldValidationType, opts...).ToFunc()
+}
+
+// ByHash orders the results by the hash field.
+func ByHash(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldHash, opts...).ToFunc()
+}
+
+// ByRegex orders the results by the regex field.
+func ByRegex(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRegex, opts...).ToFunc()
+}
+
+// ByIP orders the results by the ip field.
+func ByIP(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIP, opts...).ToFunc()
+}
+
+// ByURL orders the results by the url field.
+func ByURL(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldURL, opts...).ToFunc()
+}
+
+// ByPort orders the results by the port field.
+func ByPort(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPort, opts...).ToFunc()
+}
+
+// ByHostname orders the results by the hostname field.
+func ByHostname(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldHostname, opts...).ToFunc()
+}
+
+// ByPackageName orders the results by the package_name field.
+func ByPackageName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPackageName, opts...).ToFunc()
+}
+
+// ByUsername orders the results by the username field.
+func ByUsername(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUsername, opts...).ToFunc()
+}
+
+// ByGroupName orders the results by the group_name field.
+func ByGroupName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldGroupName, opts...).ToFunc()
+}
+
+// ByFilePath orders the results by the file_path field.
+func ByFilePath(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldFilePath, opts...).ToFunc()
+}
+
+// BySearchString orders the results by the search_string field.
+func BySearchString(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSearchString, opts...).ToFunc()
+}
+
+// ByServiceName orders the results by the service_name field.
+func ByServiceName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServiceName, opts...).ToFunc()
+}
+
+// ByFilePermission orders the results by the file_permission field.
+func ByFilePermission(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldFilePermission, opts...).ToFunc()
+}
+
+// ByServiceStatus orders the results by the service_status field.
+func ByServiceStatus(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServiceStatus, opts...).ToFunc()
+}
+
+// ByProcessName orders the results by the process_name field.
+func ByProcessName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldProcessName, opts...).ToFunc()
+}
+
+// ByUsersCount orders the results by Users count.
+func ByUsersCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newUsersStep(), opts...)
+	}
+}
+
+// ByUsers orders the results by Users terms.
+func ByUsers(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newUsersStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByEnvironmentField orders the results by Environment field.
+func ByEnvironmentField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newEnvironmentStep(), sql.OrderByField(field, opts...))
+	}
+}
+func newUsersStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(UsersInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, UsersTable, UsersColumn),
+	)
+}
+func newEnvironmentStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(EnvironmentInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, EnvironmentTable, EnvironmentColumn),
+	)
+}
+
 // MarshalGQL implements graphql.Marshaler interface.
-func (vt ValidationType) MarshalGQL(w io.Writer) {
-	io.WriteString(w, strconv.Quote(vt.String()))
+func (e ValidationType) MarshalGQL(w io.Writer) {
+	io.WriteString(w, strconv.Quote(e.String()))
 }
 
 // UnmarshalGQL implements graphql.Unmarshaler interface.
-func (vt *ValidationType) UnmarshalGQL(val interface{}) error {
+func (e *ValidationType) UnmarshalGQL(val interface{}) error {
 	str, ok := val.(string)
 	if !ok {
 		return fmt.Errorf("enum %T must be a string", val)
 	}
-	*vt = ValidationType(str)
-	if err := ValidationTypeValidator(*vt); err != nil {
+	*e = ValidationType(str)
+	if err := ValidationTypeValidator(*e); err != nil {
 		return fmt.Errorf("%s is not a valid ValidationType", str)
 	}
 	return nil
 }
 
 // MarshalGQL implements graphql.Marshaler interface.
-func (ss ServiceStatus) MarshalGQL(w io.Writer) {
-	io.WriteString(w, strconv.Quote(ss.String()))
+func (e ServiceStatus) MarshalGQL(w io.Writer) {
+	io.WriteString(w, strconv.Quote(e.String()))
 }
 
 // UnmarshalGQL implements graphql.Unmarshaler interface.
-func (ss *ServiceStatus) UnmarshalGQL(val interface{}) error {
+func (e *ServiceStatus) UnmarshalGQL(val interface{}) error {
 	str, ok := val.(string)
 	if !ok {
 		return fmt.Errorf("enum %T must be a string", val)
 	}
-	*ss = ServiceStatus(str)
-	if err := ServiceStatusValidator(*ss); err != nil {
+	*e = ServiceStatus(str)
+	if err := ServiceStatusValidator(*e); err != nil {
 		return fmt.Errorf("%s is not a valid ServiceStatus", str)
 	}
 	return nil
