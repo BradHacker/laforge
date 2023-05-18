@@ -33,14 +33,16 @@ func (DNSRecord) Fields() []ent.Field {
 			StructTag(`hcl:"disabled,optional"`),
 		field.JSON("tags", map[string]string{}).
 			StructTag(`hcl:"tags,optional"`),
+		field.Strings("validations").
+			StructTag(`hcl:"validations,optional"`),
 	}
 }
 
 // Edges of the DNSRecord.
 func (DNSRecord) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("DNSRecordToEnvironment", Environment.Type).
-			Ref("EnvironmentToDNSRecord").
+		edge.From("Environment", Environment.Type).
+			Ref("DNSRecords").
 			Unique(),
 	}
 }

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -27,7 +28,7 @@ func RebootSystem() {
 
 	r1, _, _ := exitwin.Call(0x02, 0)
 	if r1 != 1 {
-		ExecuteCommand("cmd", "/C", "shutdown", "/r", "/f")
+		SystemExecuteCommand("cmd", "/C", "shutdown", "/r", "/f")
 	}
 
 	time.Sleep(1 * time.Hour) // sleep forever bc we need to restart
@@ -121,24 +122,56 @@ func SystemExecuteCommand(command string, args ...string) (string, error) {
 	arguments = append(arguments, args...)
 	cmd := exec.Command("powershell.exe", arguments...)
 	out, err := cmd.CombinedOutput()
+
 	return string(out), err
-	// retryCount := 5
-	// for i := 0; i < retryCount; i++ {
-	// 	// Get the data
-	// 	cmd := exec.Command("powershell.exe", arguments...)
-	// 	out, err := cmd.CombinedOutput()
-	// 	if err == nil {
-	// 		output = string(out)
-	// 		break
-	// 	}
-	// 	time.Sleep(1 * time.Minute)
-	// }
-	// if err != nil {
-	// 	return output, err
-	// }
-	// return output, nil
 }
 
 func GetSystemDependencies() []string {
 	return []string{}
+}
+
+// Validation Functions
+
+func HostProcessRunning(process_name string) (bool, error) {
+	cmd := exec.Command("tasklist", "/NH", "/FO", "CSV", "/FI", "IMAGENAME eq "+process_name)
+	output, err := cmd.Output()
+	if err != nil {
+		return false, fmt.Errorf("failure detecting if process \"%s\" is running; encountered error: \"%s\"", process_name, err)
+	}
+
+	outputStr := strings.TrimSpace(string(output))
+	if outputStr == "" || strings.Contains(outputStr, "No tasks are running") {
+		return false, fmt.Errorf("failure process \"%s\" is not running", process_name)
+	}
+
+	return true, nil
+}
+
+func HostServiceState(service_name string, service_status string) (bool, error) {
+	return false, fmt.Errorf("failure: this validation is not available for Windows")
+}
+
+func LinuxAPTInstalled(package_name string) (bool, error) {
+	return false, fmt.Errorf("failure: this validation is not available for Windows")
+}
+
+func LinuxYumInstalled(package_name string) (bool, error) {
+	return false, fmt.Errorf("failure: this validation is not available for Windows")
+}
+
+func HostPortOpen(port int) (bool, error) {
+	cmd := exec.Command("netstat", "-na")
+	output, err := cmd.Output()
+	if err != nil {
+		return false, fmt.Errorf("failure to list open ports; encountered error: \"%s\"", err)
+	}
+
+	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+	for _, line := range lines {
+		if strings.Contains(line, "TCP") && strings.Contains(line, fmt.Sprintf("127.0.0.1:%d", port)) && strings.Contains(line, "LISTENING") {
+			return true, nil
+		}
+	}
+
+	return false, fmt.Errorf("failure to detect port \"%d\" being open", port)
 }

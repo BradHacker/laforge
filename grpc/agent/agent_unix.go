@@ -6,6 +6,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/md5"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"os/exec"
 	"os/user"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -20,6 +22,10 @@ import (
 	"github.com/apenella/go-ansible/pkg/options"
 	"github.com/apenella/go-ansible/pkg/playbook"
 )
+
+func MD5Sum(content string) string {
+	return fmt.Sprintf("%x", md5.Sum([]byte(content)))
+}
 
 // RebootSystem Reboots Host Operating System
 func RebootSystem() {
@@ -33,7 +39,7 @@ func RebootSystem() {
 func CreateSystemUser(username string, password string) error {
 	_, err := user.Lookup(username)
 	if err != nil {
-		ExecuteCommand("useradd", username)
+		// ExecuteCommand("useradd", username)
 		ChangeSystemUserPassword(username, password)
 	}
 	return nil
@@ -44,7 +50,7 @@ func ChangeSystemUserPassword(username string, password string) error {
 	cmd := exec.Command("passwd", username)
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
-		logger.Error(err)
+		// logger.Error(err)
 	}
 	defer stdin.Close()
 
@@ -53,7 +59,7 @@ func ChangeSystemUserPassword(username string, password string) error {
 	io.WriteString(stdin, passnew)
 
 	if err = cmd.Start(); err != nil {
-		logger.Errorf("An error occured: ", err)
+		// logger.Errorf("An error occured: ", err)
 	}
 
 	cmd.Wait()
@@ -63,7 +69,7 @@ func ChangeSystemUserPassword(username string, password string) error {
 
 // AddSystemUserGroup Change user password.
 func AddSystemUserGroup(groupname string, username string) error {
-	ExecuteCommand("usermod", "-a", "-G", groupname, username)
+	// ExecuteCommand("usermod", "-a", "-G", groupname, username)
 	return nil
 }
 
@@ -118,45 +124,6 @@ func SystemExecuteCommand(command string, args ...string) (string, error) {
 	cmd := exec.Command(command, args...)
 	out, err := cmd.CombinedOutput()
 	return string(out), err
-	// retryCount := 5
-	// for i := 0; i < retryCount; i++ {
-	// 	// Get the data
-	// 	cmd := exec.Command(command, args...)
-	// 	stdout, err := cmd.StdoutPipe()
-	// 	if err != nil {
-	// 		fmt.Printf("error piping stdout: %v", err)
-	// 		continue
-	// 	}
-	// 	stderr, err := cmd.StderrPipe()
-	// 	if err != nil {
-	// 		fmt.Printf("error piping stderr: %v", err)
-	// 		continue
-	// 	}
-	// 	err = cmd.Run()
-	// 	// out, err := cmd.CombinedOutput()
-	// 	if err == nil {
-	// 		// output = string(out)
-	// 		combinedOutput := io.MultiReader(stdout, stderr)
-	// 		var buff []byte
-	// 		_, err = combinedOutput.Read(buff)
-	// 		if err != nil {
-	// 			fmt.Printf("error reading combined output: %v", err)
-	// 			continue
-	// 		}
-	// 		output = string(buff)
-	// 		break
-	// 	}
-	// 	time.Sleep(1 * time.Minute)
-	// }
-	// if err != nil {
-	// 	return output, err
-	// }
-	// _, err = cmd.Output()
-	// if err != nil {
-	// 	return err
-	// }
-	// return string(output)
-	// return output, nil
 }
 
 // SystemExecuteAnsible Runs Ansible Playbook
@@ -191,4 +158,92 @@ func GetSystemDependencies() []string {
 	return []string{
 		"Requires=network.target",
 		"After=network-online.target"}
+}
+
+// Validation functions
+
+func HostProcessRunning(process_name string) (bool, error) {
+	cmd := exec.Command("pgrep", "-f", process_name)
+	output, err := cmd.Output()
+
+	if err != nil {
+		return false, fmt.Errorf("failure detecting if process \"%s\" is running; encountered error: \"%s\"", process_name, err)
+	}
+
+	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+	if len(lines) > 0 {
+		return true, nil
+	}
+
+	return false, fmt.Errorf("failure process \"%s\" is not running", process_name)
+}
+
+func HostServiceState(service_name string, service_status string) (bool, error) {
+	cmd := exec.Command("systemctl", "check", service_name) // ASSUMPTION: the computer uses systemd
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return false, err
+	}
+	if string(bytes.TrimSpace(out)) == service_status {
+		return true, nil
+	}
+	return false, fmt.Errorf("service status expected \"%s\" but got \"%s\"", service_status, string(bytes.TrimSpace(out)))
+}
+
+func LinuxAPTInstalled(package_name string) (bool, error) {
+	cmd := exec.Command("apt", "policy", package_name)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Println(err)
+		if exitError, ok := err.(*exec.ExitError); ok {
+			// The command returned a non-zero status, which might mean the package is not installed.
+			if exitError.ExitCode() == 1 {
+				return false, fmt.Errorf("APT package \"%s\" is not installed; encountered an error: \"%s\"", package_name, err)
+			}
+		}
+		return false, err
+	}
+
+	// Check if the package status contains "Unable to locate package".
+	if strings.Contains(string(output), "Unable to locate package") {
+		return false, fmt.Errorf("APT package \"%s\" is not installed", package_name)
+	}
+
+	return true, nil
+}
+
+func LinuxYumInstalled(package_name string) (bool, error) {
+	cmd := exec.Command("yum", "list", "installed", package_name)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		if exitError, ok := err.(*exec.ExitError); ok {
+			// The command returned a non-zero status, which might mean the package is not installed.
+			if exitError.ExitCode() == 1 {
+				return false, fmt.Errorf("yum package \"%s\" is not installed; encounter an error: %s", package_name, err)
+			}
+		}
+		return false, err
+	}
+
+	// Check if the package is listed in the output.
+	if strings.Contains(string(output), package_name) {
+		return true, nil
+	} else {
+		return false, fmt.Errorf("yum package \"%s\" is not installed", package_name)
+	}
+}
+
+func HostPortOpen(port int) (bool, error) {
+	cmd := exec.Command("lsof", "-i", fmt.Sprintf(":%d", port))
+	output, err := cmd.Output()
+	if err != nil {
+		return false, fmt.Errorf("failure to list open ports; encountered error: \"%s\"", err)
+	}
+
+	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+	if len(lines) > 1 {
+		return true, nil
+	}
+
+	return false, fmt.Errorf("failure to detect port \"%d\" being open", port)
 }

@@ -1,6 +1,11 @@
 {
-  "debug": false,
-  "builders": {},
+  "debug": true,
+  "builders": {
+    "range_openstack": {
+      "builder": "openstack",
+      "config": "./configs/range_openstack.json"
+    }
+  },
   "database": {
     "postgres_uri": "postgresql://laforger:laforge@db/laforge",
     "admin_user": "laforger",
@@ -13,14 +18,14 @@
   },
   "ui": {
     "https_enabled": false,
-    "allowed_origins": ["http://localhost", "http://localhost:4200"]
+    "allowed_origins": ["http://129.21.21.113", "http://localhost:4200"]
   },
   "agent": {
-    "grpc_server_uri": "localhost:50051",
-    "api_download_url": "http://localhost/api/download/"
+    "grpc_server_uri": "129.21.21.113:50051",
+    "api_download_url": "http://129.21.21.113/api/download/"
   },
   "graphql": {
-    "hostname": "localhost",
+    "hostname": "129.21.21.113",
     "redis_server_uri": "redis:6379",
     "redis_password": ""
   }

@@ -2,15 +2,24 @@ package main
 
 //go:generate fileb0x assets.toml
 import (
+	"bufio"
 	"context"
 	"crypto/md5"
+	"crypto/sha256"
 	"crypto/x509"
 	"encoding/hex"
 	"errors"
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"net"
+	"net/http"
 	"os"
+	"os/exec"
+	"os/user"
+	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -280,6 +289,95 @@ func RequestTask(c pb.LaforgeClient) {
 			url := taskArgs[0]
 			taskerr := ReplayPcap(url) // - pending implementation
 			RequestTaskStatusRequest("", taskerr, r.Id, c)
+		case pb.TaskReply_VALIDATOR: // new agent command type processing
+			taskArgs := strings.Split(r.GetArgs(), "💔")
+			validatorName := taskArgs[0]
+			switch validatorName {
+			case "linux-apt-installed": // checked
+				package_name := taskArgs[1]
+				installed, err := LinuxAPTInstalled(package_name)
+				RequestTaskStatusRequest(strconv.FormatBool(installed), err, r.Id, c)
+			case "net-tcp-open": // checked
+				ip := taskArgs[1]
+				port, err := strconv.Atoi(taskArgs[2])
+				if err != nil {
+					RequestTaskStatusRequest(strconv.FormatBool(false), err, r.Id, c)
+				}
+				open, err := NetTCPOpen(ip, port)
+				RequestTaskStatusRequest(strconv.FormatBool(open), err, r.Id, c)
+			case "net-udp-open": // checked
+				ip := taskArgs[1]
+				port, err := strconv.Atoi(taskArgs[2])
+				if err != nil {
+					RequestTaskStatusRequest(strconv.FormatBool(false), err, r.Id, c)
+				}
+				open, err := NetUDPOpen(ip, port)
+				RequestTaskStatusRequest(strconv.FormatBool(open), err, r.Id, c)
+			case "net-http-content-regex": // checked
+				url := taskArgs[1]
+				regex := taskArgs[2]
+				matched, err := NetHttpContentRegex(url, regex)
+				RequestTaskStatusRequest(strconv.FormatBool(matched), err, r.Id, c)
+			case "file-exists": // checked
+				filepath := taskArgs[1]
+				exists, err := FileExists(filepath)
+				RequestTaskStatusRequest(strconv.FormatBool(exists), err, r.Id, c)
+			case "file-hash": // checked
+				filepath := taskArgs[1]
+				hash := taskArgs[2]
+				matched, err := FileHash(filepath, hash)
+				RequestTaskStatusRequest(strconv.FormatBool(matched), err, r.Id, c)
+			case "file-content-regex": // checked
+				filepath := taskArgs[1]
+				regex := taskArgs[2]
+				matched, err := FileContentRegex(filepath, regex)
+				RequestTaskStatusRequest(strconv.FormatBool(matched), err, r.Id, c)
+			case "dir-exists": // checked
+				dirpath := taskArgs[1]
+				exists, err := DirectoryExists(dirpath)
+				RequestTaskStatusRequest(strconv.FormatBool(exists), err, r.Id, c)
+			case "user-exists": // checked
+				username := taskArgs[1]
+				exists, err := UserExists(username)
+				RequestTaskStatusRequest(strconv.FormatBool(exists), err, r.Id, c)
+			case "user-group-membership": // checked
+				username := taskArgs[1]
+				groupname := taskArgs[2]
+				ismember, err := UserGroupMember(username, groupname)
+				RequestTaskStatusRequest(strconv.FormatBool(ismember), err, r.Id, c)
+			case "host-port-open": // checked
+				port, err := strconv.Atoi(taskArgs[1])
+				if err != nil {
+					RequestTaskStatusRequest("false", err, r.Id, c)
+				}
+				open, err := HostPortOpen(port)
+				RequestTaskStatusRequest(strconv.FormatBool(open), err, r.Id, c)
+			case "host-process-running": // checked
+				processname := taskArgs[1]
+				running, err := HostProcessRunning(processname)
+				RequestTaskStatusRequest(strconv.FormatBool(running), err, r.Id, c)
+			case "host-service-state": // checked
+				servicename := taskArgs[1]
+				servicestatus := taskArgs[2]
+				status, err := HostServiceState(servicename, servicestatus)
+				RequestTaskStatusRequest(strconv.FormatBool(status), err, r.Id, c)
+			case "net-icmp": // checked
+				ip := taskArgs[1]
+				replied, err := NetICMP(ip)
+				RequestTaskStatusRequest(strconv.FormatBool(replied), err, r.Id, c)
+			case "file-content-string": // checked
+				filepath := taskArgs[1]
+				searchstring := taskArgs[2]
+				exists, err := FileContentString(filepath, searchstring)
+				RequestTaskStatusRequest(strconv.FormatBool(exists), err, r.Id, c)
+			case "file-permission": // checked
+				filepath := taskArgs[1]
+				file_permissions := taskArgs[2]
+				matched, err := FilePermission(filepath, file_permissions)
+				RequestTaskStatusRequest(strconv.FormatBool(matched), err, r.Id, c)
+			default:
+				logger.Warningf("Could not run unhandled validation: %v", validatorName)
+			}
 		default:
 			logger.Infof("Response Message: %v", r)
 			RequestTaskStatusRequest("", nil, r.Id, c)
@@ -510,5 +608,226 @@ func main() {
 	err = s.Run()
 	if err != nil {
 		logger.Error(err)
+	}
+}
+
+// Validation functions
+
+func NetHttpContentRegex(url string, pattern string) (bool, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return false, fmt.Errorf("filaure to request url: \"%s\"; encountered error: \"%s\"", url, err)
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return false, fmt.Errorf("filaure to parse request body: \"%s\"; encountered error: \"%s\"", url, err)
+	}
+
+	matched, err := regexp.MatchString(pattern, string(body))
+	if err != nil {
+		return false, fmt.Errorf("failure to parse pattern: \"%s\"; encountered error: \"%s\"", pattern, err)
+	}
+
+	if matched {
+		return true, nil
+	} else {
+		return false, fmt.Errorf("no pattern match found of \"%s\" on \"%s\"", pattern, url)
+	}
+}
+
+func FileExists(file_location string) (bool, error) {
+	stat_info, read_err := os.Stat(file_location)
+	if read_err != nil {
+		return false, read_err
+	}
+	return !stat_info.IsDir(), nil
+}
+
+func FileHash(file_location string, expected_hash string) (bool, error) {
+	content, err := ioutil.ReadFile(file_location)
+	if err != nil {
+		return false, fmt.Errorf("failure to open file: \"%s\"; encountered error: %s", file_location, err)
+	}
+
+	hash := sha256.New()
+	_, err = hash.Write(content)
+	if err != nil {
+		return false, fmt.Errorf("failure to compute hash; encountered error: %s", err)
+	}
+
+	calculated_hash := hex.EncodeToString(hash.Sum(nil))
+
+	if calculated_hash == expected_hash {
+		return true, nil
+	} else {
+		return false, fmt.Errorf("hash of \"%s\" does not match; calculated: \"%s\", expected: \"%s\"", file_location, calculated_hash, expected_hash)
+	}
+}
+
+func FileContentRegex(file_location string, pattern string) (bool, error) {
+	content, err := ioutil.ReadFile(file_location)
+	if err != nil {
+		return false, fmt.Errorf("failure to read file \"%s\"; encountered error %s", file_location, err)
+	}
+
+	matched, err := regexp.MatchString(pattern, string(content))
+	if err != nil {
+		return false, fmt.Errorf("failure to parse pattern: \"%s\"; encountered error: \"%s\"", pattern, err)
+	}
+
+	if matched {
+		return true, nil
+	} else {
+		return false, fmt.Errorf("no pattern match found of \"%s\" in \"%s\"", pattern, file_location)
+	}
+}
+
+func DirectoryExists(path string) (bool, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, fmt.Errorf("directory \"%s\" does not exist; encountered error: \"%s\"", path, err)
+		}
+		return false, fmt.Errorf("failure to check if directory \"%s\" exists: encountered error: \"%s\"", path, err)
+	}
+	if info.IsDir() {
+		return true, nil
+	} else {
+		return false, fmt.Errorf("failure to detect directory: \"%s\" is not a directory", path)
+	}
+}
+
+func UserExists(user_name string) (bool, error) {
+	_, err := user.Lookup(user_name)
+	if err != nil {
+		return false, fmt.Errorf("failure to detect user \"%s\"; encountered error \"%s\"", user_name, err)
+	}
+	return true, nil
+}
+
+func UserGroupMember(user_name string, group_name string) (bool, error) {
+	usr, err := user.Lookup(user_name)
+	if err != nil {
+		return false, fmt.Errorf("failure to detect user \"%s\"; encountered error: \"%s\"", user_name, err)
+	}
+
+	group, err := user.LookupGroup(group_name)
+	if err != nil {
+		return false, fmt.Errorf("failure to detect group \"%s\"; encountered error: \"%s\"", group_name, err)
+	}
+
+	groups, err := usr.GroupIds()
+	if err != nil {
+		return false, fmt.Errorf("failure to retrieve groups of user \"%s\"; encountered error: \"%s\"", user_name, err)
+	}
+
+	for _, groupID := range groups {
+		if groupID == group.Gid {
+			return true, nil
+		}
+	}
+
+	return false, fmt.Errorf("failure to detect user \"%s\" in group \"%s\"", user_name, group_name)
+}
+
+func NetTCPOpen(ip string, port int) (bool, error) {
+	conn, err := net.DialTimeout("tcp", net.JoinHostPort(ip, strconv.Itoa(port)), 10*time.Second)
+	if err != nil {
+		return false, fmt.Errorf("failure to establish TCP connection to \"%s:%d\"; encountered error: \"%s\" ", ip, port, err)
+	}
+	defer conn.Close()
+
+	if conn != nil {
+		return true, nil
+	} else {
+		return false, fmt.Errorf("failure to establish TCP connection to \"%s:%d\"", ip, port)
+	}
+}
+
+func NetUDPOpen(ip string, port int) (bool, error) {
+	timeout := time.Second * 10
+
+	addr := net.JoinHostPort(ip, strconv.Itoa(port))
+
+	conn, err := net.DialTimeout("udp", addr, timeout)
+	if err != nil {
+		return false, err
+	}
+	defer conn.Close()
+
+	// Since UDP is connectionless, we need to send a simple message to check if the port is open.
+	_, err = conn.Write([]byte("ping"))
+	if err != nil {
+		return false, fmt.Errorf("failure to establish UDP connection to \"%s:%d\"; encountered error: \"%s\" ", ip, port, err)
+	}
+
+	// Set a read deadline to avoid waiting indefinitely for a response.
+	conn.SetReadDeadline(time.Now().Add(timeout))
+
+	buf := make([]byte, 1024)
+	_, err = conn.Read(buf)
+	if err != nil {
+		if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+			// Read timed out, so the port is likely open but not responding.
+			return true, nil
+		}
+		return false, fmt.Errorf("failure to establish UDP connection to \"%s:%d\"; encountered error: \"%s\" ", ip, port, err)
+	}
+
+	// If we received a response, the port is open.
+	return true, nil
+}
+
+func NetICMP(ip string) (bool, error) {
+	var cmd *exec.Cmd
+
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("ping", "-n", "1", ip)
+	} else {
+		cmd = exec.Command("ping", "-c", "1", ip)
+	}
+
+	err := cmd.Run()
+	if err != nil {
+		return false, fmt.Errorf("failure to ping ip \"%s\"; encountered error: \"%s\"", ip, err)
+	}
+
+	return true, nil
+}
+
+func FileContentString(filepath string, text string) (bool, error) {
+	file, err := os.Open(filepath)
+	if err != nil {
+		return false, fmt.Errorf("failure to open file \"%s\"; encountered error: \"%s\"", filepath, err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		if strings.Contains(scanner.Text(), text) {
+			return true, nil
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return false, fmt.Errorf("failure to read file \"%s\"; encountered error: \"%s\"", filepath, err)
+	}
+
+	return false, fmt.Errorf("failure to detect string \"%s\" in file \"%s\"", text, filepath)
+}
+
+func FilePermission(filepath string, permissions string) (bool, error) {
+	fileInfo, err := os.Stat(filepath)
+	if err != nil {
+		return false, fmt.Errorf("failure retrieving file \"%s\"; encountered error: \"%s\"", filepath, err)
+	}
+
+	filePermissions := fileInfo.Mode().Perm().String()
+	if filePermissions == permissions {
+		return true, nil
+	} else {
+		return false, fmt.Errorf("failuring matching permission of file \"%s\"; expected: \"%s\", detected: \"%s\"", filepath, permissions, filePermissions)
 	}
 }

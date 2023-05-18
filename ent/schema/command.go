@@ -39,16 +39,18 @@ func (Command) Fields() []ent.Field {
 			StructTag(`hcl:"vars,attr"`),
 		field.JSON("tags", map[string]string{}).
 			StructTag(`hcl:"tags,optional"`),
+		field.Strings("validations").
+			StructTag(`hcl:"validations,optional"`),
 	}
 }
 
 // Edges of the Command.
 func (Command) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("CommandToUser", User.Type).
+		edge.To("Users", User.Type).
 			StructTag(`hcl:"maintainer,block"`),
-		edge.From("CommandToEnvironment", Environment.Type).
-			Ref("EnvironmentToCommand").
+		edge.From("Environment", Environment.Type).
+			Ref("Commands").
 			Unique(),
 	}
 }

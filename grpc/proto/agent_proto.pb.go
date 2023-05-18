@@ -36,6 +36,7 @@ const (
 	TaskReply_VALIDATE       TaskReply_Command = 9
 	TaskReply_CHANGEPERMS    TaskReply_Command = 10
 	TaskReply_APPENDFILE     TaskReply_Command = 11
+	TaskReply_VALIDATOR      TaskReply_Command = 12 // validation task
 	TaskReply_ANSIBLE        TaskReply_Command = 13
 )
 
@@ -54,6 +55,7 @@ var (
 		9:  "VALIDATE",
 		10: "CHANGEPERMS",
 		11: "APPENDFILE",
+		12: "VALIDATOR",
 		13: "ANSIBLE",
 	}
 	TaskReply_Command_value = map[string]int32{
@@ -69,6 +71,7 @@ var (
 		"VALIDATE":       9,
 		"CHANGEPERMS":    10,
 		"APPENDFILE":     11,
+		"VALIDATOR":      12,
 		"ANSIBLE":        13,
 	}
 )

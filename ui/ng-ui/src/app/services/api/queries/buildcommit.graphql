@@ -10,69 +10,253 @@ query GetBuildCommit($buildCommitUUID: String!) {
     revision
     state
     type
-    BuildCommitToBuild {
+    Build {
       id
       revision
-      BuildToRepoCommit {
+      RepoCommit {
         id
         hash
         author
-        RepoCommitToRepository {
+        Repository {
           id
-          repo_url
+          repoUrl
         }
       }
-      buildToEnvironment {
+      Environment {
         id
         name
       }
-      buildToTeam {
+      Teams {
         id
-        TeamToPlan {
+        Plan {
           id
-          PlanToStatus {
+          Status {
             id
             state
           }
         }
-        team_number
-        TeamToProvisionedNetwork {
+        teamNumber
+        ProvisionedNetworks {
           id
-          ProvisionedNetworkToPlan {
+          Plan {
             id
-            PlanToStatus {
+            Status {
               id
               state
             }
           }
           name
           cidr
-          ProvisionedNetworkToNetwork {
+          Network {
             id
-            vdi_visible
+            vdiVisible
           }
-          ProvisionedNetworkToProvisionedHost {
+          ProvisionedHosts {
             id
-            ProvisionedHostToPlan {
+            Plan {
               id
-              PlanToStatus {
+              Status {
                 id
                 state
               }
             }
-            subnet_ip
-            ProvisionedHostToHost {
+            subnetIp
+            Host {
               id
               hostname
             }
-            ProvisionedHostToProvisioningStep {
+            ProvisioningSteps {
               id
-              step_number
-              ProvisioningStepToPlan {
+              type
+              stepNumber
+              Script {
                 id
-                PlanToStatus {
+                name
+                language
+                description
+                source
+                sourceType
+                disabled
+                args
+                vars {
+                  key
+                  value
+                }
+                tags {
+                  key
+                  value
+                }
+              }
+              Command {
+                id
+                name
+                description
+                program
+                args
+                disabled
+                vars {
+                  key
+                  value
+                }
+                tags {
+                  key
+                  value
+                }
+              }
+              DNSRecord {
+                id
+                name
+                values
+                type
+                zone
+                disabled
+                vars {
+                  key
+                  value
+                }
+                tags {
+                  key
+                  value
+                }
+              }
+              FileDownload {
+                id
+                source
+                sourceType
+                destination
+                disabled
+                tags {
+                  key
+                  value
+                }
+              }
+              FileDelete {
+                id
+                path
+                tags {
+                  key
+                  value
+                }
+              }
+              FileExtract {
+                id
+                source
+                destination
+                type
+                tags {
+                  key
+                  value
+                }
+              }
+              Status {
+                id
+              }
+              Plan {
+                id
+                Status {
                   id
-                  state
+                }
+              }
+            }
+            ProvisioningScheduledSteps {
+              id
+              type
+              runTime
+              ScheduledStep {
+                id
+                name
+                description
+                step
+                type
+                schedule
+                runAt
+              }
+              Script {
+                id
+                name
+                language
+                description
+                source
+                sourceType
+                disabled
+                args
+                vars {
+                  key
+                  value
+                }
+                tags {
+                  key
+                  value
+                }
+              }
+              Command {
+                id
+                name
+                description
+                program
+                args
+                disabled
+                vars {
+                  key
+                  value
+                }
+                tags {
+                  key
+                  value
+                }
+              }
+              DNSRecord {
+                id
+                name
+                values
+                type
+                zone
+                disabled
+                vars {
+                  key
+                  value
+                }
+                tags {
+                  key
+                  value
+                }
+              }
+              FileDownload {
+                id
+                source
+                sourceType
+                destination
+                disabled
+                tags {
+                  key
+                  value
+                }
+              }
+              FileDelete {
+                id
+                path
+                tags {
+                  key
+                  value
+                }
+              }
+              FileExtract {
+                id
+                source
+                destination
+                type
+                tags {
+                  key
+                  value
+                }
+              }
+              Status {
+                id
+              }
+              Plan {
+                id
+                Status {
+                  id
                 }
               }
             }
@@ -80,10 +264,10 @@ query GetBuildCommit($buildCommitUUID: String!) {
         }
       }
     }
-    BuildCommitToPlanDiffs {
+    PlanDiffs {
       id
-      new_state
-      PlanDiffToPlan {
+      newState
+      Plan {
         id
       }
     }
