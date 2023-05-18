@@ -70,6 +70,8 @@ type Tx struct {
 	ProvisioningScheduledStep *ProvisioningScheduledStepClient
 	// ProvisioningStep is the client for interacting with the ProvisioningStep builders.
 	ProvisioningStep *ProvisioningStepClient
+	// ReplayPcap is the client for interacting with the ReplayPcap builders.
+	ReplayPcap *ReplayPcapClient
 	// RepoCommit is the client for interacting with the RepoCommit builders.
 	RepoCommit *RepoCommitClient
 	// Repository is the client for interacting with the Repository builders.
@@ -256,6 +258,7 @@ func (tx *Tx) init() {
 	tx.ProvisionedNetwork = NewProvisionedNetworkClient(tx.config)
 	tx.ProvisioningScheduledStep = NewProvisioningScheduledStepClient(tx.config)
 	tx.ProvisioningStep = NewProvisioningStepClient(tx.config)
+	tx.ReplayPcap = NewReplayPcapClient(tx.config)
 	tx.RepoCommit = NewRepoCommitClient(tx.config)
 	tx.Repository = NewRepositoryClient(tx.config)
 	tx.ScheduledStep = NewScheduledStepClient(tx.config)

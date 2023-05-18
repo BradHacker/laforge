@@ -28,6 +28,7 @@ import (
 	"github.com/gen0cide/laforge/ent/includednetwork"
 	"github.com/gen0cide/laforge/ent/network"
 	"github.com/gen0cide/laforge/ent/predicate"
+	"github.com/gen0cide/laforge/ent/replaypcap"
 	"github.com/gen0cide/laforge/ent/repository"
 	"github.com/gen0cide/laforge/ent/scheduledstep"
 	"github.com/gen0cide/laforge/ent/script"
@@ -67,6 +68,7 @@ type EnvironmentQuery struct {
 	withRepositories     *RepositoryQuery
 	withServerTasks      *ServerTaskQuery
 	withValidations      *ValidationQuery
+	withReplayPcaps      *ReplayPcapQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -565,6 +567,28 @@ func (eq *EnvironmentQuery) QueryValidations() *ValidationQuery {
 	return query
 }
 
+// QueryReplayPcaps chains the current query on the "ReplayPcaps" edge.
+func (eq *EnvironmentQuery) QueryReplayPcaps() *ReplayPcapQuery {
+	query := &ReplayPcapQuery{config: eq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := eq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := eq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(environment.Table, environment.FieldID, selector),
+			sqlgraph.To(replaypcap.Table, replaypcap.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, environment.ReplayPcapsTable, environment.ReplayPcapsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(eq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first Environment entity from the query.
 // Returns a *NotFoundError when no Environment was found.
 func (eq *EnvironmentQuery) First(ctx context.Context) (*Environment, error) {
@@ -767,6 +791,7 @@ func (eq *EnvironmentQuery) Clone() *EnvironmentQuery {
 		withRepositories:     eq.withRepositories.Clone(),
 		withServerTasks:      eq.withServerTasks.Clone(),
 		withValidations:      eq.withValidations.Clone(),
+		withReplayPcaps:      eq.withReplayPcaps.Clone(),
 		// clone intermediate query.
 		sql:    eq.sql.Clone(),
 		path:   eq.path,
@@ -1005,6 +1030,17 @@ func (eq *EnvironmentQuery) WithValidations(opts ...func(*ValidationQuery)) *Env
 	return eq
 }
 
+// WithReplayPcaps tells the query-builder to eager-load the nodes that are connected to
+// the "ReplayPcaps" edge. The optional arguments are used to configure the query builder of the edge.
+func (eq *EnvironmentQuery) WithReplayPcaps(opts ...func(*ReplayPcapQuery)) *EnvironmentQuery {
+	query := &ReplayPcapQuery{config: eq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	eq.withReplayPcaps = query
+	return eq
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -1073,7 +1109,7 @@ func (eq *EnvironmentQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 	var (
 		nodes       = []*Environment{}
 		_spec       = eq.querySpec()
-		loadedTypes = [21]bool{
+		loadedTypes = [22]bool{
 			eq.withUsers != nil,
 			eq.withHosts != nil,
 			eq.withCompetitions != nil,
@@ -1095,6 +1131,7 @@ func (eq *EnvironmentQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 			eq.withRepositories != nil,
 			eq.withServerTasks != nil,
 			eq.withValidations != nil,
+			eq.withReplayPcaps != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
@@ -1263,6 +1300,13 @@ func (eq *EnvironmentQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 		if err := eq.loadValidations(ctx, query, nodes,
 			func(n *Environment) { n.Edges.Validations = []*Validation{} },
 			func(n *Environment, e *Validation) { n.Edges.Validations = append(n.Edges.Validations, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := eq.withReplayPcaps; query != nil {
+		if err := eq.loadReplayPcaps(ctx, query, nodes,
+			func(n *Environment) { n.Edges.ReplayPcaps = []*ReplayPcap{} },
+			func(n *Environment, e *ReplayPcap) { n.Edges.ReplayPcaps = append(n.Edges.ReplayPcaps, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -2023,6 +2067,37 @@ func (eq *EnvironmentQuery) loadValidations(ctx context.Context, query *Validati
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected foreign-key "environment_validations" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (eq *EnvironmentQuery) loadReplayPcaps(ctx context.Context, query *ReplayPcapQuery, nodes []*Environment, init func(*Environment), assign func(*Environment, *ReplayPcap)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Environment)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.ReplayPcap(func(s *sql.Selector) {
+		s.Where(sql.InValues(environment.ReplayPcapsColumn, fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.environment_replay_pcaps
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "environment_replay_pcaps" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "environment_replay_pcaps" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

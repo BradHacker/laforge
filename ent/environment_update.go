@@ -27,6 +27,7 @@ import (
 	"github.com/gen0cide/laforge/ent/includednetwork"
 	"github.com/gen0cide/laforge/ent/network"
 	"github.com/gen0cide/laforge/ent/predicate"
+	"github.com/gen0cide/laforge/ent/replaypcap"
 	"github.com/gen0cide/laforge/ent/repository"
 	"github.com/gen0cide/laforge/ent/scheduledstep"
 	"github.com/gen0cide/laforge/ent/script"
@@ -442,6 +443,21 @@ func (eu *EnvironmentUpdate) AddValidations(v ...*Validation) *EnvironmentUpdate
 		ids[i] = v[i].ID
 	}
 	return eu.AddValidationIDs(ids...)
+}
+
+// AddReplayPcapIDs adds the "ReplayPcaps" edge to the ReplayPcap entity by IDs.
+func (eu *EnvironmentUpdate) AddReplayPcapIDs(ids ...uuid.UUID) *EnvironmentUpdate {
+	eu.mutation.AddReplayPcapIDs(ids...)
+	return eu
+}
+
+// AddReplayPcaps adds the "ReplayPcaps" edges to the ReplayPcap entity.
+func (eu *EnvironmentUpdate) AddReplayPcaps(r ...*ReplayPcap) *EnvironmentUpdate {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return eu.AddReplayPcapIDs(ids...)
 }
 
 // Mutation returns the EnvironmentMutation object of the builder.
@@ -888,6 +904,27 @@ func (eu *EnvironmentUpdate) RemoveValidations(v ...*Validation) *EnvironmentUpd
 		ids[i] = v[i].ID
 	}
 	return eu.RemoveValidationIDs(ids...)
+}
+
+// ClearReplayPcaps clears all "ReplayPcaps" edges to the ReplayPcap entity.
+func (eu *EnvironmentUpdate) ClearReplayPcaps() *EnvironmentUpdate {
+	eu.mutation.ClearReplayPcaps()
+	return eu
+}
+
+// RemoveReplayPcapIDs removes the "ReplayPcaps" edge to ReplayPcap entities by IDs.
+func (eu *EnvironmentUpdate) RemoveReplayPcapIDs(ids ...uuid.UUID) *EnvironmentUpdate {
+	eu.mutation.RemoveReplayPcapIDs(ids...)
+	return eu
+}
+
+// RemoveReplayPcaps removes "ReplayPcaps" edges to ReplayPcap entities.
+func (eu *EnvironmentUpdate) RemoveReplayPcaps(r ...*ReplayPcap) *EnvironmentUpdate {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return eu.RemoveReplayPcapIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -2187,6 +2224,60 @@ func (eu *EnvironmentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if eu.mutation.ReplayPcapsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   environment.ReplayPcapsTable,
+			Columns: []string{environment.ReplayPcapsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: replaypcap.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := eu.mutation.RemovedReplayPcapsIDs(); len(nodes) > 0 && !eu.mutation.ReplayPcapsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   environment.ReplayPcapsTable,
+			Columns: []string{environment.ReplayPcapsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: replaypcap.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := eu.mutation.ReplayPcapsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   environment.ReplayPcapsTable,
+			Columns: []string{environment.ReplayPcapsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: replaypcap.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, eu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{environment.Label}
@@ -2599,6 +2690,21 @@ func (euo *EnvironmentUpdateOne) AddValidations(v ...*Validation) *EnvironmentUp
 		ids[i] = v[i].ID
 	}
 	return euo.AddValidationIDs(ids...)
+}
+
+// AddReplayPcapIDs adds the "ReplayPcaps" edge to the ReplayPcap entity by IDs.
+func (euo *EnvironmentUpdateOne) AddReplayPcapIDs(ids ...uuid.UUID) *EnvironmentUpdateOne {
+	euo.mutation.AddReplayPcapIDs(ids...)
+	return euo
+}
+
+// AddReplayPcaps adds the "ReplayPcaps" edges to the ReplayPcap entity.
+func (euo *EnvironmentUpdateOne) AddReplayPcaps(r ...*ReplayPcap) *EnvironmentUpdateOne {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return euo.AddReplayPcapIDs(ids...)
 }
 
 // Mutation returns the EnvironmentMutation object of the builder.
@@ -3045,6 +3151,27 @@ func (euo *EnvironmentUpdateOne) RemoveValidations(v ...*Validation) *Environmen
 		ids[i] = v[i].ID
 	}
 	return euo.RemoveValidationIDs(ids...)
+}
+
+// ClearReplayPcaps clears all "ReplayPcaps" edges to the ReplayPcap entity.
+func (euo *EnvironmentUpdateOne) ClearReplayPcaps() *EnvironmentUpdateOne {
+	euo.mutation.ClearReplayPcaps()
+	return euo
+}
+
+// RemoveReplayPcapIDs removes the "ReplayPcaps" edge to ReplayPcap entities by IDs.
+func (euo *EnvironmentUpdateOne) RemoveReplayPcapIDs(ids ...uuid.UUID) *EnvironmentUpdateOne {
+	euo.mutation.RemoveReplayPcapIDs(ids...)
+	return euo
+}
+
+// RemoveReplayPcaps removes "ReplayPcaps" edges to ReplayPcap entities.
+func (euo *EnvironmentUpdateOne) RemoveReplayPcaps(r ...*ReplayPcap) *EnvironmentUpdateOne {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return euo.RemoveReplayPcapIDs(ids...)
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -4366,6 +4493,60 @@ func (euo *EnvironmentUpdateOne) sqlSave(ctx context.Context) (_node *Environmen
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeUUID,
 					Column: validation.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if euo.mutation.ReplayPcapsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   environment.ReplayPcapsTable,
+			Columns: []string{environment.ReplayPcapsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: replaypcap.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := euo.mutation.RemovedReplayPcapsIDs(); len(nodes) > 0 && !euo.mutation.ReplayPcapsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   environment.ReplayPcapsTable,
+			Columns: []string{environment.ReplayPcapsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: replaypcap.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := euo.mutation.ReplayPcapsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   environment.ReplayPcapsTable,
+			Columns: []string{environment.ReplayPcapsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: replaypcap.FieldID,
 				},
 			},
 		}

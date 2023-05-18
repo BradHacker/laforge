@@ -25,6 +25,7 @@ import (
 	"github.com/gen0cide/laforge/ent/identity"
 	"github.com/gen0cide/laforge/ent/includednetwork"
 	"github.com/gen0cide/laforge/ent/network"
+	"github.com/gen0cide/laforge/ent/replaypcap"
 	"github.com/gen0cide/laforge/ent/scheduledstep"
 	"github.com/gen0cide/laforge/ent/script"
 	"github.com/gen0cide/laforge/ent/validation"
@@ -69,6 +70,7 @@ type DefinedConfigs struct {
 	DefinedIdentities     []*ent.Identity               `hcl:"identity,block" json:"identities,omitempty"`
 	DefinedAnsible        []*ent.Ansible                `hcl:"ansible,block" json:"ansible,omitempty"`
 	DefinedScheduledSteps []*ent.ScheduledStep          `hcl:"scheduled,block" json:"scheduled,omitempty"`
+	DefinedReplayPcaps    []*ent.ReplayPcap             `hcl:"replay_pcap,block" json:"replay_pcap,omitempty"`
 	Competitions          map[string]*ent.Competition   `json:"-"`
 	Hosts                 map[string]*ent.Host          `json:"-"`
 	Networks              map[string]*ent.Network       `json:"-"`
@@ -585,7 +587,7 @@ func createEnviroments(ctx context.Context, client *ent.Client, log *logging.Log
 					AddAnsibles(returnedAnsible...).
 					AddScheduledSteps(returnedScheduledSteps...).
 					AddValidations(returnedValidations...).
-					ReplayPcaps(returnedReplayPcaps...).
+					AddReplayPcaps(returnedReplayPcaps...).
 					Save(ctx)
 				if err != nil {
 					err = rollback(txClient, err)
@@ -1932,13 +1934,13 @@ func createReplayPcap(txClient *ent.Tx, ctx context.Context, log *logging.Logger
 			Where(
 				replaypcap.And(
 					replaypcap.HclIDEQ(cReplayPcap.HclID),
-					replaypcap.HasReplayPcapToEnvironmentWith(environment.HclIDEQ(envHclID)),
+					replaypcap.HasEnvironmentWith(environment.HclIDEQ(envHclID)),
 				),
 			).
 			Only(ctx)
 		if err != nil {
 			if err == err.(*ent.NotFoundError) {
-				createdQuery := txClient.ReplyPcap.Create().
+				createdQuery := txClient.ReplayPcap.Create().
 					SetHclID(cReplayPcap.HclID).
 					SetSourceType(cReplayPcap.SourceType).
 					SetSource(cReplayPcap.Source).

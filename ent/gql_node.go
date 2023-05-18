@@ -38,6 +38,7 @@ import (
 	"github.com/gen0cide/laforge/ent/provisionednetwork"
 	"github.com/gen0cide/laforge/ent/provisioningscheduledstep"
 	"github.com/gen0cide/laforge/ent/provisioningstep"
+	"github.com/gen0cide/laforge/ent/replaypcap"
 	"github.com/gen0cide/laforge/ent/repocommit"
 	"github.com/gen0cide/laforge/ent/repository"
 	"github.com/gen0cide/laforge/ent/scheduledstep"
@@ -1290,7 +1291,7 @@ func (e *Environment) Node(ctx context.Context) (node *Node, err error) {
 		ID:     e.ID,
 		Type:   "Environment",
 		Fields: make([]*Field, 11),
-		Edges:  make([]*Edge, 21),
+		Edges:  make([]*Edge, 22),
 	}
 	var buf []byte
 	if buf, err = json.Marshal(e.HclID); err != nil {
@@ -1588,6 +1589,16 @@ func (e *Environment) Node(ctx context.Context) (node *Node, err error) {
 	err = e.QueryValidations().
 		Select(validation.FieldID).
 		Scan(ctx, &node.Edges[20].IDs)
+	if err != nil {
+		return nil, err
+	}
+	node.Edges[21] = &Edge{
+		Type: "ReplayPcap",
+		Name: "ReplayPcaps",
+	}
+	err = e.QueryReplayPcaps().
+		Select(replaypcap.FieldID).
+		Scan(ctx, &node.Edges[21].IDs)
 	if err != nil {
 		return nil, err
 	}
@@ -3214,6 +3225,83 @@ func (ps *ProvisioningStep) Node(ctx context.Context) (node *Node, err error) {
 	return node, nil
 }
 
+func (rp *ReplayPcap) Node(ctx context.Context) (node *Node, err error) {
+	node = &Node{
+		ID:     rp.ID,
+		Type:   "ReplayPcap",
+		Fields: make([]*Field, 7),
+		Edges:  make([]*Edge, 1),
+	}
+	var buf []byte
+	if buf, err = json.Marshal(rp.HclID); err != nil {
+		return nil, err
+	}
+	node.Fields[0] = &Field{
+		Type:  "string",
+		Name:  "hcl_id",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(rp.SourceType); err != nil {
+		return nil, err
+	}
+	node.Fields[1] = &Field{
+		Type:  "string",
+		Name:  "source_type",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(rp.Source); err != nil {
+		return nil, err
+	}
+	node.Fields[2] = &Field{
+		Type:  "string",
+		Name:  "source",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(rp.Template); err != nil {
+		return nil, err
+	}
+	node.Fields[3] = &Field{
+		Type:  "bool",
+		Name:  "template",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(rp.Disabled); err != nil {
+		return nil, err
+	}
+	node.Fields[4] = &Field{
+		Type:  "bool",
+		Name:  "disabled",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(rp.AbsPath); err != nil {
+		return nil, err
+	}
+	node.Fields[5] = &Field{
+		Type:  "string",
+		Name:  "abs_path",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(rp.Tags); err != nil {
+		return nil, err
+	}
+	node.Fields[6] = &Field{
+		Type:  "map[string]string",
+		Name:  "tags",
+		Value: string(buf),
+	}
+	node.Edges[0] = &Edge{
+		Type: "Environment",
+		Name: "Environment",
+	}
+	err = rp.QueryEnvironment().
+		Select(environment.FieldID).
+		Scan(ctx, &node.Edges[0].IDs)
+	if err != nil {
+		return nil, err
+	}
+	return node, nil
+}
+
 func (rc *RepoCommit) Node(ctx context.Context) (node *Node, err error) {
 	node = &Node{
 		ID:     rc.ID,
@@ -4572,6 +4660,15 @@ func (c *Client) noder(ctx context.Context, table string, id uuid.UUID) (Noder, 
 			return nil, err
 		}
 		return n, nil
+	case replaypcap.Table:
+		n, err := c.ReplayPcap.Query().
+			Where(replaypcap.ID(id)).
+			CollectFields(ctx, "ReplayPcap").
+			Only(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return n, nil
 	case repocommit.Table:
 		n, err := c.RepoCommit.Query().
 			Where(repocommit.ID(id)).
@@ -5112,6 +5209,19 @@ func (c *Client) noders(ctx context.Context, table string, ids []uuid.UUID) ([]N
 		nodes, err := c.ProvisioningStep.Query().
 			Where(provisioningstep.IDIn(ids...)).
 			CollectFields(ctx, "ProvisioningStep").
+			All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, node := range nodes {
+			for _, noder := range idmap[node.ID] {
+				*noder = node
+			}
+		}
+	case replaypcap.Table:
+		nodes, err := c.ReplayPcap.Query().
+			Where(replaypcap.IDIn(ids...)).
+			CollectFields(ctx, "ReplayPcap").
 			All(ctx)
 		if err != nil {
 			return nil, err

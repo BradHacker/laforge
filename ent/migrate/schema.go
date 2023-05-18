@@ -84,7 +84,7 @@ var (
 	// AgentTasksColumns holds the columns for the "agent_tasks" table.
 	AgentTasksColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "command", Type: field.TypeEnum, Enums: []string{"DEFAULT", "DELETE", "REBOOT", "EXTRACT", "DOWNLOAD", "CREATEUSER", "CREATEUSERPASS", "ADDTOGROUP", "EXECUTE", "VALIDATE", "CHANGEPERMS", "APPENDFILE", "ANSIBLE", "VALIDATOR"}},
+		{Name: "command", Type: field.TypeEnum, Enums: []string{"DEFAULT", "DELETE", "REBOOT", "EXTRACT", "DOWNLOAD", "CREATEUSER", "CREATEUSERPASS", "ADDTOGROUP", "EXECUTE", "VALIDATE", "CHANGEPERMS", "APPENDFILE", "ANSIBLE", "REPLAYPCAP", "VALIDATOR"}},
 		{Name: "args", Type: field.TypeString},
 		{Name: "number", Type: field.TypeInt},
 		{Name: "output", Type: field.TypeString, Default: ""},
@@ -998,6 +998,32 @@ var (
 			},
 		},
 	}
+	// ReplayPcapsColumns holds the columns for the "replay_pcaps" table.
+	ReplayPcapsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "hcl_id", Type: field.TypeString},
+		{Name: "source_type", Type: field.TypeString},
+		{Name: "source", Type: field.TypeString},
+		{Name: "template", Type: field.TypeBool},
+		{Name: "disabled", Type: field.TypeBool},
+		{Name: "abs_path", Type: field.TypeString},
+		{Name: "tags", Type: field.TypeJSON},
+		{Name: "environment_replay_pcaps", Type: field.TypeUUID, Nullable: true},
+	}
+	// ReplayPcapsTable holds the schema information for the "replay_pcaps" table.
+	ReplayPcapsTable = &schema.Table{
+		Name:       "replay_pcaps",
+		Columns:    ReplayPcapsColumns,
+		PrimaryKey: []*schema.Column{ReplayPcapsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "replay_pcaps_environments_ReplayPcaps",
+				Columns:    []*schema.Column{ReplayPcapsColumns[8]},
+				RefColumns: []*schema.Column{EnvironmentsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// RepoCommitsColumns holds the columns for the "repo_commits" table.
 	RepoCommitsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -1630,6 +1656,7 @@ var (
 		ProvisionedNetworksTable,
 		ProvisioningScheduledStepsTable,
 		ProvisioningStepsTable,
+		ReplayPcapsTable,
 		RepoCommitsTable,
 		RepositoriesTable,
 		ScheduledStepsTable,
@@ -1721,6 +1748,7 @@ func init() {
 	ProvisioningStepsTable.ForeignKeys[7].RefTable = FileDownloadsTable
 	ProvisioningStepsTable.ForeignKeys[8].RefTable = FileExtractsTable
 	ProvisioningStepsTable.ForeignKeys[9].RefTable = AnsiblesTable
+	ReplayPcapsTable.ForeignKeys[0].RefTable = EnvironmentsTable
 	RepoCommitsTable.ForeignKeys[0].RefTable = RepositoriesTable
 	ScheduledStepsTable.ForeignKeys[0].RefTable = EnvironmentsTable
 	ScriptsTable.ForeignKeys[0].RefTable = EnvironmentsTable

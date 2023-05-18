@@ -37,8 +37,8 @@ func (ReplayPcap) Fields() []ent.Field {
 // Edges of the ReplayPcap.
 func (ReplayPcap) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("ReplayPcapToEnvironment", Environment.Type).
-			Ref("EnvironmentToReplayPcap").
+		edge.From("Environment", Environment.Type).
+			Ref("ReplayPcaps").
 			Unique(),
 	}
 }

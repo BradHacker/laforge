@@ -43,6 +43,7 @@ import (
 	"github.com/gen0cide/laforge/ent/provisionednetwork"
 	"github.com/gen0cide/laforge/ent/provisioningscheduledstep"
 	"github.com/gen0cide/laforge/ent/provisioningstep"
+	"github.com/gen0cide/laforge/ent/replaypcap"
 	"github.com/gen0cide/laforge/ent/repocommit"
 	"github.com/gen0cide/laforge/ent/repository"
 	"github.com/gen0cide/laforge/ent/scheduledstep"
@@ -6852,6 +6853,233 @@ func (ps *ProvisioningStep) ToEdge(order *ProvisioningStepOrder) *ProvisioningSt
 	return &ProvisioningStepEdge{
 		Node:   ps,
 		Cursor: order.Field.toCursor(ps),
+	}
+}
+
+// ReplayPcapEdge is the edge representation of ReplayPcap.
+type ReplayPcapEdge struct {
+	Node   *ReplayPcap `json:"node"`
+	Cursor Cursor      `json:"cursor"`
+}
+
+// ReplayPcapConnection is the connection containing edges to ReplayPcap.
+type ReplayPcapConnection struct {
+	Edges      []*ReplayPcapEdge `json:"edges"`
+	PageInfo   PageInfo          `json:"pageInfo"`
+	TotalCount int               `json:"totalCount"`
+}
+
+// ReplayPcapPaginateOption enables pagination customization.
+type ReplayPcapPaginateOption func(*replayPcapPager) error
+
+// WithReplayPcapOrder configures pagination ordering.
+func WithReplayPcapOrder(order *ReplayPcapOrder) ReplayPcapPaginateOption {
+	if order == nil {
+		order = DefaultReplayPcapOrder
+	}
+	o := *order
+	return func(pager *replayPcapPager) error {
+		if err := o.Direction.Validate(); err != nil {
+			return err
+		}
+		if o.Field == nil {
+			o.Field = DefaultReplayPcapOrder.Field
+		}
+		pager.order = &o
+		return nil
+	}
+}
+
+// WithReplayPcapFilter configures pagination filter.
+func WithReplayPcapFilter(filter func(*ReplayPcapQuery) (*ReplayPcapQuery, error)) ReplayPcapPaginateOption {
+	return func(pager *replayPcapPager) error {
+		if filter == nil {
+			return errors.New("ReplayPcapQuery filter cannot be nil")
+		}
+		pager.filter = filter
+		return nil
+	}
+}
+
+type replayPcapPager struct {
+	order  *ReplayPcapOrder
+	filter func(*ReplayPcapQuery) (*ReplayPcapQuery, error)
+}
+
+func newReplayPcapPager(opts []ReplayPcapPaginateOption) (*replayPcapPager, error) {
+	pager := &replayPcapPager{}
+	for _, opt := range opts {
+		if err := opt(pager); err != nil {
+			return nil, err
+		}
+	}
+	if pager.order == nil {
+		pager.order = DefaultReplayPcapOrder
+	}
+	return pager, nil
+}
+
+func (p *replayPcapPager) applyFilter(query *ReplayPcapQuery) (*ReplayPcapQuery, error) {
+	if p.filter != nil {
+		return p.filter(query)
+	}
+	return query, nil
+}
+
+func (p *replayPcapPager) toCursor(rp *ReplayPcap) Cursor {
+	return p.order.Field.toCursor(rp)
+}
+
+func (p *replayPcapPager) applyCursors(query *ReplayPcapQuery, after, before *Cursor) *ReplayPcapQuery {
+	for _, predicate := range cursorsToPredicates(
+		p.order.Direction, after, before,
+		p.order.Field.field, DefaultReplayPcapOrder.Field.field,
+	) {
+		query = query.Where(predicate)
+	}
+	return query
+}
+
+func (p *replayPcapPager) applyOrder(query *ReplayPcapQuery, reverse bool) *ReplayPcapQuery {
+	direction := p.order.Direction
+	if reverse {
+		direction = direction.reverse()
+	}
+	query = query.Order(direction.orderFunc(p.order.Field.field))
+	if p.order.Field != DefaultReplayPcapOrder.Field {
+		query = query.Order(direction.orderFunc(DefaultReplayPcapOrder.Field.field))
+	}
+	return query
+}
+
+// Paginate executes the query and returns a relay based cursor connection to ReplayPcap.
+func (rp *ReplayPcapQuery) Paginate(
+	ctx context.Context, after *Cursor, first *int,
+	before *Cursor, last *int, opts ...ReplayPcapPaginateOption,
+) (*ReplayPcapConnection, error) {
+	if err := validateFirstLast(first, last); err != nil {
+		return nil, err
+	}
+	pager, err := newReplayPcapPager(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	if rp, err = pager.applyFilter(rp); err != nil {
+		return nil, err
+	}
+
+	conn := &ReplayPcapConnection{Edges: []*ReplayPcapEdge{}}
+	if !hasCollectedField(ctx, edgesField) || first != nil && *first == 0 || last != nil && *last == 0 {
+		if hasCollectedField(ctx, totalCountField) ||
+			hasCollectedField(ctx, pageInfoField) {
+			count, err := rp.Count(ctx)
+			if err != nil {
+				return nil, err
+			}
+			conn.TotalCount = count
+			conn.PageInfo.HasNextPage = first != nil && count > 0
+			conn.PageInfo.HasPreviousPage = last != nil && count > 0
+		}
+		return conn, nil
+	}
+
+	if (after != nil || first != nil || before != nil || last != nil) && hasCollectedField(ctx, totalCountField) {
+		count, err := rp.Clone().Count(ctx)
+		if err != nil {
+			return nil, err
+		}
+		conn.TotalCount = count
+	}
+
+	rp = pager.applyCursors(rp, after, before)
+	rp = pager.applyOrder(rp, last != nil)
+	var limit int
+	if first != nil {
+		limit = *first + 1
+	} else if last != nil {
+		limit = *last + 1
+	}
+	if limit > 0 {
+		rp = rp.Limit(limit)
+	}
+
+	if field := getCollectedField(ctx, edgesField, nodeField); field != nil {
+		rp = rp.collectField(graphql.GetOperationContext(ctx), *field)
+	}
+
+	nodes, err := rp.All(ctx)
+	if err != nil || len(nodes) == 0 {
+		return conn, err
+	}
+
+	if len(nodes) == limit {
+		conn.PageInfo.HasNextPage = first != nil
+		conn.PageInfo.HasPreviousPage = last != nil
+		nodes = nodes[:len(nodes)-1]
+	}
+
+	var nodeAt func(int) *ReplayPcap
+	if last != nil {
+		n := len(nodes) - 1
+		nodeAt = func(i int) *ReplayPcap {
+			return nodes[n-i]
+		}
+	} else {
+		nodeAt = func(i int) *ReplayPcap {
+			return nodes[i]
+		}
+	}
+
+	conn.Edges = make([]*ReplayPcapEdge, len(nodes))
+	for i := range nodes {
+		node := nodeAt(i)
+		conn.Edges[i] = &ReplayPcapEdge{
+			Node:   node,
+			Cursor: pager.toCursor(node),
+		}
+	}
+
+	conn.PageInfo.StartCursor = &conn.Edges[0].Cursor
+	conn.PageInfo.EndCursor = &conn.Edges[len(conn.Edges)-1].Cursor
+	if conn.TotalCount == 0 {
+		conn.TotalCount = len(nodes)
+	}
+
+	return conn, nil
+}
+
+// ReplayPcapOrderField defines the ordering field of ReplayPcap.
+type ReplayPcapOrderField struct {
+	field    string
+	toCursor func(*ReplayPcap) Cursor
+}
+
+// ReplayPcapOrder defines the ordering of ReplayPcap.
+type ReplayPcapOrder struct {
+	Direction OrderDirection        `json:"direction"`
+	Field     *ReplayPcapOrderField `json:"field"`
+}
+
+// DefaultReplayPcapOrder is the default ordering of ReplayPcap.
+var DefaultReplayPcapOrder = &ReplayPcapOrder{
+	Direction: OrderDirectionAsc,
+	Field: &ReplayPcapOrderField{
+		field: replaypcap.FieldID,
+		toCursor: func(rp *ReplayPcap) Cursor {
+			return Cursor{ID: rp.ID}
+		},
+	},
+}
+
+// ToEdge converts ReplayPcap into ReplayPcapEdge.
+func (rp *ReplayPcap) ToEdge(order *ReplayPcapOrder) *ReplayPcapEdge {
+	if order == nil {
+		order = DefaultReplayPcapOrder
+	}
+	return &ReplayPcapEdge{
+		Node:   rp,
+		Cursor: order.Field.toCursor(rp),
 	}
 }
 

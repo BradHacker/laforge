@@ -500,6 +500,14 @@ func (e *Environment) Validations(ctx context.Context) ([]*Validation, error) {
 	return result, err
 }
 
+func (e *Environment) ReplayPcaps(ctx context.Context) ([]*ReplayPcap, error) {
+	result, err := e.Edges.ReplayPcapsOrErr()
+	if IsNotLoaded(err) {
+		result, err = e.QueryReplayPcaps().All(ctx)
+	}
+	return result, err
+}
+
 func (fd *FileDelete) Environment(ctx context.Context) (*Environment, error) {
 	result, err := fd.Edges.EnvironmentOrErr()
 	if IsNotLoaded(err) {
@@ -1152,6 +1160,14 @@ func (ps *ProvisioningStep) GinFileMiddleware(ctx context.Context) (*GinFileMidd
 	result, err := ps.Edges.GinFileMiddlewareOrErr()
 	if IsNotLoaded(err) {
 		result, err = ps.QueryGinFileMiddleware().Only(ctx)
+	}
+	return result, MaskNotFound(err)
+}
+
+func (rp *ReplayPcap) Environment(ctx context.Context) (*Environment, error) {
+	result, err := rp.Edges.EnvironmentOrErr()
+	if IsNotLoaded(err) {
+		result, err = rp.QueryEnvironment().Only(ctx)
 	}
 	return result, MaskNotFound(err)
 }

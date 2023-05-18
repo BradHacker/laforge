@@ -93,6 +93,9 @@ type ProvisioningScheduledStep func(*sql.Selector)
 // ProvisioningStep is the predicate function for provisioningstep builders.
 type ProvisioningStep func(*sql.Selector)
 
+// ReplayPcap is the predicate function for replaypcap builders.
+type ReplayPcap func(*sql.Selector)
+
 // RepoCommit is the predicate function for repocommit builders.
 type RepoCommit func(*sql.Selector)
 

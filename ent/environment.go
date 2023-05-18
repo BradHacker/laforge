@@ -86,6 +86,8 @@ type Environment struct {
 	HCLServerTasks []*ServerTask `json:"ServerTasks,omitempty"`
 	// Validations holds the value of the Validations edge.
 	HCLValidations []*Validation `json:"Validations,omitempty"`
+	// ReplayPcaps holds the value of the ReplayPcaps edge.
+	HCLReplayPcaps []*ReplayPcap `json:"ReplayPcaps,omitempty"`
 	//
 
 }
@@ -134,9 +136,11 @@ type EnvironmentEdges struct {
 	ServerTasks []*ServerTask `json:"ServerTasks,omitempty"`
 	// Validations holds the value of the Validations edge.
 	Validations []*Validation `json:"Validations,omitempty"`
+	// ReplayPcaps holds the value of the ReplayPcaps edge.
+	ReplayPcaps []*ReplayPcap `json:"ReplayPcaps,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [21]bool
+	loadedTypes [22]bool
 }
 
 // UsersOrErr returns the Users value or an error if the edge
@@ -326,6 +330,15 @@ func (e EnvironmentEdges) ValidationsOrErr() ([]*Validation, error) {
 		return e.Validations, nil
 	}
 	return nil, &NotLoadedError{edge: "Validations"}
+}
+
+// ReplayPcapsOrErr returns the ReplayPcaps value or an error if the edge
+// was not loaded in eager-loading.
+func (e EnvironmentEdges) ReplayPcapsOrErr() ([]*ReplayPcap, error) {
+	if e.loadedTypes[21] {
+		return e.ReplayPcaps, nil
+	}
+	return nil, &NotLoadedError{edge: "ReplayPcaps"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -544,6 +557,11 @@ func (e *Environment) QueryServerTasks() *ServerTaskQuery {
 // QueryValidations queries the "Validations" edge of the Environment entity.
 func (e *Environment) QueryValidations() *ValidationQuery {
 	return (&EnvironmentClient{config: e.config}).QueryValidations(e)
+}
+
+// QueryReplayPcaps queries the "ReplayPcaps" edge of the Environment entity.
+func (e *Environment) QueryReplayPcaps() *ReplayPcapQuery {
+	return (&EnvironmentClient{config: e.config}).QueryReplayPcaps(e)
 }
 
 // Update returns a builder for updating this Environment.
