@@ -453,40 +453,7 @@ func (bu *BuildUpdate) RemoveServerTasks(s ...*ServerTask) *BuildUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (bu *BuildUpdate) Save(ctx context.Context) (int, error) {
-	var (
-		err      error
-		affected int
-	)
-	if len(bu.hooks) == 0 {
-		if err = bu.check(); err != nil {
-			return 0, err
-		}
-		affected, err = bu.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*BuildMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = bu.check(); err != nil {
-				return 0, err
-			}
-			bu.mutation = mutation
-			affected, err = bu.sqlSave(ctx)
-			mutation.done = true
-			return affected, err
-		})
-		for i := len(bu.hooks) - 1; i >= 0; i-- {
-			if bu.hooks[i] == nil {
-				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = bu.hooks[i](mut)
-		}
-		if _, err := mut.Mutate(ctx, bu.mutation); err != nil {
-			return 0, err
-		}
-	}
-	return affected, err
+	return withHooks(ctx, bu.sqlSave, bu.mutation, bu.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -523,16 +490,10 @@ func (bu *BuildUpdate) check() error {
 }
 
 func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   build.Table,
-			Columns: build.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: build.FieldID,
-			},
-		},
+	if err := bu.check(); err != nil {
+		return n, err
 	}
+	_spec := sqlgraph.NewUpdateSpec(build.Table, build.Columns, sqlgraph.NewFieldSpec(build.FieldID, field.TypeUUID))
 	if ps := bu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -541,46 +502,22 @@ func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 	}
 	if value, ok := bu.mutation.Revision(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: build.FieldRevision,
-		})
+		_spec.SetField(build.FieldRevision, field.TypeInt, value)
 	}
 	if value, ok := bu.mutation.AddedRevision(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: build.FieldRevision,
-		})
+		_spec.AddField(build.FieldRevision, field.TypeInt, value)
 	}
 	if value, ok := bu.mutation.EnvironmentRevision(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: build.FieldEnvironmentRevision,
-		})
+		_spec.SetField(build.FieldEnvironmentRevision, field.TypeInt, value)
 	}
 	if value, ok := bu.mutation.AddedEnvironmentRevision(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: build.FieldEnvironmentRevision,
-		})
+		_spec.AddField(build.FieldEnvironmentRevision, field.TypeInt, value)
 	}
 	if value, ok := bu.mutation.Vars(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: build.FieldVars,
-		})
+		_spec.SetField(build.FieldVars, field.TypeJSON, value)
 	}
 	if value, ok := bu.mutation.CompletedPlan(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeBool,
-			Value:  value,
-			Column: build.FieldCompletedPlan,
-		})
+		_spec.SetField(build.FieldCompletedPlan, field.TypeBool, value)
 	}
 	if bu.mutation.StatusCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -590,10 +527,7 @@ func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{build.StatusColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: status.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(status.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -606,10 +540,7 @@ func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{build.StatusColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: status.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(status.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -625,10 +556,7 @@ func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{build.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -641,10 +569,7 @@ func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{build.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -660,10 +585,7 @@ func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{build.CompetitionColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: competition.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(competition.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -676,10 +598,7 @@ func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{build.CompetitionColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: competition.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(competition.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -695,10 +614,7 @@ func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{build.LatestBuildCommitColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: buildcommit.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(buildcommit.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -711,10 +627,7 @@ func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{build.LatestBuildCommitColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: buildcommit.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(buildcommit.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -730,10 +643,7 @@ func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{build.RepoCommitColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: repocommit.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(repocommit.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -746,10 +656,7 @@ func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{build.RepoCommitColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: repocommit.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(repocommit.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -765,10 +672,7 @@ func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{build.ProvisionedNetworksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisionednetwork.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisionednetwork.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -781,10 +685,7 @@ func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{build.ProvisionedNetworksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisionednetwork.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisionednetwork.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -800,10 +701,7 @@ func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{build.ProvisionedNetworksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisionednetwork.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisionednetwork.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -819,10 +717,7 @@ func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{build.TeamsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: team.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -835,10 +730,7 @@ func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{build.TeamsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: team.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -854,10 +746,7 @@ func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{build.TeamsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: team.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -873,10 +762,7 @@ func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{build.PlansColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: plan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(plan.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -889,10 +775,7 @@ func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{build.PlansColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: plan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(plan.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -908,10 +791,7 @@ func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{build.PlansColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: plan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(plan.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -927,10 +807,7 @@ func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{build.BuildCommitsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: buildcommit.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(buildcommit.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -943,10 +820,7 @@ func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{build.BuildCommitsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: buildcommit.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(buildcommit.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -962,10 +836,7 @@ func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{build.BuildCommitsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: buildcommit.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(buildcommit.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -981,10 +852,7 @@ func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{build.AdhocPlansColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: adhocplan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(adhocplan.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -997,10 +865,7 @@ func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{build.AdhocPlansColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: adhocplan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(adhocplan.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1016,10 +881,7 @@ func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{build.AdhocPlansColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: adhocplan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(adhocplan.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1035,10 +897,7 @@ func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{build.AgentStatusesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: agentstatus.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(agentstatus.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1051,10 +910,7 @@ func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{build.AgentStatusesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: agentstatus.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(agentstatus.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1070,10 +926,7 @@ func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{build.AgentStatusesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: agentstatus.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(agentstatus.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1089,10 +942,7 @@ func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{build.ServerTasksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: servertask.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(servertask.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1105,10 +955,7 @@ func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{build.ServerTasksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: servertask.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(servertask.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1124,10 +971,7 @@ func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{build.ServerTasksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: servertask.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(servertask.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1143,6 +987,7 @@ func (bu *BuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		return 0, err
 	}
+	bu.mutation.done = true
 	return n, nil
 }
 
@@ -1566,6 +1411,12 @@ func (buo *BuildUpdateOne) RemoveServerTasks(s ...*ServerTask) *BuildUpdateOne {
 	return buo.RemoveServerTaskIDs(ids...)
 }
 
+// Where appends a list predicates to the BuildUpdate builder.
+func (buo *BuildUpdateOne) Where(ps ...predicate.Build) *BuildUpdateOne {
+	buo.mutation.Where(ps...)
+	return buo
+}
+
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
 func (buo *BuildUpdateOne) Select(field string, fields ...string) *BuildUpdateOne {
@@ -1575,46 +1426,7 @@ func (buo *BuildUpdateOne) Select(field string, fields ...string) *BuildUpdateOn
 
 // Save executes the query and returns the updated Build entity.
 func (buo *BuildUpdateOne) Save(ctx context.Context) (*Build, error) {
-	var (
-		err  error
-		node *Build
-	)
-	if len(buo.hooks) == 0 {
-		if err = buo.check(); err != nil {
-			return nil, err
-		}
-		node, err = buo.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*BuildMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = buo.check(); err != nil {
-				return nil, err
-			}
-			buo.mutation = mutation
-			node, err = buo.sqlSave(ctx)
-			mutation.done = true
-			return node, err
-		})
-		for i := len(buo.hooks) - 1; i >= 0; i-- {
-			if buo.hooks[i] == nil {
-				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = buo.hooks[i](mut)
-		}
-		v, err := mut.Mutate(ctx, buo.mutation)
-		if err != nil {
-			return nil, err
-		}
-		nv, ok := v.(*Build)
-		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from BuildMutation", v)
-		}
-		node = nv
-	}
-	return node, err
+	return withHooks(ctx, buo.sqlSave, buo.mutation, buo.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -1651,16 +1463,10 @@ func (buo *BuildUpdateOne) check() error {
 }
 
 func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   build.Table,
-			Columns: build.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: build.FieldID,
-			},
-		},
+	if err := buo.check(); err != nil {
+		return _node, err
 	}
+	_spec := sqlgraph.NewUpdateSpec(build.Table, build.Columns, sqlgraph.NewFieldSpec(build.FieldID, field.TypeUUID))
 	id, ok := buo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Build.id" for update`)}
@@ -1686,46 +1492,22 @@ func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error
 		}
 	}
 	if value, ok := buo.mutation.Revision(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: build.FieldRevision,
-		})
+		_spec.SetField(build.FieldRevision, field.TypeInt, value)
 	}
 	if value, ok := buo.mutation.AddedRevision(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: build.FieldRevision,
-		})
+		_spec.AddField(build.FieldRevision, field.TypeInt, value)
 	}
 	if value, ok := buo.mutation.EnvironmentRevision(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: build.FieldEnvironmentRevision,
-		})
+		_spec.SetField(build.FieldEnvironmentRevision, field.TypeInt, value)
 	}
 	if value, ok := buo.mutation.AddedEnvironmentRevision(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: build.FieldEnvironmentRevision,
-		})
+		_spec.AddField(build.FieldEnvironmentRevision, field.TypeInt, value)
 	}
 	if value, ok := buo.mutation.Vars(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: build.FieldVars,
-		})
+		_spec.SetField(build.FieldVars, field.TypeJSON, value)
 	}
 	if value, ok := buo.mutation.CompletedPlan(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeBool,
-			Value:  value,
-			Column: build.FieldCompletedPlan,
-		})
+		_spec.SetField(build.FieldCompletedPlan, field.TypeBool, value)
 	}
 	if buo.mutation.StatusCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1735,10 +1517,7 @@ func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error
 			Columns: []string{build.StatusColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: status.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(status.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1751,10 +1530,7 @@ func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error
 			Columns: []string{build.StatusColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: status.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(status.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1770,10 +1546,7 @@ func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error
 			Columns: []string{build.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1786,10 +1559,7 @@ func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error
 			Columns: []string{build.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1805,10 +1575,7 @@ func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error
 			Columns: []string{build.CompetitionColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: competition.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(competition.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1821,10 +1588,7 @@ func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error
 			Columns: []string{build.CompetitionColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: competition.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(competition.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1840,10 +1604,7 @@ func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error
 			Columns: []string{build.LatestBuildCommitColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: buildcommit.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(buildcommit.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1856,10 +1617,7 @@ func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error
 			Columns: []string{build.LatestBuildCommitColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: buildcommit.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(buildcommit.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1875,10 +1633,7 @@ func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error
 			Columns: []string{build.RepoCommitColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: repocommit.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(repocommit.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1891,10 +1646,7 @@ func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error
 			Columns: []string{build.RepoCommitColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: repocommit.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(repocommit.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1910,10 +1662,7 @@ func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error
 			Columns: []string{build.ProvisionedNetworksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisionednetwork.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisionednetwork.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1926,10 +1675,7 @@ func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error
 			Columns: []string{build.ProvisionedNetworksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisionednetwork.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisionednetwork.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1945,10 +1691,7 @@ func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error
 			Columns: []string{build.ProvisionedNetworksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: provisionednetwork.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(provisionednetwork.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1964,10 +1707,7 @@ func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error
 			Columns: []string{build.TeamsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: team.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1980,10 +1720,7 @@ func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error
 			Columns: []string{build.TeamsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: team.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1999,10 +1736,7 @@ func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error
 			Columns: []string{build.TeamsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: team.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -2018,10 +1752,7 @@ func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error
 			Columns: []string{build.PlansColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: plan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(plan.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -2034,10 +1765,7 @@ func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error
 			Columns: []string{build.PlansColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: plan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(plan.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -2053,10 +1781,7 @@ func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error
 			Columns: []string{build.PlansColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: plan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(plan.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -2072,10 +1797,7 @@ func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error
 			Columns: []string{build.BuildCommitsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: buildcommit.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(buildcommit.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -2088,10 +1810,7 @@ func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error
 			Columns: []string{build.BuildCommitsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: buildcommit.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(buildcommit.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -2107,10 +1826,7 @@ func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error
 			Columns: []string{build.BuildCommitsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: buildcommit.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(buildcommit.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -2126,10 +1842,7 @@ func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error
 			Columns: []string{build.AdhocPlansColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: adhocplan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(adhocplan.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -2142,10 +1855,7 @@ func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error
 			Columns: []string{build.AdhocPlansColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: adhocplan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(adhocplan.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -2161,10 +1871,7 @@ func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error
 			Columns: []string{build.AdhocPlansColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: adhocplan.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(adhocplan.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -2180,10 +1887,7 @@ func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error
 			Columns: []string{build.AgentStatusesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: agentstatus.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(agentstatus.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -2196,10 +1900,7 @@ func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error
 			Columns: []string{build.AgentStatusesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: agentstatus.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(agentstatus.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -2215,10 +1916,7 @@ func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error
 			Columns: []string{build.AgentStatusesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: agentstatus.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(agentstatus.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -2234,10 +1932,7 @@ func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error
 			Columns: []string{build.ServerTasksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: servertask.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(servertask.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -2250,10 +1945,7 @@ func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error
 			Columns: []string{build.ServerTasksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: servertask.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(servertask.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -2269,10 +1961,7 @@ func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error
 			Columns: []string{build.ServerTasksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: servertask.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(servertask.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -2291,5 +1980,6 @@ func (buo *BuildUpdateOne) sqlSave(ctx context.Context) (_node *Build, err error
 		}
 		return nil, err
 	}
+	buo.mutation.done = true
 	return _node, nil
 }

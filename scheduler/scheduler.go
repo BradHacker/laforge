@@ -148,7 +148,7 @@ func ExecuteScheduledStep(ctx context.Context, client *ent.Client, rdb *redis.Cl
 		logger.Log.Errorf("failed to query provisioned scheduled step status: %v", err)
 		return
 	}
-	logger.Log.Debugf("executing %s scheduled step \"%s\" to run \"%s\"", entProvisioningScheduledStep.Type, entScheduledStep.HclID, entScheduledStep.Step)
+	logger.Log.Debugf("executing %s scheduled step \"%s\" to run \"%s\"", entProvisioningScheduledStep.Type, entScheduledStep.HCLID, entScheduledStep.Step)
 
 	entProvisionedHost, err := entProvisioningScheduledStep.ProvisionedHost(ctx)
 	if err != nil {

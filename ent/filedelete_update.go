@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 	"github.com/gen0cide/laforge/ent/environment"
 	"github.com/gen0cide/laforge/ent/filedelete"
@@ -29,9 +30,9 @@ func (fdu *FileDeleteUpdate) Where(ps ...predicate.FileDelete) *FileDeleteUpdate
 	return fdu
 }
 
-// SetHclID sets the "hcl_id" field.
-func (fdu *FileDeleteUpdate) SetHclID(s string) *FileDeleteUpdate {
-	fdu.mutation.SetHclID(s)
+// SetHCLID sets the "hcl_id" field.
+func (fdu *FileDeleteUpdate) SetHCLID(s string) *FileDeleteUpdate {
+	fdu.mutation.SetHCLID(s)
 	return fdu
 }
 
@@ -50,6 +51,12 @@ func (fdu *FileDeleteUpdate) SetTags(m map[string]string) *FileDeleteUpdate {
 // SetValidations sets the "validations" field.
 func (fdu *FileDeleteUpdate) SetValidations(s []string) *FileDeleteUpdate {
 	fdu.mutation.SetValidations(s)
+	return fdu
+}
+
+// AppendValidations appends s to the "validations" field.
+func (fdu *FileDeleteUpdate) AppendValidations(s []string) *FileDeleteUpdate {
+	fdu.mutation.AppendValidations(s)
 	return fdu
 }
 
@@ -85,34 +92,7 @@ func (fdu *FileDeleteUpdate) ClearEnvironment() *FileDeleteUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (fdu *FileDeleteUpdate) Save(ctx context.Context) (int, error) {
-	var (
-		err      error
-		affected int
-	)
-	if len(fdu.hooks) == 0 {
-		affected, err = fdu.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*FileDeleteMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			fdu.mutation = mutation
-			affected, err = fdu.sqlSave(ctx)
-			mutation.done = true
-			return affected, err
-		})
-		for i := len(fdu.hooks) - 1; i >= 0; i-- {
-			if fdu.hooks[i] == nil {
-				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = fdu.hooks[i](mut)
-		}
-		if _, err := mut.Mutate(ctx, fdu.mutation); err != nil {
-			return 0, err
-		}
-	}
-	return affected, err
+	return withHooks(ctx, fdu.sqlSave, fdu.mutation, fdu.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -138,16 +118,7 @@ func (fdu *FileDeleteUpdate) ExecX(ctx context.Context) {
 }
 
 func (fdu *FileDeleteUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   filedelete.Table,
-			Columns: filedelete.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: filedelete.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewUpdateSpec(filedelete.Table, filedelete.Columns, sqlgraph.NewFieldSpec(filedelete.FieldID, field.TypeUUID))
 	if ps := fdu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -155,32 +126,21 @@ func (fdu *FileDeleteUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := fdu.mutation.HclID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: filedelete.FieldHclID,
-		})
+	if value, ok := fdu.mutation.HCLID(); ok {
+		_spec.SetField(filedelete.FieldHCLID, field.TypeString, value)
 	}
 	if value, ok := fdu.mutation.Path(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: filedelete.FieldPath,
-		})
+		_spec.SetField(filedelete.FieldPath, field.TypeString, value)
 	}
 	if value, ok := fdu.mutation.Tags(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: filedelete.FieldTags,
-		})
+		_spec.SetField(filedelete.FieldTags, field.TypeJSON, value)
 	}
 	if value, ok := fdu.mutation.Validations(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: filedelete.FieldValidations,
+		_spec.SetField(filedelete.FieldValidations, field.TypeJSON, value)
+	}
+	if value, ok := fdu.mutation.AppendedValidations(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, filedelete.FieldValidations, value)
 		})
 	}
 	if fdu.mutation.EnvironmentCleared() {
@@ -191,10 +151,7 @@ func (fdu *FileDeleteUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{filedelete.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -207,10 +164,7 @@ func (fdu *FileDeleteUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{filedelete.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -226,6 +180,7 @@ func (fdu *FileDeleteUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		return 0, err
 	}
+	fdu.mutation.done = true
 	return n, nil
 }
 
@@ -237,9 +192,9 @@ type FileDeleteUpdateOne struct {
 	mutation *FileDeleteMutation
 }
 
-// SetHclID sets the "hcl_id" field.
-func (fduo *FileDeleteUpdateOne) SetHclID(s string) *FileDeleteUpdateOne {
-	fduo.mutation.SetHclID(s)
+// SetHCLID sets the "hcl_id" field.
+func (fduo *FileDeleteUpdateOne) SetHCLID(s string) *FileDeleteUpdateOne {
+	fduo.mutation.SetHCLID(s)
 	return fduo
 }
 
@@ -258,6 +213,12 @@ func (fduo *FileDeleteUpdateOne) SetTags(m map[string]string) *FileDeleteUpdateO
 // SetValidations sets the "validations" field.
 func (fduo *FileDeleteUpdateOne) SetValidations(s []string) *FileDeleteUpdateOne {
 	fduo.mutation.SetValidations(s)
+	return fduo
+}
+
+// AppendValidations appends s to the "validations" field.
+func (fduo *FileDeleteUpdateOne) AppendValidations(s []string) *FileDeleteUpdateOne {
+	fduo.mutation.AppendValidations(s)
 	return fduo
 }
 
@@ -291,6 +252,12 @@ func (fduo *FileDeleteUpdateOne) ClearEnvironment() *FileDeleteUpdateOne {
 	return fduo
 }
 
+// Where appends a list predicates to the FileDeleteUpdate builder.
+func (fduo *FileDeleteUpdateOne) Where(ps ...predicate.FileDelete) *FileDeleteUpdateOne {
+	fduo.mutation.Where(ps...)
+	return fduo
+}
+
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
 func (fduo *FileDeleteUpdateOne) Select(field string, fields ...string) *FileDeleteUpdateOne {
@@ -300,40 +267,7 @@ func (fduo *FileDeleteUpdateOne) Select(field string, fields ...string) *FileDel
 
 // Save executes the query and returns the updated FileDelete entity.
 func (fduo *FileDeleteUpdateOne) Save(ctx context.Context) (*FileDelete, error) {
-	var (
-		err  error
-		node *FileDelete
-	)
-	if len(fduo.hooks) == 0 {
-		node, err = fduo.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*FileDeleteMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			fduo.mutation = mutation
-			node, err = fduo.sqlSave(ctx)
-			mutation.done = true
-			return node, err
-		})
-		for i := len(fduo.hooks) - 1; i >= 0; i-- {
-			if fduo.hooks[i] == nil {
-				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = fduo.hooks[i](mut)
-		}
-		v, err := mut.Mutate(ctx, fduo.mutation)
-		if err != nil {
-			return nil, err
-		}
-		nv, ok := v.(*FileDelete)
-		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from FileDeleteMutation", v)
-		}
-		node = nv
-	}
-	return node, err
+	return withHooks(ctx, fduo.sqlSave, fduo.mutation, fduo.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -359,16 +293,7 @@ func (fduo *FileDeleteUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (fduo *FileDeleteUpdateOne) sqlSave(ctx context.Context) (_node *FileDelete, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   filedelete.Table,
-			Columns: filedelete.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: filedelete.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewUpdateSpec(filedelete.Table, filedelete.Columns, sqlgraph.NewFieldSpec(filedelete.FieldID, field.TypeUUID))
 	id, ok := fduo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "FileDelete.id" for update`)}
@@ -393,32 +318,21 @@ func (fduo *FileDeleteUpdateOne) sqlSave(ctx context.Context) (_node *FileDelete
 			}
 		}
 	}
-	if value, ok := fduo.mutation.HclID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: filedelete.FieldHclID,
-		})
+	if value, ok := fduo.mutation.HCLID(); ok {
+		_spec.SetField(filedelete.FieldHCLID, field.TypeString, value)
 	}
 	if value, ok := fduo.mutation.Path(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: filedelete.FieldPath,
-		})
+		_spec.SetField(filedelete.FieldPath, field.TypeString, value)
 	}
 	if value, ok := fduo.mutation.Tags(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: filedelete.FieldTags,
-		})
+		_spec.SetField(filedelete.FieldTags, field.TypeJSON, value)
 	}
 	if value, ok := fduo.mutation.Validations(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: filedelete.FieldValidations,
+		_spec.SetField(filedelete.FieldValidations, field.TypeJSON, value)
+	}
+	if value, ok := fduo.mutation.AppendedValidations(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, filedelete.FieldValidations, value)
 		})
 	}
 	if fduo.mutation.EnvironmentCleared() {
@@ -429,10 +343,7 @@ func (fduo *FileDeleteUpdateOne) sqlSave(ctx context.Context) (_node *FileDelete
 			Columns: []string{filedelete.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -445,10 +356,7 @@ func (fduo *FileDeleteUpdateOne) sqlSave(ctx context.Context) (_node *FileDelete
 			Columns: []string{filedelete.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -467,5 +375,6 @@ func (fduo *FileDeleteUpdateOne) sqlSave(ctx context.Context) (_node *FileDelete
 		}
 		return nil, err
 	}
+	fduo.mutation.done = true
 	return _node, nil
 }

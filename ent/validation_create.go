@@ -22,9 +22,9 @@ type ValidationCreate struct {
 	hooks    []Hook
 }
 
-// SetHclID sets the "hcl_id" field.
-func (vc *ValidationCreate) SetHclID(s string) *ValidationCreate {
-	vc.mutation.SetHclID(s)
+// SetHCLID sets the "hcl_id" field.
+func (vc *ValidationCreate) SetHCLID(s string) *ValidationCreate {
+	vc.mutation.SetHCLID(s)
 	return vc
 }
 
@@ -305,50 +305,8 @@ func (vc *ValidationCreate) Mutation() *ValidationMutation {
 
 // Save creates the Validation in the database.
 func (vc *ValidationCreate) Save(ctx context.Context) (*Validation, error) {
-	var (
-		err  error
-		node *Validation
-	)
 	vc.defaults()
-	if len(vc.hooks) == 0 {
-		if err = vc.check(); err != nil {
-			return nil, err
-		}
-		node, err = vc.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*ValidationMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = vc.check(); err != nil {
-				return nil, err
-			}
-			vc.mutation = mutation
-			if node, err = vc.sqlSave(ctx); err != nil {
-				return nil, err
-			}
-			mutation.id = &node.ID
-			mutation.done = true
-			return node, err
-		})
-		for i := len(vc.hooks) - 1; i >= 0; i-- {
-			if vc.hooks[i] == nil {
-				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = vc.hooks[i](mut)
-		}
-		v, err := mut.Mutate(ctx, vc.mutation)
-		if err != nil {
-			return nil, err
-		}
-		nv, ok := v.(*Validation)
-		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from ValidationMutation", v)
-		}
-		node = nv
-	}
-	return node, err
+	return withHooks(ctx, vc.sqlSave, vc.mutation, vc.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
@@ -387,7 +345,7 @@ func (vc *ValidationCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (vc *ValidationCreate) check() error {
-	if _, ok := vc.mutation.HclID(); !ok {
+	if _, ok := vc.mutation.HCLID(); !ok {
 		return &ValidationError{Name: "hcl_id", err: errors.New(`ent: missing required field "Validation.hcl_id"`)}
 	}
 	if _, ok := vc.mutation.ValidationType(); !ok {
@@ -410,6 +368,9 @@ func (vc *ValidationCreate) check() error {
 }
 
 func (vc *ValidationCreate) sqlSave(ctx context.Context) (*Validation, error) {
+	if err := vc.check(); err != nil {
+		return nil, err
+	}
 	_node, _spec := vc.createSpec()
 	if err := sqlgraph.CreateNode(ctx, vc.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
@@ -424,166 +385,90 @@ func (vc *ValidationCreate) sqlSave(ctx context.Context) (*Validation, error) {
 			return nil, err
 		}
 	}
+	vc.mutation.id = &_node.ID
+	vc.mutation.done = true
 	return _node, nil
 }
 
 func (vc *ValidationCreate) createSpec() (*Validation, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Validation{config: vc.config}
-		_spec = &sqlgraph.CreateSpec{
-			Table: validation.Table,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: validation.FieldID,
-			},
-		}
+		_spec = sqlgraph.NewCreateSpec(validation.Table, sqlgraph.NewFieldSpec(validation.FieldID, field.TypeUUID))
 	)
 	if id, ok := vc.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
-	if value, ok := vc.mutation.HclID(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldHclID,
-		})
-		_node.HclID = value
+	if value, ok := vc.mutation.HCLID(); ok {
+		_spec.SetField(validation.FieldHCLID, field.TypeString, value)
+		_node.HCLID = value
 	}
 	if value, ok := vc.mutation.ValidationType(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeEnum,
-			Value:  value,
-			Column: validation.FieldValidationType,
-		})
+		_spec.SetField(validation.FieldValidationType, field.TypeEnum, value)
 		_node.ValidationType = value
 	}
 	if value, ok := vc.mutation.Hash(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldHash,
-		})
+		_spec.SetField(validation.FieldHash, field.TypeString, value)
 		_node.Hash = value
 	}
 	if value, ok := vc.mutation.Regex(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldRegex,
-		})
+		_spec.SetField(validation.FieldRegex, field.TypeString, value)
 		_node.Regex = value
 	}
 	if value, ok := vc.mutation.IP(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldIP,
-		})
+		_spec.SetField(validation.FieldIP, field.TypeString, value)
 		_node.IP = value
 	}
 	if value, ok := vc.mutation.URL(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldURL,
-		})
+		_spec.SetField(validation.FieldURL, field.TypeString, value)
 		_node.URL = value
 	}
 	if value, ok := vc.mutation.Port(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: validation.FieldPort,
-		})
+		_spec.SetField(validation.FieldPort, field.TypeInt, value)
 		_node.Port = value
 	}
 	if value, ok := vc.mutation.Hostname(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldHostname,
-		})
+		_spec.SetField(validation.FieldHostname, field.TypeString, value)
 		_node.Hostname = value
 	}
 	if value, ok := vc.mutation.Nameservers(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: validation.FieldNameservers,
-		})
+		_spec.SetField(validation.FieldNameservers, field.TypeJSON, value)
 		_node.Nameservers = value
 	}
 	if value, ok := vc.mutation.PackageName(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldPackageName,
-		})
+		_spec.SetField(validation.FieldPackageName, field.TypeString, value)
 		_node.PackageName = value
 	}
 	if value, ok := vc.mutation.Username(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldUsername,
-		})
+		_spec.SetField(validation.FieldUsername, field.TypeString, value)
 		_node.Username = value
 	}
 	if value, ok := vc.mutation.GroupName(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldGroupName,
-		})
+		_spec.SetField(validation.FieldGroupName, field.TypeString, value)
 		_node.GroupName = value
 	}
 	if value, ok := vc.mutation.FilePath(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldFilePath,
-		})
+		_spec.SetField(validation.FieldFilePath, field.TypeString, value)
 		_node.FilePath = value
 	}
 	if value, ok := vc.mutation.SearchString(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldSearchString,
-		})
+		_spec.SetField(validation.FieldSearchString, field.TypeString, value)
 		_node.SearchString = value
 	}
 	if value, ok := vc.mutation.ServiceName(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldServiceName,
-		})
+		_spec.SetField(validation.FieldServiceName, field.TypeString, value)
 		_node.ServiceName = value
 	}
 	if value, ok := vc.mutation.FilePermission(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldFilePermission,
-		})
+		_spec.SetField(validation.FieldFilePermission, field.TypeString, value)
 		_node.FilePermission = value
 	}
 	if value, ok := vc.mutation.ServiceStatus(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeEnum,
-			Value:  value,
-			Column: validation.FieldServiceStatus,
-		})
+		_spec.SetField(validation.FieldServiceStatus, field.TypeEnum, value)
 		_node.ServiceStatus = value
 	}
 	if value, ok := vc.mutation.ProcessName(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldProcessName,
-		})
+		_spec.SetField(validation.FieldProcessName, field.TypeString, value)
 		_node.ProcessName = value
 	}
 	if nodes := vc.mutation.UsersIDs(); len(nodes) > 0 {
@@ -594,10 +479,7 @@ func (vc *ValidationCreate) createSpec() (*Validation, *sqlgraph.CreateSpec) {
 			Columns: []string{validation.UsersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -613,10 +495,7 @@ func (vc *ValidationCreate) createSpec() (*Validation, *sqlgraph.CreateSpec) {
 			Columns: []string{validation.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -652,8 +531,8 @@ func (vcb *ValidationCreateBulk) Save(ctx context.Context) ([]*Validation, error
 					return nil, err
 				}
 				builder.mutation = mutation
-				nodes[i], specs[i] = builder.createSpec()
 				var err error
+				nodes[i], specs[i] = builder.createSpec()
 				if i < len(mutators)-1 {
 					_, err = mutators[i+1].Mutate(root, vcb.builders[i+1].mutation)
 				} else {

@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 	"github.com/gen0cide/laforge/ent/predicate"
 	"github.com/gen0cide/laforge/ent/repocommit"
@@ -85,6 +86,12 @@ func (rcu *RepoCommitUpdate) SetParentHashes(s []string) *RepoCommitUpdate {
 	return rcu
 }
 
+// AppendParentHashes appends s to the "parent_hashes" field.
+func (rcu *RepoCommitUpdate) AppendParentHashes(s []string) *RepoCommitUpdate {
+	rcu.mutation.AppendParentHashes(s)
+	return rcu
+}
+
 // SetRepositoryID sets the "Repository" edge to the Repository entity by ID.
 func (rcu *RepoCommitUpdate) SetRepositoryID(id uuid.UUID) *RepoCommitUpdate {
 	rcu.mutation.SetRepositoryID(id)
@@ -117,34 +124,7 @@ func (rcu *RepoCommitUpdate) ClearRepository() *RepoCommitUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (rcu *RepoCommitUpdate) Save(ctx context.Context) (int, error) {
-	var (
-		err      error
-		affected int
-	)
-	if len(rcu.hooks) == 0 {
-		affected, err = rcu.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*RepoCommitMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			rcu.mutation = mutation
-			affected, err = rcu.sqlSave(ctx)
-			mutation.done = true
-			return affected, err
-		})
-		for i := len(rcu.hooks) - 1; i >= 0; i-- {
-			if rcu.hooks[i] == nil {
-				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = rcu.hooks[i](mut)
-		}
-		if _, err := mut.Mutate(ctx, rcu.mutation); err != nil {
-			return 0, err
-		}
-	}
-	return affected, err
+	return withHooks(ctx, rcu.sqlSave, rcu.mutation, rcu.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -170,16 +150,7 @@ func (rcu *RepoCommitUpdate) ExecX(ctx context.Context) {
 }
 
 func (rcu *RepoCommitUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   repocommit.Table,
-			Columns: repocommit.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: repocommit.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewUpdateSpec(repocommit.Table, repocommit.Columns, sqlgraph.NewFieldSpec(repocommit.FieldID, field.TypeUUID))
 	if ps := rcu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -188,66 +159,35 @@ func (rcu *RepoCommitUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 	}
 	if value, ok := rcu.mutation.Revision(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: repocommit.FieldRevision,
-		})
+		_spec.SetField(repocommit.FieldRevision, field.TypeInt, value)
 	}
 	if value, ok := rcu.mutation.AddedRevision(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: repocommit.FieldRevision,
-		})
+		_spec.AddField(repocommit.FieldRevision, field.TypeInt, value)
 	}
 	if value, ok := rcu.mutation.Hash(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: repocommit.FieldHash,
-		})
+		_spec.SetField(repocommit.FieldHash, field.TypeString, value)
 	}
 	if value, ok := rcu.mutation.Author(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: repocommit.FieldAuthor,
-		})
+		_spec.SetField(repocommit.FieldAuthor, field.TypeJSON, value)
 	}
 	if value, ok := rcu.mutation.Committer(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: repocommit.FieldCommitter,
-		})
+		_spec.SetField(repocommit.FieldCommitter, field.TypeJSON, value)
 	}
 	if value, ok := rcu.mutation.PgpSignature(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: repocommit.FieldPgpSignature,
-		})
+		_spec.SetField(repocommit.FieldPgpSignature, field.TypeString, value)
 	}
 	if value, ok := rcu.mutation.Message(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: repocommit.FieldMessage,
-		})
+		_spec.SetField(repocommit.FieldMessage, field.TypeString, value)
 	}
 	if value, ok := rcu.mutation.TreeHash(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: repocommit.FieldTreeHash,
-		})
+		_spec.SetField(repocommit.FieldTreeHash, field.TypeString, value)
 	}
 	if value, ok := rcu.mutation.ParentHashes(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: repocommit.FieldParentHashes,
+		_spec.SetField(repocommit.FieldParentHashes, field.TypeJSON, value)
+	}
+	if value, ok := rcu.mutation.AppendedParentHashes(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, repocommit.FieldParentHashes, value)
 		})
 	}
 	if rcu.mutation.RepositoryCleared() {
@@ -258,10 +198,7 @@ func (rcu *RepoCommitUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{repocommit.RepositoryColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: repository.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(repository.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -274,10 +211,7 @@ func (rcu *RepoCommitUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{repocommit.RepositoryColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: repository.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(repository.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -293,6 +227,7 @@ func (rcu *RepoCommitUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		return 0, err
 	}
+	rcu.mutation.done = true
 	return n, nil
 }
 
@@ -359,6 +294,12 @@ func (rcuo *RepoCommitUpdateOne) SetParentHashes(s []string) *RepoCommitUpdateOn
 	return rcuo
 }
 
+// AppendParentHashes appends s to the "parent_hashes" field.
+func (rcuo *RepoCommitUpdateOne) AppendParentHashes(s []string) *RepoCommitUpdateOne {
+	rcuo.mutation.AppendParentHashes(s)
+	return rcuo
+}
+
 // SetRepositoryID sets the "Repository" edge to the Repository entity by ID.
 func (rcuo *RepoCommitUpdateOne) SetRepositoryID(id uuid.UUID) *RepoCommitUpdateOne {
 	rcuo.mutation.SetRepositoryID(id)
@@ -389,6 +330,12 @@ func (rcuo *RepoCommitUpdateOne) ClearRepository() *RepoCommitUpdateOne {
 	return rcuo
 }
 
+// Where appends a list predicates to the RepoCommitUpdate builder.
+func (rcuo *RepoCommitUpdateOne) Where(ps ...predicate.RepoCommit) *RepoCommitUpdateOne {
+	rcuo.mutation.Where(ps...)
+	return rcuo
+}
+
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
 func (rcuo *RepoCommitUpdateOne) Select(field string, fields ...string) *RepoCommitUpdateOne {
@@ -398,40 +345,7 @@ func (rcuo *RepoCommitUpdateOne) Select(field string, fields ...string) *RepoCom
 
 // Save executes the query and returns the updated RepoCommit entity.
 func (rcuo *RepoCommitUpdateOne) Save(ctx context.Context) (*RepoCommit, error) {
-	var (
-		err  error
-		node *RepoCommit
-	)
-	if len(rcuo.hooks) == 0 {
-		node, err = rcuo.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*RepoCommitMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			rcuo.mutation = mutation
-			node, err = rcuo.sqlSave(ctx)
-			mutation.done = true
-			return node, err
-		})
-		for i := len(rcuo.hooks) - 1; i >= 0; i-- {
-			if rcuo.hooks[i] == nil {
-				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = rcuo.hooks[i](mut)
-		}
-		v, err := mut.Mutate(ctx, rcuo.mutation)
-		if err != nil {
-			return nil, err
-		}
-		nv, ok := v.(*RepoCommit)
-		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from RepoCommitMutation", v)
-		}
-		node = nv
-	}
-	return node, err
+	return withHooks(ctx, rcuo.sqlSave, rcuo.mutation, rcuo.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -457,16 +371,7 @@ func (rcuo *RepoCommitUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (rcuo *RepoCommitUpdateOne) sqlSave(ctx context.Context) (_node *RepoCommit, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   repocommit.Table,
-			Columns: repocommit.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: repocommit.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewUpdateSpec(repocommit.Table, repocommit.Columns, sqlgraph.NewFieldSpec(repocommit.FieldID, field.TypeUUID))
 	id, ok := rcuo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "RepoCommit.id" for update`)}
@@ -492,66 +397,35 @@ func (rcuo *RepoCommitUpdateOne) sqlSave(ctx context.Context) (_node *RepoCommit
 		}
 	}
 	if value, ok := rcuo.mutation.Revision(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: repocommit.FieldRevision,
-		})
+		_spec.SetField(repocommit.FieldRevision, field.TypeInt, value)
 	}
 	if value, ok := rcuo.mutation.AddedRevision(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: repocommit.FieldRevision,
-		})
+		_spec.AddField(repocommit.FieldRevision, field.TypeInt, value)
 	}
 	if value, ok := rcuo.mutation.Hash(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: repocommit.FieldHash,
-		})
+		_spec.SetField(repocommit.FieldHash, field.TypeString, value)
 	}
 	if value, ok := rcuo.mutation.Author(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: repocommit.FieldAuthor,
-		})
+		_spec.SetField(repocommit.FieldAuthor, field.TypeJSON, value)
 	}
 	if value, ok := rcuo.mutation.Committer(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: repocommit.FieldCommitter,
-		})
+		_spec.SetField(repocommit.FieldCommitter, field.TypeJSON, value)
 	}
 	if value, ok := rcuo.mutation.PgpSignature(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: repocommit.FieldPgpSignature,
-		})
+		_spec.SetField(repocommit.FieldPgpSignature, field.TypeString, value)
 	}
 	if value, ok := rcuo.mutation.Message(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: repocommit.FieldMessage,
-		})
+		_spec.SetField(repocommit.FieldMessage, field.TypeString, value)
 	}
 	if value, ok := rcuo.mutation.TreeHash(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: repocommit.FieldTreeHash,
-		})
+		_spec.SetField(repocommit.FieldTreeHash, field.TypeString, value)
 	}
 	if value, ok := rcuo.mutation.ParentHashes(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: repocommit.FieldParentHashes,
+		_spec.SetField(repocommit.FieldParentHashes, field.TypeJSON, value)
+	}
+	if value, ok := rcuo.mutation.AppendedParentHashes(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, repocommit.FieldParentHashes, value)
 		})
 	}
 	if rcuo.mutation.RepositoryCleared() {
@@ -562,10 +436,7 @@ func (rcuo *RepoCommitUpdateOne) sqlSave(ctx context.Context) (_node *RepoCommit
 			Columns: []string{repocommit.RepositoryColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: repository.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(repository.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -578,10 +449,7 @@ func (rcuo *RepoCommitUpdateOne) sqlSave(ctx context.Context) (_node *RepoCommit
 			Columns: []string{repocommit.RepositoryColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: repository.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(repository.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -600,5 +468,6 @@ func (rcuo *RepoCommitUpdateOne) sqlSave(ctx context.Context) (_node *RepoCommit
 		}
 		return nil, err
 	}
+	rcuo.mutation.done = true
 	return _node, nil
 }

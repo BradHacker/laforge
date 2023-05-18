@@ -11,1910 +11,1262 @@ import (
 
 // ID filters vertices based on their ID field.
 func ID(id uuid.UUID) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldID), id))
-	})
+	return predicate.Validation(sql.FieldEQ(FieldID, id))
 }
 
 // IDEQ applies the EQ predicate on the ID field.
 func IDEQ(id uuid.UUID) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldID), id))
-	})
+	return predicate.Validation(sql.FieldEQ(FieldID, id))
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
 func IDNEQ(id uuid.UUID) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldID), id))
-	})
+	return predicate.Validation(sql.FieldNEQ(FieldID, id))
 }
 
 // IDIn applies the In predicate on the ID field.
 func IDIn(ids ...uuid.UUID) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		v := make([]interface{}, len(ids))
-		for i := range v {
-			v[i] = ids[i]
-		}
-		s.Where(sql.In(s.C(FieldID), v...))
-	})
+	return predicate.Validation(sql.FieldIn(FieldID, ids...))
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
 func IDNotIn(ids ...uuid.UUID) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		v := make([]interface{}, len(ids))
-		for i := range v {
-			v[i] = ids[i]
-		}
-		s.Where(sql.NotIn(s.C(FieldID), v...))
-	})
+	return predicate.Validation(sql.FieldNotIn(FieldID, ids...))
 }
 
 // IDGT applies the GT predicate on the ID field.
 func IDGT(id uuid.UUID) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldID), id))
-	})
+	return predicate.Validation(sql.FieldGT(FieldID, id))
 }
 
 // IDGTE applies the GTE predicate on the ID field.
 func IDGTE(id uuid.UUID) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldID), id))
-	})
+	return predicate.Validation(sql.FieldGTE(FieldID, id))
 }
 
 // IDLT applies the LT predicate on the ID field.
 func IDLT(id uuid.UUID) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldID), id))
-	})
+	return predicate.Validation(sql.FieldLT(FieldID, id))
 }
 
 // IDLTE applies the LTE predicate on the ID field.
 func IDLTE(id uuid.UUID) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldID), id))
-	})
+	return predicate.Validation(sql.FieldLTE(FieldID, id))
 }
 
-// HclID applies equality check predicate on the "hcl_id" field. It's identical to HclIDEQ.
-func HclID(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldHclID), v))
-	})
+// HCLID applies equality check predicate on the "hcl_id" field. It's identical to HCLIDEQ.
+func HCLID(v string) predicate.Validation {
+	return predicate.Validation(sql.FieldEQ(FieldHCLID, v))
 }
 
 // Hash applies equality check predicate on the "hash" field. It's identical to HashEQ.
 func Hash(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldHash), v))
-	})
+	return predicate.Validation(sql.FieldEQ(FieldHash, v))
 }
 
 // Regex applies equality check predicate on the "regex" field. It's identical to RegexEQ.
 func Regex(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldRegex), v))
-	})
+	return predicate.Validation(sql.FieldEQ(FieldRegex, v))
 }
 
 // IP applies equality check predicate on the "ip" field. It's identical to IPEQ.
 func IP(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldIP), v))
-	})
+	return predicate.Validation(sql.FieldEQ(FieldIP, v))
 }
 
 // URL applies equality check predicate on the "url" field. It's identical to URLEQ.
 func URL(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldURL), v))
-	})
+	return predicate.Validation(sql.FieldEQ(FieldURL, v))
 }
 
 // Port applies equality check predicate on the "port" field. It's identical to PortEQ.
 func Port(v int) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldPort), v))
-	})
+	return predicate.Validation(sql.FieldEQ(FieldPort, v))
 }
 
 // Hostname applies equality check predicate on the "hostname" field. It's identical to HostnameEQ.
 func Hostname(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldHostname), v))
-	})
+	return predicate.Validation(sql.FieldEQ(FieldHostname, v))
 }
 
 // PackageName applies equality check predicate on the "package_name" field. It's identical to PackageNameEQ.
 func PackageName(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldPackageName), v))
-	})
+	return predicate.Validation(sql.FieldEQ(FieldPackageName, v))
 }
 
 // Username applies equality check predicate on the "username" field. It's identical to UsernameEQ.
 func Username(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldUsername), v))
-	})
+	return predicate.Validation(sql.FieldEQ(FieldUsername, v))
 }
 
 // GroupName applies equality check predicate on the "group_name" field. It's identical to GroupNameEQ.
 func GroupName(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldGroupName), v))
-	})
+	return predicate.Validation(sql.FieldEQ(FieldGroupName, v))
 }
 
 // FilePath applies equality check predicate on the "file_path" field. It's identical to FilePathEQ.
 func FilePath(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldFilePath), v))
-	})
+	return predicate.Validation(sql.FieldEQ(FieldFilePath, v))
 }
 
 // SearchString applies equality check predicate on the "search_string" field. It's identical to SearchStringEQ.
 func SearchString(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldSearchString), v))
-	})
+	return predicate.Validation(sql.FieldEQ(FieldSearchString, v))
 }
 
 // ServiceName applies equality check predicate on the "service_name" field. It's identical to ServiceNameEQ.
 func ServiceName(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldServiceName), v))
-	})
+	return predicate.Validation(sql.FieldEQ(FieldServiceName, v))
 }
 
 // FilePermission applies equality check predicate on the "file_permission" field. It's identical to FilePermissionEQ.
 func FilePermission(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldFilePermission), v))
-	})
+	return predicate.Validation(sql.FieldEQ(FieldFilePermission, v))
 }
 
 // ProcessName applies equality check predicate on the "process_name" field. It's identical to ProcessNameEQ.
 func ProcessName(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldProcessName), v))
-	})
+	return predicate.Validation(sql.FieldEQ(FieldProcessName, v))
 }
 
-// HclIDEQ applies the EQ predicate on the "hcl_id" field.
-func HclIDEQ(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldHclID), v))
-	})
+// HCLIDEQ applies the EQ predicate on the "hcl_id" field.
+func HCLIDEQ(v string) predicate.Validation {
+	return predicate.Validation(sql.FieldEQ(FieldHCLID, v))
 }
 
-// HclIDNEQ applies the NEQ predicate on the "hcl_id" field.
-func HclIDNEQ(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldHclID), v))
-	})
+// HCLIDNEQ applies the NEQ predicate on the "hcl_id" field.
+func HCLIDNEQ(v string) predicate.Validation {
+	return predicate.Validation(sql.FieldNEQ(FieldHCLID, v))
 }
 
-// HclIDIn applies the In predicate on the "hcl_id" field.
-func HclIDIn(vs ...string) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldHclID), v...))
-	})
+// HCLIDIn applies the In predicate on the "hcl_id" field.
+func HCLIDIn(vs ...string) predicate.Validation {
+	return predicate.Validation(sql.FieldIn(FieldHCLID, vs...))
 }
 
-// HclIDNotIn applies the NotIn predicate on the "hcl_id" field.
-func HclIDNotIn(vs ...string) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldHclID), v...))
-	})
+// HCLIDNotIn applies the NotIn predicate on the "hcl_id" field.
+func HCLIDNotIn(vs ...string) predicate.Validation {
+	return predicate.Validation(sql.FieldNotIn(FieldHCLID, vs...))
 }
 
-// HclIDGT applies the GT predicate on the "hcl_id" field.
-func HclIDGT(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldHclID), v))
-	})
+// HCLIDGT applies the GT predicate on the "hcl_id" field.
+func HCLIDGT(v string) predicate.Validation {
+	return predicate.Validation(sql.FieldGT(FieldHCLID, v))
 }
 
-// HclIDGTE applies the GTE predicate on the "hcl_id" field.
-func HclIDGTE(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldHclID), v))
-	})
+// HCLIDGTE applies the GTE predicate on the "hcl_id" field.
+func HCLIDGTE(v string) predicate.Validation {
+	return predicate.Validation(sql.FieldGTE(FieldHCLID, v))
 }
 
-// HclIDLT applies the LT predicate on the "hcl_id" field.
-func HclIDLT(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldHclID), v))
-	})
+// HCLIDLT applies the LT predicate on the "hcl_id" field.
+func HCLIDLT(v string) predicate.Validation {
+	return predicate.Validation(sql.FieldLT(FieldHCLID, v))
 }
 
-// HclIDLTE applies the LTE predicate on the "hcl_id" field.
-func HclIDLTE(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldHclID), v))
-	})
+// HCLIDLTE applies the LTE predicate on the "hcl_id" field.
+func HCLIDLTE(v string) predicate.Validation {
+	return predicate.Validation(sql.FieldLTE(FieldHCLID, v))
 }
 
-// HclIDContains applies the Contains predicate on the "hcl_id" field.
-func HclIDContains(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldHclID), v))
-	})
+// HCLIDContains applies the Contains predicate on the "hcl_id" field.
+func HCLIDContains(v string) predicate.Validation {
+	return predicate.Validation(sql.FieldContains(FieldHCLID, v))
 }
 
-// HclIDHasPrefix applies the HasPrefix predicate on the "hcl_id" field.
-func HclIDHasPrefix(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldHclID), v))
-	})
+// HCLIDHasPrefix applies the HasPrefix predicate on the "hcl_id" field.
+func HCLIDHasPrefix(v string) predicate.Validation {
+	return predicate.Validation(sql.FieldHasPrefix(FieldHCLID, v))
 }
 
-// HclIDHasSuffix applies the HasSuffix predicate on the "hcl_id" field.
-func HclIDHasSuffix(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldHclID), v))
-	})
+// HCLIDHasSuffix applies the HasSuffix predicate on the "hcl_id" field.
+func HCLIDHasSuffix(v string) predicate.Validation {
+	return predicate.Validation(sql.FieldHasSuffix(FieldHCLID, v))
 }
 
-// HclIDEqualFold applies the EqualFold predicate on the "hcl_id" field.
-func HclIDEqualFold(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldHclID), v))
-	})
+// HCLIDEqualFold applies the EqualFold predicate on the "hcl_id" field.
+func HCLIDEqualFold(v string) predicate.Validation {
+	return predicate.Validation(sql.FieldEqualFold(FieldHCLID, v))
 }
 
-// HclIDContainsFold applies the ContainsFold predicate on the "hcl_id" field.
-func HclIDContainsFold(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldHclID), v))
-	})
+// HCLIDContainsFold applies the ContainsFold predicate on the "hcl_id" field.
+func HCLIDContainsFold(v string) predicate.Validation {
+	return predicate.Validation(sql.FieldContainsFold(FieldHCLID, v))
 }
 
 // ValidationTypeEQ applies the EQ predicate on the "validation_type" field.
 func ValidationTypeEQ(v ValidationType) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldValidationType), v))
-	})
+	return predicate.Validation(sql.FieldEQ(FieldValidationType, v))
 }
 
 // ValidationTypeNEQ applies the NEQ predicate on the "validation_type" field.
 func ValidationTypeNEQ(v ValidationType) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldValidationType), v))
-	})
+	return predicate.Validation(sql.FieldNEQ(FieldValidationType, v))
 }
 
 // ValidationTypeIn applies the In predicate on the "validation_type" field.
 func ValidationTypeIn(vs ...ValidationType) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldValidationType), v...))
-	})
+	return predicate.Validation(sql.FieldIn(FieldValidationType, vs...))
 }
 
 // ValidationTypeNotIn applies the NotIn predicate on the "validation_type" field.
 func ValidationTypeNotIn(vs ...ValidationType) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldValidationType), v...))
-	})
+	return predicate.Validation(sql.FieldNotIn(FieldValidationType, vs...))
 }
 
 // HashEQ applies the EQ predicate on the "hash" field.
 func HashEQ(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldHash), v))
-	})
+	return predicate.Validation(sql.FieldEQ(FieldHash, v))
 }
 
 // HashNEQ applies the NEQ predicate on the "hash" field.
 func HashNEQ(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldHash), v))
-	})
+	return predicate.Validation(sql.FieldNEQ(FieldHash, v))
 }
 
 // HashIn applies the In predicate on the "hash" field.
 func HashIn(vs ...string) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldHash), v...))
-	})
+	return predicate.Validation(sql.FieldIn(FieldHash, vs...))
 }
 
 // HashNotIn applies the NotIn predicate on the "hash" field.
 func HashNotIn(vs ...string) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldHash), v...))
-	})
+	return predicate.Validation(sql.FieldNotIn(FieldHash, vs...))
 }
 
 // HashGT applies the GT predicate on the "hash" field.
 func HashGT(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldHash), v))
-	})
+	return predicate.Validation(sql.FieldGT(FieldHash, v))
 }
 
 // HashGTE applies the GTE predicate on the "hash" field.
 func HashGTE(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldHash), v))
-	})
+	return predicate.Validation(sql.FieldGTE(FieldHash, v))
 }
 
 // HashLT applies the LT predicate on the "hash" field.
 func HashLT(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldHash), v))
-	})
+	return predicate.Validation(sql.FieldLT(FieldHash, v))
 }
 
 // HashLTE applies the LTE predicate on the "hash" field.
 func HashLTE(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldHash), v))
-	})
+	return predicate.Validation(sql.FieldLTE(FieldHash, v))
 }
 
 // HashContains applies the Contains predicate on the "hash" field.
 func HashContains(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldHash), v))
-	})
+	return predicate.Validation(sql.FieldContains(FieldHash, v))
 }
 
 // HashHasPrefix applies the HasPrefix predicate on the "hash" field.
 func HashHasPrefix(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldHash), v))
-	})
+	return predicate.Validation(sql.FieldHasPrefix(FieldHash, v))
 }
 
 // HashHasSuffix applies the HasSuffix predicate on the "hash" field.
 func HashHasSuffix(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldHash), v))
-	})
+	return predicate.Validation(sql.FieldHasSuffix(FieldHash, v))
 }
 
 // HashIsNil applies the IsNil predicate on the "hash" field.
 func HashIsNil() predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.IsNull(s.C(FieldHash)))
-	})
+	return predicate.Validation(sql.FieldIsNull(FieldHash))
 }
 
 // HashNotNil applies the NotNil predicate on the "hash" field.
 func HashNotNil() predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NotNull(s.C(FieldHash)))
-	})
+	return predicate.Validation(sql.FieldNotNull(FieldHash))
 }
 
 // HashEqualFold applies the EqualFold predicate on the "hash" field.
 func HashEqualFold(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldHash), v))
-	})
+	return predicate.Validation(sql.FieldEqualFold(FieldHash, v))
 }
 
 // HashContainsFold applies the ContainsFold predicate on the "hash" field.
 func HashContainsFold(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldHash), v))
-	})
+	return predicate.Validation(sql.FieldContainsFold(FieldHash, v))
 }
 
 // RegexEQ applies the EQ predicate on the "regex" field.
 func RegexEQ(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldRegex), v))
-	})
+	return predicate.Validation(sql.FieldEQ(FieldRegex, v))
 }
 
 // RegexNEQ applies the NEQ predicate on the "regex" field.
 func RegexNEQ(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldRegex), v))
-	})
+	return predicate.Validation(sql.FieldNEQ(FieldRegex, v))
 }
 
 // RegexIn applies the In predicate on the "regex" field.
 func RegexIn(vs ...string) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldRegex), v...))
-	})
+	return predicate.Validation(sql.FieldIn(FieldRegex, vs...))
 }
 
 // RegexNotIn applies the NotIn predicate on the "regex" field.
 func RegexNotIn(vs ...string) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldRegex), v...))
-	})
+	return predicate.Validation(sql.FieldNotIn(FieldRegex, vs...))
 }
 
 // RegexGT applies the GT predicate on the "regex" field.
 func RegexGT(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldRegex), v))
-	})
+	return predicate.Validation(sql.FieldGT(FieldRegex, v))
 }
 
 // RegexGTE applies the GTE predicate on the "regex" field.
 func RegexGTE(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldRegex), v))
-	})
+	return predicate.Validation(sql.FieldGTE(FieldRegex, v))
 }
 
 // RegexLT applies the LT predicate on the "regex" field.
 func RegexLT(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldRegex), v))
-	})
+	return predicate.Validation(sql.FieldLT(FieldRegex, v))
 }
 
 // RegexLTE applies the LTE predicate on the "regex" field.
 func RegexLTE(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldRegex), v))
-	})
+	return predicate.Validation(sql.FieldLTE(FieldRegex, v))
 }
 
 // RegexContains applies the Contains predicate on the "regex" field.
 func RegexContains(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldRegex), v))
-	})
+	return predicate.Validation(sql.FieldContains(FieldRegex, v))
 }
 
 // RegexHasPrefix applies the HasPrefix predicate on the "regex" field.
 func RegexHasPrefix(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldRegex), v))
-	})
+	return predicate.Validation(sql.FieldHasPrefix(FieldRegex, v))
 }
 
 // RegexHasSuffix applies the HasSuffix predicate on the "regex" field.
 func RegexHasSuffix(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldRegex), v))
-	})
+	return predicate.Validation(sql.FieldHasSuffix(FieldRegex, v))
 }
 
 // RegexIsNil applies the IsNil predicate on the "regex" field.
 func RegexIsNil() predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.IsNull(s.C(FieldRegex)))
-	})
+	return predicate.Validation(sql.FieldIsNull(FieldRegex))
 }
 
 // RegexNotNil applies the NotNil predicate on the "regex" field.
 func RegexNotNil() predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NotNull(s.C(FieldRegex)))
-	})
+	return predicate.Validation(sql.FieldNotNull(FieldRegex))
 }
 
 // RegexEqualFold applies the EqualFold predicate on the "regex" field.
 func RegexEqualFold(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldRegex), v))
-	})
+	return predicate.Validation(sql.FieldEqualFold(FieldRegex, v))
 }
 
 // RegexContainsFold applies the ContainsFold predicate on the "regex" field.
 func RegexContainsFold(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldRegex), v))
-	})
+	return predicate.Validation(sql.FieldContainsFold(FieldRegex, v))
 }
 
 // IPEQ applies the EQ predicate on the "ip" field.
 func IPEQ(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldIP), v))
-	})
+	return predicate.Validation(sql.FieldEQ(FieldIP, v))
 }
 
 // IPNEQ applies the NEQ predicate on the "ip" field.
 func IPNEQ(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldIP), v))
-	})
+	return predicate.Validation(sql.FieldNEQ(FieldIP, v))
 }
 
 // IPIn applies the In predicate on the "ip" field.
 func IPIn(vs ...string) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldIP), v...))
-	})
+	return predicate.Validation(sql.FieldIn(FieldIP, vs...))
 }
 
 // IPNotIn applies the NotIn predicate on the "ip" field.
 func IPNotIn(vs ...string) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldIP), v...))
-	})
+	return predicate.Validation(sql.FieldNotIn(FieldIP, vs...))
 }
 
 // IPGT applies the GT predicate on the "ip" field.
 func IPGT(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldIP), v))
-	})
+	return predicate.Validation(sql.FieldGT(FieldIP, v))
 }
 
 // IPGTE applies the GTE predicate on the "ip" field.
 func IPGTE(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldIP), v))
-	})
+	return predicate.Validation(sql.FieldGTE(FieldIP, v))
 }
 
 // IPLT applies the LT predicate on the "ip" field.
 func IPLT(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldIP), v))
-	})
+	return predicate.Validation(sql.FieldLT(FieldIP, v))
 }
 
 // IPLTE applies the LTE predicate on the "ip" field.
 func IPLTE(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldIP), v))
-	})
+	return predicate.Validation(sql.FieldLTE(FieldIP, v))
 }
 
 // IPContains applies the Contains predicate on the "ip" field.
 func IPContains(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldIP), v))
-	})
+	return predicate.Validation(sql.FieldContains(FieldIP, v))
 }
 
 // IPHasPrefix applies the HasPrefix predicate on the "ip" field.
 func IPHasPrefix(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldIP), v))
-	})
+	return predicate.Validation(sql.FieldHasPrefix(FieldIP, v))
 }
 
 // IPHasSuffix applies the HasSuffix predicate on the "ip" field.
 func IPHasSuffix(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldIP), v))
-	})
+	return predicate.Validation(sql.FieldHasSuffix(FieldIP, v))
 }
 
 // IPIsNil applies the IsNil predicate on the "ip" field.
 func IPIsNil() predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.IsNull(s.C(FieldIP)))
-	})
+	return predicate.Validation(sql.FieldIsNull(FieldIP))
 }
 
 // IPNotNil applies the NotNil predicate on the "ip" field.
 func IPNotNil() predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NotNull(s.C(FieldIP)))
-	})
+	return predicate.Validation(sql.FieldNotNull(FieldIP))
 }
 
 // IPEqualFold applies the EqualFold predicate on the "ip" field.
 func IPEqualFold(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldIP), v))
-	})
+	return predicate.Validation(sql.FieldEqualFold(FieldIP, v))
 }
 
 // IPContainsFold applies the ContainsFold predicate on the "ip" field.
 func IPContainsFold(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldIP), v))
-	})
+	return predicate.Validation(sql.FieldContainsFold(FieldIP, v))
 }
 
 // URLEQ applies the EQ predicate on the "url" field.
 func URLEQ(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldURL), v))
-	})
+	return predicate.Validation(sql.FieldEQ(FieldURL, v))
 }
 
 // URLNEQ applies the NEQ predicate on the "url" field.
 func URLNEQ(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldURL), v))
-	})
+	return predicate.Validation(sql.FieldNEQ(FieldURL, v))
 }
 
 // URLIn applies the In predicate on the "url" field.
 func URLIn(vs ...string) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldURL), v...))
-	})
+	return predicate.Validation(sql.FieldIn(FieldURL, vs...))
 }
 
 // URLNotIn applies the NotIn predicate on the "url" field.
 func URLNotIn(vs ...string) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldURL), v...))
-	})
+	return predicate.Validation(sql.FieldNotIn(FieldURL, vs...))
 }
 
 // URLGT applies the GT predicate on the "url" field.
 func URLGT(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldURL), v))
-	})
+	return predicate.Validation(sql.FieldGT(FieldURL, v))
 }
 
 // URLGTE applies the GTE predicate on the "url" field.
 func URLGTE(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldURL), v))
-	})
+	return predicate.Validation(sql.FieldGTE(FieldURL, v))
 }
 
 // URLLT applies the LT predicate on the "url" field.
 func URLLT(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldURL), v))
-	})
+	return predicate.Validation(sql.FieldLT(FieldURL, v))
 }
 
 // URLLTE applies the LTE predicate on the "url" field.
 func URLLTE(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldURL), v))
-	})
+	return predicate.Validation(sql.FieldLTE(FieldURL, v))
 }
 
 // URLContains applies the Contains predicate on the "url" field.
 func URLContains(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldURL), v))
-	})
+	return predicate.Validation(sql.FieldContains(FieldURL, v))
 }
 
 // URLHasPrefix applies the HasPrefix predicate on the "url" field.
 func URLHasPrefix(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldURL), v))
-	})
+	return predicate.Validation(sql.FieldHasPrefix(FieldURL, v))
 }
 
 // URLHasSuffix applies the HasSuffix predicate on the "url" field.
 func URLHasSuffix(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldURL), v))
-	})
+	return predicate.Validation(sql.FieldHasSuffix(FieldURL, v))
 }
 
 // URLIsNil applies the IsNil predicate on the "url" field.
 func URLIsNil() predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.IsNull(s.C(FieldURL)))
-	})
+	return predicate.Validation(sql.FieldIsNull(FieldURL))
 }
 
 // URLNotNil applies the NotNil predicate on the "url" field.
 func URLNotNil() predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NotNull(s.C(FieldURL)))
-	})
+	return predicate.Validation(sql.FieldNotNull(FieldURL))
 }
 
 // URLEqualFold applies the EqualFold predicate on the "url" field.
 func URLEqualFold(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldURL), v))
-	})
+	return predicate.Validation(sql.FieldEqualFold(FieldURL, v))
 }
 
 // URLContainsFold applies the ContainsFold predicate on the "url" field.
 func URLContainsFold(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldURL), v))
-	})
+	return predicate.Validation(sql.FieldContainsFold(FieldURL, v))
 }
 
 // PortEQ applies the EQ predicate on the "port" field.
 func PortEQ(v int) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldPort), v))
-	})
+	return predicate.Validation(sql.FieldEQ(FieldPort, v))
 }
 
 // PortNEQ applies the NEQ predicate on the "port" field.
 func PortNEQ(v int) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldPort), v))
-	})
+	return predicate.Validation(sql.FieldNEQ(FieldPort, v))
 }
 
 // PortIn applies the In predicate on the "port" field.
 func PortIn(vs ...int) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldPort), v...))
-	})
+	return predicate.Validation(sql.FieldIn(FieldPort, vs...))
 }
 
 // PortNotIn applies the NotIn predicate on the "port" field.
 func PortNotIn(vs ...int) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldPort), v...))
-	})
+	return predicate.Validation(sql.FieldNotIn(FieldPort, vs...))
 }
 
 // PortGT applies the GT predicate on the "port" field.
 func PortGT(v int) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldPort), v))
-	})
+	return predicate.Validation(sql.FieldGT(FieldPort, v))
 }
 
 // PortGTE applies the GTE predicate on the "port" field.
 func PortGTE(v int) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldPort), v))
-	})
+	return predicate.Validation(sql.FieldGTE(FieldPort, v))
 }
 
 // PortLT applies the LT predicate on the "port" field.
 func PortLT(v int) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldPort), v))
-	})
+	return predicate.Validation(sql.FieldLT(FieldPort, v))
 }
 
 // PortLTE applies the LTE predicate on the "port" field.
 func PortLTE(v int) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldPort), v))
-	})
+	return predicate.Validation(sql.FieldLTE(FieldPort, v))
 }
 
 // PortIsNil applies the IsNil predicate on the "port" field.
 func PortIsNil() predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.IsNull(s.C(FieldPort)))
-	})
+	return predicate.Validation(sql.FieldIsNull(FieldPort))
 }
 
 // PortNotNil applies the NotNil predicate on the "port" field.
 func PortNotNil() predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NotNull(s.C(FieldPort)))
-	})
+	return predicate.Validation(sql.FieldNotNull(FieldPort))
 }
 
 // HostnameEQ applies the EQ predicate on the "hostname" field.
 func HostnameEQ(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldHostname), v))
-	})
+	return predicate.Validation(sql.FieldEQ(FieldHostname, v))
 }
 
 // HostnameNEQ applies the NEQ predicate on the "hostname" field.
 func HostnameNEQ(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldHostname), v))
-	})
+	return predicate.Validation(sql.FieldNEQ(FieldHostname, v))
 }
 
 // HostnameIn applies the In predicate on the "hostname" field.
 func HostnameIn(vs ...string) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldHostname), v...))
-	})
+	return predicate.Validation(sql.FieldIn(FieldHostname, vs...))
 }
 
 // HostnameNotIn applies the NotIn predicate on the "hostname" field.
 func HostnameNotIn(vs ...string) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldHostname), v...))
-	})
+	return predicate.Validation(sql.FieldNotIn(FieldHostname, vs...))
 }
 
 // HostnameGT applies the GT predicate on the "hostname" field.
 func HostnameGT(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldHostname), v))
-	})
+	return predicate.Validation(sql.FieldGT(FieldHostname, v))
 }
 
 // HostnameGTE applies the GTE predicate on the "hostname" field.
 func HostnameGTE(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldHostname), v))
-	})
+	return predicate.Validation(sql.FieldGTE(FieldHostname, v))
 }
 
 // HostnameLT applies the LT predicate on the "hostname" field.
 func HostnameLT(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldHostname), v))
-	})
+	return predicate.Validation(sql.FieldLT(FieldHostname, v))
 }
 
 // HostnameLTE applies the LTE predicate on the "hostname" field.
 func HostnameLTE(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldHostname), v))
-	})
+	return predicate.Validation(sql.FieldLTE(FieldHostname, v))
 }
 
 // HostnameContains applies the Contains predicate on the "hostname" field.
 func HostnameContains(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldHostname), v))
-	})
+	return predicate.Validation(sql.FieldContains(FieldHostname, v))
 }
 
 // HostnameHasPrefix applies the HasPrefix predicate on the "hostname" field.
 func HostnameHasPrefix(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldHostname), v))
-	})
+	return predicate.Validation(sql.FieldHasPrefix(FieldHostname, v))
 }
 
 // HostnameHasSuffix applies the HasSuffix predicate on the "hostname" field.
 func HostnameHasSuffix(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldHostname), v))
-	})
+	return predicate.Validation(sql.FieldHasSuffix(FieldHostname, v))
 }
 
 // HostnameIsNil applies the IsNil predicate on the "hostname" field.
 func HostnameIsNil() predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.IsNull(s.C(FieldHostname)))
-	})
+	return predicate.Validation(sql.FieldIsNull(FieldHostname))
 }
 
 // HostnameNotNil applies the NotNil predicate on the "hostname" field.
 func HostnameNotNil() predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NotNull(s.C(FieldHostname)))
-	})
+	return predicate.Validation(sql.FieldNotNull(FieldHostname))
 }
 
 // HostnameEqualFold applies the EqualFold predicate on the "hostname" field.
 func HostnameEqualFold(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldHostname), v))
-	})
+	return predicate.Validation(sql.FieldEqualFold(FieldHostname, v))
 }
 
 // HostnameContainsFold applies the ContainsFold predicate on the "hostname" field.
 func HostnameContainsFold(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldHostname), v))
-	})
+	return predicate.Validation(sql.FieldContainsFold(FieldHostname, v))
 }
 
 // NameserversIsNil applies the IsNil predicate on the "nameservers" field.
 func NameserversIsNil() predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.IsNull(s.C(FieldNameservers)))
-	})
+	return predicate.Validation(sql.FieldIsNull(FieldNameservers))
 }
 
 // NameserversNotNil applies the NotNil predicate on the "nameservers" field.
 func NameserversNotNil() predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NotNull(s.C(FieldNameservers)))
-	})
+	return predicate.Validation(sql.FieldNotNull(FieldNameservers))
 }
 
 // PackageNameEQ applies the EQ predicate on the "package_name" field.
 func PackageNameEQ(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldPackageName), v))
-	})
+	return predicate.Validation(sql.FieldEQ(FieldPackageName, v))
 }
 
 // PackageNameNEQ applies the NEQ predicate on the "package_name" field.
 func PackageNameNEQ(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldPackageName), v))
-	})
+	return predicate.Validation(sql.FieldNEQ(FieldPackageName, v))
 }
 
 // PackageNameIn applies the In predicate on the "package_name" field.
 func PackageNameIn(vs ...string) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldPackageName), v...))
-	})
+	return predicate.Validation(sql.FieldIn(FieldPackageName, vs...))
 }
 
 // PackageNameNotIn applies the NotIn predicate on the "package_name" field.
 func PackageNameNotIn(vs ...string) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldPackageName), v...))
-	})
+	return predicate.Validation(sql.FieldNotIn(FieldPackageName, vs...))
 }
 
 // PackageNameGT applies the GT predicate on the "package_name" field.
 func PackageNameGT(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldPackageName), v))
-	})
+	return predicate.Validation(sql.FieldGT(FieldPackageName, v))
 }
 
 // PackageNameGTE applies the GTE predicate on the "package_name" field.
 func PackageNameGTE(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldPackageName), v))
-	})
+	return predicate.Validation(sql.FieldGTE(FieldPackageName, v))
 }
 
 // PackageNameLT applies the LT predicate on the "package_name" field.
 func PackageNameLT(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldPackageName), v))
-	})
+	return predicate.Validation(sql.FieldLT(FieldPackageName, v))
 }
 
 // PackageNameLTE applies the LTE predicate on the "package_name" field.
 func PackageNameLTE(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldPackageName), v))
-	})
+	return predicate.Validation(sql.FieldLTE(FieldPackageName, v))
 }
 
 // PackageNameContains applies the Contains predicate on the "package_name" field.
 func PackageNameContains(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldPackageName), v))
-	})
+	return predicate.Validation(sql.FieldContains(FieldPackageName, v))
 }
 
 // PackageNameHasPrefix applies the HasPrefix predicate on the "package_name" field.
 func PackageNameHasPrefix(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldPackageName), v))
-	})
+	return predicate.Validation(sql.FieldHasPrefix(FieldPackageName, v))
 }
 
 // PackageNameHasSuffix applies the HasSuffix predicate on the "package_name" field.
 func PackageNameHasSuffix(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldPackageName), v))
-	})
+	return predicate.Validation(sql.FieldHasSuffix(FieldPackageName, v))
 }
 
 // PackageNameIsNil applies the IsNil predicate on the "package_name" field.
 func PackageNameIsNil() predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.IsNull(s.C(FieldPackageName)))
-	})
+	return predicate.Validation(sql.FieldIsNull(FieldPackageName))
 }
 
 // PackageNameNotNil applies the NotNil predicate on the "package_name" field.
 func PackageNameNotNil() predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NotNull(s.C(FieldPackageName)))
-	})
+	return predicate.Validation(sql.FieldNotNull(FieldPackageName))
 }
 
 // PackageNameEqualFold applies the EqualFold predicate on the "package_name" field.
 func PackageNameEqualFold(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldPackageName), v))
-	})
+	return predicate.Validation(sql.FieldEqualFold(FieldPackageName, v))
 }
 
 // PackageNameContainsFold applies the ContainsFold predicate on the "package_name" field.
 func PackageNameContainsFold(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldPackageName), v))
-	})
+	return predicate.Validation(sql.FieldContainsFold(FieldPackageName, v))
 }
 
 // UsernameEQ applies the EQ predicate on the "username" field.
 func UsernameEQ(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldUsername), v))
-	})
+	return predicate.Validation(sql.FieldEQ(FieldUsername, v))
 }
 
 // UsernameNEQ applies the NEQ predicate on the "username" field.
 func UsernameNEQ(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldUsername), v))
-	})
+	return predicate.Validation(sql.FieldNEQ(FieldUsername, v))
 }
 
 // UsernameIn applies the In predicate on the "username" field.
 func UsernameIn(vs ...string) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldUsername), v...))
-	})
+	return predicate.Validation(sql.FieldIn(FieldUsername, vs...))
 }
 
 // UsernameNotIn applies the NotIn predicate on the "username" field.
 func UsernameNotIn(vs ...string) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldUsername), v...))
-	})
+	return predicate.Validation(sql.FieldNotIn(FieldUsername, vs...))
 }
 
 // UsernameGT applies the GT predicate on the "username" field.
 func UsernameGT(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldUsername), v))
-	})
+	return predicate.Validation(sql.FieldGT(FieldUsername, v))
 }
 
 // UsernameGTE applies the GTE predicate on the "username" field.
 func UsernameGTE(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldUsername), v))
-	})
+	return predicate.Validation(sql.FieldGTE(FieldUsername, v))
 }
 
 // UsernameLT applies the LT predicate on the "username" field.
 func UsernameLT(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldUsername), v))
-	})
+	return predicate.Validation(sql.FieldLT(FieldUsername, v))
 }
 
 // UsernameLTE applies the LTE predicate on the "username" field.
 func UsernameLTE(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldUsername), v))
-	})
+	return predicate.Validation(sql.FieldLTE(FieldUsername, v))
 }
 
 // UsernameContains applies the Contains predicate on the "username" field.
 func UsernameContains(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldUsername), v))
-	})
+	return predicate.Validation(sql.FieldContains(FieldUsername, v))
 }
 
 // UsernameHasPrefix applies the HasPrefix predicate on the "username" field.
 func UsernameHasPrefix(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldUsername), v))
-	})
+	return predicate.Validation(sql.FieldHasPrefix(FieldUsername, v))
 }
 
 // UsernameHasSuffix applies the HasSuffix predicate on the "username" field.
 func UsernameHasSuffix(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldUsername), v))
-	})
+	return predicate.Validation(sql.FieldHasSuffix(FieldUsername, v))
 }
 
 // UsernameIsNil applies the IsNil predicate on the "username" field.
 func UsernameIsNil() predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.IsNull(s.C(FieldUsername)))
-	})
+	return predicate.Validation(sql.FieldIsNull(FieldUsername))
 }
 
 // UsernameNotNil applies the NotNil predicate on the "username" field.
 func UsernameNotNil() predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NotNull(s.C(FieldUsername)))
-	})
+	return predicate.Validation(sql.FieldNotNull(FieldUsername))
 }
 
 // UsernameEqualFold applies the EqualFold predicate on the "username" field.
 func UsernameEqualFold(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldUsername), v))
-	})
+	return predicate.Validation(sql.FieldEqualFold(FieldUsername, v))
 }
 
 // UsernameContainsFold applies the ContainsFold predicate on the "username" field.
 func UsernameContainsFold(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldUsername), v))
-	})
+	return predicate.Validation(sql.FieldContainsFold(FieldUsername, v))
 }
 
 // GroupNameEQ applies the EQ predicate on the "group_name" field.
 func GroupNameEQ(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldGroupName), v))
-	})
+	return predicate.Validation(sql.FieldEQ(FieldGroupName, v))
 }
 
 // GroupNameNEQ applies the NEQ predicate on the "group_name" field.
 func GroupNameNEQ(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldGroupName), v))
-	})
+	return predicate.Validation(sql.FieldNEQ(FieldGroupName, v))
 }
 
 // GroupNameIn applies the In predicate on the "group_name" field.
 func GroupNameIn(vs ...string) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldGroupName), v...))
-	})
+	return predicate.Validation(sql.FieldIn(FieldGroupName, vs...))
 }
 
 // GroupNameNotIn applies the NotIn predicate on the "group_name" field.
 func GroupNameNotIn(vs ...string) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldGroupName), v...))
-	})
+	return predicate.Validation(sql.FieldNotIn(FieldGroupName, vs...))
 }
 
 // GroupNameGT applies the GT predicate on the "group_name" field.
 func GroupNameGT(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldGroupName), v))
-	})
+	return predicate.Validation(sql.FieldGT(FieldGroupName, v))
 }
 
 // GroupNameGTE applies the GTE predicate on the "group_name" field.
 func GroupNameGTE(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldGroupName), v))
-	})
+	return predicate.Validation(sql.FieldGTE(FieldGroupName, v))
 }
 
 // GroupNameLT applies the LT predicate on the "group_name" field.
 func GroupNameLT(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldGroupName), v))
-	})
+	return predicate.Validation(sql.FieldLT(FieldGroupName, v))
 }
 
 // GroupNameLTE applies the LTE predicate on the "group_name" field.
 func GroupNameLTE(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldGroupName), v))
-	})
+	return predicate.Validation(sql.FieldLTE(FieldGroupName, v))
 }
 
 // GroupNameContains applies the Contains predicate on the "group_name" field.
 func GroupNameContains(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldGroupName), v))
-	})
+	return predicate.Validation(sql.FieldContains(FieldGroupName, v))
 }
 
 // GroupNameHasPrefix applies the HasPrefix predicate on the "group_name" field.
 func GroupNameHasPrefix(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldGroupName), v))
-	})
+	return predicate.Validation(sql.FieldHasPrefix(FieldGroupName, v))
 }
 
 // GroupNameHasSuffix applies the HasSuffix predicate on the "group_name" field.
 func GroupNameHasSuffix(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldGroupName), v))
-	})
+	return predicate.Validation(sql.FieldHasSuffix(FieldGroupName, v))
 }
 
 // GroupNameIsNil applies the IsNil predicate on the "group_name" field.
 func GroupNameIsNil() predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.IsNull(s.C(FieldGroupName)))
-	})
+	return predicate.Validation(sql.FieldIsNull(FieldGroupName))
 }
 
 // GroupNameNotNil applies the NotNil predicate on the "group_name" field.
 func GroupNameNotNil() predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NotNull(s.C(FieldGroupName)))
-	})
+	return predicate.Validation(sql.FieldNotNull(FieldGroupName))
 }
 
 // GroupNameEqualFold applies the EqualFold predicate on the "group_name" field.
 func GroupNameEqualFold(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldGroupName), v))
-	})
+	return predicate.Validation(sql.FieldEqualFold(FieldGroupName, v))
 }
 
 // GroupNameContainsFold applies the ContainsFold predicate on the "group_name" field.
 func GroupNameContainsFold(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldGroupName), v))
-	})
+	return predicate.Validation(sql.FieldContainsFold(FieldGroupName, v))
 }
 
 // FilePathEQ applies the EQ predicate on the "file_path" field.
 func FilePathEQ(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldFilePath), v))
-	})
+	return predicate.Validation(sql.FieldEQ(FieldFilePath, v))
 }
 
 // FilePathNEQ applies the NEQ predicate on the "file_path" field.
 func FilePathNEQ(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldFilePath), v))
-	})
+	return predicate.Validation(sql.FieldNEQ(FieldFilePath, v))
 }
 
 // FilePathIn applies the In predicate on the "file_path" field.
 func FilePathIn(vs ...string) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldFilePath), v...))
-	})
+	return predicate.Validation(sql.FieldIn(FieldFilePath, vs...))
 }
 
 // FilePathNotIn applies the NotIn predicate on the "file_path" field.
 func FilePathNotIn(vs ...string) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldFilePath), v...))
-	})
+	return predicate.Validation(sql.FieldNotIn(FieldFilePath, vs...))
 }
 
 // FilePathGT applies the GT predicate on the "file_path" field.
 func FilePathGT(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldFilePath), v))
-	})
+	return predicate.Validation(sql.FieldGT(FieldFilePath, v))
 }
 
 // FilePathGTE applies the GTE predicate on the "file_path" field.
 func FilePathGTE(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldFilePath), v))
-	})
+	return predicate.Validation(sql.FieldGTE(FieldFilePath, v))
 }
 
 // FilePathLT applies the LT predicate on the "file_path" field.
 func FilePathLT(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldFilePath), v))
-	})
+	return predicate.Validation(sql.FieldLT(FieldFilePath, v))
 }
 
 // FilePathLTE applies the LTE predicate on the "file_path" field.
 func FilePathLTE(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldFilePath), v))
-	})
+	return predicate.Validation(sql.FieldLTE(FieldFilePath, v))
 }
 
 // FilePathContains applies the Contains predicate on the "file_path" field.
 func FilePathContains(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldFilePath), v))
-	})
+	return predicate.Validation(sql.FieldContains(FieldFilePath, v))
 }
 
 // FilePathHasPrefix applies the HasPrefix predicate on the "file_path" field.
 func FilePathHasPrefix(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldFilePath), v))
-	})
+	return predicate.Validation(sql.FieldHasPrefix(FieldFilePath, v))
 }
 
 // FilePathHasSuffix applies the HasSuffix predicate on the "file_path" field.
 func FilePathHasSuffix(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldFilePath), v))
-	})
+	return predicate.Validation(sql.FieldHasSuffix(FieldFilePath, v))
 }
 
 // FilePathIsNil applies the IsNil predicate on the "file_path" field.
 func FilePathIsNil() predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.IsNull(s.C(FieldFilePath)))
-	})
+	return predicate.Validation(sql.FieldIsNull(FieldFilePath))
 }
 
 // FilePathNotNil applies the NotNil predicate on the "file_path" field.
 func FilePathNotNil() predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NotNull(s.C(FieldFilePath)))
-	})
+	return predicate.Validation(sql.FieldNotNull(FieldFilePath))
 }
 
 // FilePathEqualFold applies the EqualFold predicate on the "file_path" field.
 func FilePathEqualFold(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldFilePath), v))
-	})
+	return predicate.Validation(sql.FieldEqualFold(FieldFilePath, v))
 }
 
 // FilePathContainsFold applies the ContainsFold predicate on the "file_path" field.
 func FilePathContainsFold(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldFilePath), v))
-	})
+	return predicate.Validation(sql.FieldContainsFold(FieldFilePath, v))
 }
 
 // SearchStringEQ applies the EQ predicate on the "search_string" field.
 func SearchStringEQ(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldSearchString), v))
-	})
+	return predicate.Validation(sql.FieldEQ(FieldSearchString, v))
 }
 
 // SearchStringNEQ applies the NEQ predicate on the "search_string" field.
 func SearchStringNEQ(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldSearchString), v))
-	})
+	return predicate.Validation(sql.FieldNEQ(FieldSearchString, v))
 }
 
 // SearchStringIn applies the In predicate on the "search_string" field.
 func SearchStringIn(vs ...string) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldSearchString), v...))
-	})
+	return predicate.Validation(sql.FieldIn(FieldSearchString, vs...))
 }
 
 // SearchStringNotIn applies the NotIn predicate on the "search_string" field.
 func SearchStringNotIn(vs ...string) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldSearchString), v...))
-	})
+	return predicate.Validation(sql.FieldNotIn(FieldSearchString, vs...))
 }
 
 // SearchStringGT applies the GT predicate on the "search_string" field.
 func SearchStringGT(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldSearchString), v))
-	})
+	return predicate.Validation(sql.FieldGT(FieldSearchString, v))
 }
 
 // SearchStringGTE applies the GTE predicate on the "search_string" field.
 func SearchStringGTE(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldSearchString), v))
-	})
+	return predicate.Validation(sql.FieldGTE(FieldSearchString, v))
 }
 
 // SearchStringLT applies the LT predicate on the "search_string" field.
 func SearchStringLT(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldSearchString), v))
-	})
+	return predicate.Validation(sql.FieldLT(FieldSearchString, v))
 }
 
 // SearchStringLTE applies the LTE predicate on the "search_string" field.
 func SearchStringLTE(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldSearchString), v))
-	})
+	return predicate.Validation(sql.FieldLTE(FieldSearchString, v))
 }
 
 // SearchStringContains applies the Contains predicate on the "search_string" field.
 func SearchStringContains(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldSearchString), v))
-	})
+	return predicate.Validation(sql.FieldContains(FieldSearchString, v))
 }
 
 // SearchStringHasPrefix applies the HasPrefix predicate on the "search_string" field.
 func SearchStringHasPrefix(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldSearchString), v))
-	})
+	return predicate.Validation(sql.FieldHasPrefix(FieldSearchString, v))
 }
 
 // SearchStringHasSuffix applies the HasSuffix predicate on the "search_string" field.
 func SearchStringHasSuffix(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldSearchString), v))
-	})
+	return predicate.Validation(sql.FieldHasSuffix(FieldSearchString, v))
 }
 
 // SearchStringIsNil applies the IsNil predicate on the "search_string" field.
 func SearchStringIsNil() predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.IsNull(s.C(FieldSearchString)))
-	})
+	return predicate.Validation(sql.FieldIsNull(FieldSearchString))
 }
 
 // SearchStringNotNil applies the NotNil predicate on the "search_string" field.
 func SearchStringNotNil() predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NotNull(s.C(FieldSearchString)))
-	})
+	return predicate.Validation(sql.FieldNotNull(FieldSearchString))
 }
 
 // SearchStringEqualFold applies the EqualFold predicate on the "search_string" field.
 func SearchStringEqualFold(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldSearchString), v))
-	})
+	return predicate.Validation(sql.FieldEqualFold(FieldSearchString, v))
 }
 
 // SearchStringContainsFold applies the ContainsFold predicate on the "search_string" field.
 func SearchStringContainsFold(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldSearchString), v))
-	})
+	return predicate.Validation(sql.FieldContainsFold(FieldSearchString, v))
 }
 
 // ServiceNameEQ applies the EQ predicate on the "service_name" field.
 func ServiceNameEQ(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldServiceName), v))
-	})
+	return predicate.Validation(sql.FieldEQ(FieldServiceName, v))
 }
 
 // ServiceNameNEQ applies the NEQ predicate on the "service_name" field.
 func ServiceNameNEQ(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldServiceName), v))
-	})
+	return predicate.Validation(sql.FieldNEQ(FieldServiceName, v))
 }
 
 // ServiceNameIn applies the In predicate on the "service_name" field.
 func ServiceNameIn(vs ...string) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldServiceName), v...))
-	})
+	return predicate.Validation(sql.FieldIn(FieldServiceName, vs...))
 }
 
 // ServiceNameNotIn applies the NotIn predicate on the "service_name" field.
 func ServiceNameNotIn(vs ...string) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldServiceName), v...))
-	})
+	return predicate.Validation(sql.FieldNotIn(FieldServiceName, vs...))
 }
 
 // ServiceNameGT applies the GT predicate on the "service_name" field.
 func ServiceNameGT(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldServiceName), v))
-	})
+	return predicate.Validation(sql.FieldGT(FieldServiceName, v))
 }
 
 // ServiceNameGTE applies the GTE predicate on the "service_name" field.
 func ServiceNameGTE(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldServiceName), v))
-	})
+	return predicate.Validation(sql.FieldGTE(FieldServiceName, v))
 }
 
 // ServiceNameLT applies the LT predicate on the "service_name" field.
 func ServiceNameLT(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldServiceName), v))
-	})
+	return predicate.Validation(sql.FieldLT(FieldServiceName, v))
 }
 
 // ServiceNameLTE applies the LTE predicate on the "service_name" field.
 func ServiceNameLTE(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldServiceName), v))
-	})
+	return predicate.Validation(sql.FieldLTE(FieldServiceName, v))
 }
 
 // ServiceNameContains applies the Contains predicate on the "service_name" field.
 func ServiceNameContains(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldServiceName), v))
-	})
+	return predicate.Validation(sql.FieldContains(FieldServiceName, v))
 }
 
 // ServiceNameHasPrefix applies the HasPrefix predicate on the "service_name" field.
 func ServiceNameHasPrefix(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldServiceName), v))
-	})
+	return predicate.Validation(sql.FieldHasPrefix(FieldServiceName, v))
 }
 
 // ServiceNameHasSuffix applies the HasSuffix predicate on the "service_name" field.
 func ServiceNameHasSuffix(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldServiceName), v))
-	})
+	return predicate.Validation(sql.FieldHasSuffix(FieldServiceName, v))
 }
 
 // ServiceNameIsNil applies the IsNil predicate on the "service_name" field.
 func ServiceNameIsNil() predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.IsNull(s.C(FieldServiceName)))
-	})
+	return predicate.Validation(sql.FieldIsNull(FieldServiceName))
 }
 
 // ServiceNameNotNil applies the NotNil predicate on the "service_name" field.
 func ServiceNameNotNil() predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NotNull(s.C(FieldServiceName)))
-	})
+	return predicate.Validation(sql.FieldNotNull(FieldServiceName))
 }
 
 // ServiceNameEqualFold applies the EqualFold predicate on the "service_name" field.
 func ServiceNameEqualFold(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldServiceName), v))
-	})
+	return predicate.Validation(sql.FieldEqualFold(FieldServiceName, v))
 }
 
 // ServiceNameContainsFold applies the ContainsFold predicate on the "service_name" field.
 func ServiceNameContainsFold(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldServiceName), v))
-	})
+	return predicate.Validation(sql.FieldContainsFold(FieldServiceName, v))
 }
 
 // FilePermissionEQ applies the EQ predicate on the "file_permission" field.
 func FilePermissionEQ(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldFilePermission), v))
-	})
+	return predicate.Validation(sql.FieldEQ(FieldFilePermission, v))
 }
 
 // FilePermissionNEQ applies the NEQ predicate on the "file_permission" field.
 func FilePermissionNEQ(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldFilePermission), v))
-	})
+	return predicate.Validation(sql.FieldNEQ(FieldFilePermission, v))
 }
 
 // FilePermissionIn applies the In predicate on the "file_permission" field.
 func FilePermissionIn(vs ...string) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldFilePermission), v...))
-	})
+	return predicate.Validation(sql.FieldIn(FieldFilePermission, vs...))
 }
 
 // FilePermissionNotIn applies the NotIn predicate on the "file_permission" field.
 func FilePermissionNotIn(vs ...string) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldFilePermission), v...))
-	})
+	return predicate.Validation(sql.FieldNotIn(FieldFilePermission, vs...))
 }
 
 // FilePermissionGT applies the GT predicate on the "file_permission" field.
 func FilePermissionGT(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldFilePermission), v))
-	})
+	return predicate.Validation(sql.FieldGT(FieldFilePermission, v))
 }
 
 // FilePermissionGTE applies the GTE predicate on the "file_permission" field.
 func FilePermissionGTE(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldFilePermission), v))
-	})
+	return predicate.Validation(sql.FieldGTE(FieldFilePermission, v))
 }
 
 // FilePermissionLT applies the LT predicate on the "file_permission" field.
 func FilePermissionLT(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldFilePermission), v))
-	})
+	return predicate.Validation(sql.FieldLT(FieldFilePermission, v))
 }
 
 // FilePermissionLTE applies the LTE predicate on the "file_permission" field.
 func FilePermissionLTE(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldFilePermission), v))
-	})
+	return predicate.Validation(sql.FieldLTE(FieldFilePermission, v))
 }
 
 // FilePermissionContains applies the Contains predicate on the "file_permission" field.
 func FilePermissionContains(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldFilePermission), v))
-	})
+	return predicate.Validation(sql.FieldContains(FieldFilePermission, v))
 }
 
 // FilePermissionHasPrefix applies the HasPrefix predicate on the "file_permission" field.
 func FilePermissionHasPrefix(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldFilePermission), v))
-	})
+	return predicate.Validation(sql.FieldHasPrefix(FieldFilePermission, v))
 }
 
 // FilePermissionHasSuffix applies the HasSuffix predicate on the "file_permission" field.
 func FilePermissionHasSuffix(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldFilePermission), v))
-	})
+	return predicate.Validation(sql.FieldHasSuffix(FieldFilePermission, v))
 }
 
 // FilePermissionIsNil applies the IsNil predicate on the "file_permission" field.
 func FilePermissionIsNil() predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.IsNull(s.C(FieldFilePermission)))
-	})
+	return predicate.Validation(sql.FieldIsNull(FieldFilePermission))
 }
 
 // FilePermissionNotNil applies the NotNil predicate on the "file_permission" field.
 func FilePermissionNotNil() predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NotNull(s.C(FieldFilePermission)))
-	})
+	return predicate.Validation(sql.FieldNotNull(FieldFilePermission))
 }
 
 // FilePermissionEqualFold applies the EqualFold predicate on the "file_permission" field.
 func FilePermissionEqualFold(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldFilePermission), v))
-	})
+	return predicate.Validation(sql.FieldEqualFold(FieldFilePermission, v))
 }
 
 // FilePermissionContainsFold applies the ContainsFold predicate on the "file_permission" field.
 func FilePermissionContainsFold(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldFilePermission), v))
-	})
+	return predicate.Validation(sql.FieldContainsFold(FieldFilePermission, v))
 }
 
 // ServiceStatusEQ applies the EQ predicate on the "service_status" field.
 func ServiceStatusEQ(v ServiceStatus) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldServiceStatus), v))
-	})
+	return predicate.Validation(sql.FieldEQ(FieldServiceStatus, v))
 }
 
 // ServiceStatusNEQ applies the NEQ predicate on the "service_status" field.
 func ServiceStatusNEQ(v ServiceStatus) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldServiceStatus), v))
-	})
+	return predicate.Validation(sql.FieldNEQ(FieldServiceStatus, v))
 }
 
 // ServiceStatusIn applies the In predicate on the "service_status" field.
 func ServiceStatusIn(vs ...ServiceStatus) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldServiceStatus), v...))
-	})
+	return predicate.Validation(sql.FieldIn(FieldServiceStatus, vs...))
 }
 
 // ServiceStatusNotIn applies the NotIn predicate on the "service_status" field.
 func ServiceStatusNotIn(vs ...ServiceStatus) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldServiceStatus), v...))
-	})
+	return predicate.Validation(sql.FieldNotIn(FieldServiceStatus, vs...))
 }
 
 // ProcessNameEQ applies the EQ predicate on the "process_name" field.
 func ProcessNameEQ(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldProcessName), v))
-	})
+	return predicate.Validation(sql.FieldEQ(FieldProcessName, v))
 }
 
 // ProcessNameNEQ applies the NEQ predicate on the "process_name" field.
 func ProcessNameNEQ(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldProcessName), v))
-	})
+	return predicate.Validation(sql.FieldNEQ(FieldProcessName, v))
 }
 
 // ProcessNameIn applies the In predicate on the "process_name" field.
 func ProcessNameIn(vs ...string) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldProcessName), v...))
-	})
+	return predicate.Validation(sql.FieldIn(FieldProcessName, vs...))
 }
 
 // ProcessNameNotIn applies the NotIn predicate on the "process_name" field.
 func ProcessNameNotIn(vs ...string) predicate.Validation {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldProcessName), v...))
-	})
+	return predicate.Validation(sql.FieldNotIn(FieldProcessName, vs...))
 }
 
 // ProcessNameGT applies the GT predicate on the "process_name" field.
 func ProcessNameGT(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldProcessName), v))
-	})
+	return predicate.Validation(sql.FieldGT(FieldProcessName, v))
 }
 
 // ProcessNameGTE applies the GTE predicate on the "process_name" field.
 func ProcessNameGTE(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldProcessName), v))
-	})
+	return predicate.Validation(sql.FieldGTE(FieldProcessName, v))
 }
 
 // ProcessNameLT applies the LT predicate on the "process_name" field.
 func ProcessNameLT(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldProcessName), v))
-	})
+	return predicate.Validation(sql.FieldLT(FieldProcessName, v))
 }
 
 // ProcessNameLTE applies the LTE predicate on the "process_name" field.
 func ProcessNameLTE(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldProcessName), v))
-	})
+	return predicate.Validation(sql.FieldLTE(FieldProcessName, v))
 }
 
 // ProcessNameContains applies the Contains predicate on the "process_name" field.
 func ProcessNameContains(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldProcessName), v))
-	})
+	return predicate.Validation(sql.FieldContains(FieldProcessName, v))
 }
 
 // ProcessNameHasPrefix applies the HasPrefix predicate on the "process_name" field.
 func ProcessNameHasPrefix(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldProcessName), v))
-	})
+	return predicate.Validation(sql.FieldHasPrefix(FieldProcessName, v))
 }
 
 // ProcessNameHasSuffix applies the HasSuffix predicate on the "process_name" field.
 func ProcessNameHasSuffix(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldProcessName), v))
-	})
+	return predicate.Validation(sql.FieldHasSuffix(FieldProcessName, v))
 }
 
 // ProcessNameIsNil applies the IsNil predicate on the "process_name" field.
 func ProcessNameIsNil() predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.IsNull(s.C(FieldProcessName)))
-	})
+	return predicate.Validation(sql.FieldIsNull(FieldProcessName))
 }
 
 // ProcessNameNotNil applies the NotNil predicate on the "process_name" field.
 func ProcessNameNotNil() predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.NotNull(s.C(FieldProcessName)))
-	})
+	return predicate.Validation(sql.FieldNotNull(FieldProcessName))
 }
 
 // ProcessNameEqualFold applies the EqualFold predicate on the "process_name" field.
 func ProcessNameEqualFold(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldProcessName), v))
-	})
+	return predicate.Validation(sql.FieldEqualFold(FieldProcessName, v))
 }
 
 // ProcessNameContainsFold applies the ContainsFold predicate on the "process_name" field.
 func ProcessNameContainsFold(v string) predicate.Validation {
-	return predicate.Validation(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldProcessName), v))
-	})
+	return predicate.Validation(sql.FieldContainsFold(FieldProcessName, v))
 }
 
 // HasUsers applies the HasEdge predicate on the "Users" edge.
@@ -1922,7 +1274,6 @@ func HasUsers() predicate.Validation {
 	return predicate.Validation(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(UsersTable, FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, UsersTable, UsersColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
@@ -1932,11 +1283,7 @@ func HasUsers() predicate.Validation {
 // HasUsersWith applies the HasEdge predicate on the "Users" edge with a given conditions (other predicates).
 func HasUsersWith(preds ...predicate.User) predicate.Validation {
 	return predicate.Validation(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(UsersInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, UsersTable, UsersColumn),
-		)
+		step := newUsersStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)
@@ -1950,7 +1297,6 @@ func HasEnvironment() predicate.Validation {
 	return predicate.Validation(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(EnvironmentTable, FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, EnvironmentTable, EnvironmentColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
@@ -1960,11 +1306,7 @@ func HasEnvironment() predicate.Validation {
 // HasEnvironmentWith applies the HasEdge predicate on the "Environment" edge with a given conditions (other predicates).
 func HasEnvironmentWith(preds ...predicate.Environment) predicate.Validation {
 	return predicate.Validation(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(EnvironmentInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, EnvironmentTable, EnvironmentColumn),
-		)
+		step := newEnvironmentStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

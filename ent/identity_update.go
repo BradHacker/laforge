@@ -29,9 +29,9 @@ func (iu *IdentityUpdate) Where(ps ...predicate.Identity) *IdentityUpdate {
 	return iu
 }
 
-// SetHclID sets the "hcl_id" field.
-func (iu *IdentityUpdate) SetHclID(s string) *IdentityUpdate {
-	iu.mutation.SetHclID(s)
+// SetHCLID sets the "hcl_id" field.
+func (iu *IdentityUpdate) SetHCLID(s string) *IdentityUpdate {
+	iu.mutation.SetHCLID(s)
 	return iu
 }
 
@@ -115,34 +115,7 @@ func (iu *IdentityUpdate) ClearEnvironment() *IdentityUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (iu *IdentityUpdate) Save(ctx context.Context) (int, error) {
-	var (
-		err      error
-		affected int
-	)
-	if len(iu.hooks) == 0 {
-		affected, err = iu.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*IdentityMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			iu.mutation = mutation
-			affected, err = iu.sqlSave(ctx)
-			mutation.done = true
-			return affected, err
-		})
-		for i := len(iu.hooks) - 1; i >= 0; i-- {
-			if iu.hooks[i] == nil {
-				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = iu.hooks[i](mut)
-		}
-		if _, err := mut.Mutate(ctx, iu.mutation); err != nil {
-			return 0, err
-		}
-	}
-	return affected, err
+	return withHooks(ctx, iu.sqlSave, iu.mutation, iu.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -168,16 +141,7 @@ func (iu *IdentityUpdate) ExecX(ctx context.Context) {
 }
 
 func (iu *IdentityUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   identity.Table,
-			Columns: identity.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: identity.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewUpdateSpec(identity.Table, identity.Columns, sqlgraph.NewFieldSpec(identity.FieldID, field.TypeUUID))
 	if ps := iu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -185,68 +149,32 @@ func (iu *IdentityUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := iu.mutation.HclID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: identity.FieldHclID,
-		})
+	if value, ok := iu.mutation.HCLID(); ok {
+		_spec.SetField(identity.FieldHCLID, field.TypeString, value)
 	}
 	if value, ok := iu.mutation.FirstName(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: identity.FieldFirstName,
-		})
+		_spec.SetField(identity.FieldFirstName, field.TypeString, value)
 	}
 	if value, ok := iu.mutation.LastName(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: identity.FieldLastName,
-		})
+		_spec.SetField(identity.FieldLastName, field.TypeString, value)
 	}
 	if value, ok := iu.mutation.Email(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: identity.FieldEmail,
-		})
+		_spec.SetField(identity.FieldEmail, field.TypeString, value)
 	}
 	if value, ok := iu.mutation.Password(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: identity.FieldPassword,
-		})
+		_spec.SetField(identity.FieldPassword, field.TypeString, value)
 	}
 	if value, ok := iu.mutation.Description(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: identity.FieldDescription,
-		})
+		_spec.SetField(identity.FieldDescription, field.TypeString, value)
 	}
 	if value, ok := iu.mutation.AvatarFile(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: identity.FieldAvatarFile,
-		})
+		_spec.SetField(identity.FieldAvatarFile, field.TypeString, value)
 	}
 	if value, ok := iu.mutation.Vars(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: identity.FieldVars,
-		})
+		_spec.SetField(identity.FieldVars, field.TypeJSON, value)
 	}
 	if value, ok := iu.mutation.Tags(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: identity.FieldTags,
-		})
+		_spec.SetField(identity.FieldTags, field.TypeJSON, value)
 	}
 	if iu.mutation.EnvironmentCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -256,10 +184,7 @@ func (iu *IdentityUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{identity.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -272,10 +197,7 @@ func (iu *IdentityUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{identity.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -291,6 +213,7 @@ func (iu *IdentityUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		return 0, err
 	}
+	iu.mutation.done = true
 	return n, nil
 }
 
@@ -302,9 +225,9 @@ type IdentityUpdateOne struct {
 	mutation *IdentityMutation
 }
 
-// SetHclID sets the "hcl_id" field.
-func (iuo *IdentityUpdateOne) SetHclID(s string) *IdentityUpdateOne {
-	iuo.mutation.SetHclID(s)
+// SetHCLID sets the "hcl_id" field.
+func (iuo *IdentityUpdateOne) SetHCLID(s string) *IdentityUpdateOne {
+	iuo.mutation.SetHCLID(s)
 	return iuo
 }
 
@@ -386,6 +309,12 @@ func (iuo *IdentityUpdateOne) ClearEnvironment() *IdentityUpdateOne {
 	return iuo
 }
 
+// Where appends a list predicates to the IdentityUpdate builder.
+func (iuo *IdentityUpdateOne) Where(ps ...predicate.Identity) *IdentityUpdateOne {
+	iuo.mutation.Where(ps...)
+	return iuo
+}
+
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
 func (iuo *IdentityUpdateOne) Select(field string, fields ...string) *IdentityUpdateOne {
@@ -395,40 +324,7 @@ func (iuo *IdentityUpdateOne) Select(field string, fields ...string) *IdentityUp
 
 // Save executes the query and returns the updated Identity entity.
 func (iuo *IdentityUpdateOne) Save(ctx context.Context) (*Identity, error) {
-	var (
-		err  error
-		node *Identity
-	)
-	if len(iuo.hooks) == 0 {
-		node, err = iuo.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*IdentityMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			iuo.mutation = mutation
-			node, err = iuo.sqlSave(ctx)
-			mutation.done = true
-			return node, err
-		})
-		for i := len(iuo.hooks) - 1; i >= 0; i-- {
-			if iuo.hooks[i] == nil {
-				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = iuo.hooks[i](mut)
-		}
-		v, err := mut.Mutate(ctx, iuo.mutation)
-		if err != nil {
-			return nil, err
-		}
-		nv, ok := v.(*Identity)
-		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from IdentityMutation", v)
-		}
-		node = nv
-	}
-	return node, err
+	return withHooks(ctx, iuo.sqlSave, iuo.mutation, iuo.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -454,16 +350,7 @@ func (iuo *IdentityUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (iuo *IdentityUpdateOne) sqlSave(ctx context.Context) (_node *Identity, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   identity.Table,
-			Columns: identity.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: identity.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewUpdateSpec(identity.Table, identity.Columns, sqlgraph.NewFieldSpec(identity.FieldID, field.TypeUUID))
 	id, ok := iuo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Identity.id" for update`)}
@@ -488,68 +375,32 @@ func (iuo *IdentityUpdateOne) sqlSave(ctx context.Context) (_node *Identity, err
 			}
 		}
 	}
-	if value, ok := iuo.mutation.HclID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: identity.FieldHclID,
-		})
+	if value, ok := iuo.mutation.HCLID(); ok {
+		_spec.SetField(identity.FieldHCLID, field.TypeString, value)
 	}
 	if value, ok := iuo.mutation.FirstName(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: identity.FieldFirstName,
-		})
+		_spec.SetField(identity.FieldFirstName, field.TypeString, value)
 	}
 	if value, ok := iuo.mutation.LastName(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: identity.FieldLastName,
-		})
+		_spec.SetField(identity.FieldLastName, field.TypeString, value)
 	}
 	if value, ok := iuo.mutation.Email(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: identity.FieldEmail,
-		})
+		_spec.SetField(identity.FieldEmail, field.TypeString, value)
 	}
 	if value, ok := iuo.mutation.Password(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: identity.FieldPassword,
-		})
+		_spec.SetField(identity.FieldPassword, field.TypeString, value)
 	}
 	if value, ok := iuo.mutation.Description(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: identity.FieldDescription,
-		})
+		_spec.SetField(identity.FieldDescription, field.TypeString, value)
 	}
 	if value, ok := iuo.mutation.AvatarFile(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: identity.FieldAvatarFile,
-		})
+		_spec.SetField(identity.FieldAvatarFile, field.TypeString, value)
 	}
 	if value, ok := iuo.mutation.Vars(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: identity.FieldVars,
-		})
+		_spec.SetField(identity.FieldVars, field.TypeJSON, value)
 	}
 	if value, ok := iuo.mutation.Tags(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: identity.FieldTags,
-		})
+		_spec.SetField(identity.FieldTags, field.TypeJSON, value)
 	}
 	if iuo.mutation.EnvironmentCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -559,10 +410,7 @@ func (iuo *IdentityUpdateOne) sqlSave(ctx context.Context) (_node *Identity, err
 			Columns: []string{identity.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -575,10 +423,7 @@ func (iuo *IdentityUpdateOne) sqlSave(ctx context.Context) (_node *Identity, err
 			Columns: []string{identity.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -597,5 +442,6 @@ func (iuo *IdentityUpdateOne) sqlSave(ctx context.Context) (_node *Identity, err
 		}
 		return nil, err
 	}
+	iuo.mutation.done = true
 	return _node, nil
 }

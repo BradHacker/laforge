@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 	"github.com/gen0cide/laforge/ent/environment"
 	"github.com/gen0cide/laforge/ent/finding"
@@ -31,9 +32,9 @@ func (su *ScriptUpdate) Where(ps ...predicate.Script) *ScriptUpdate {
 	return su
 }
 
-// SetHclID sets the "hcl_id" field.
-func (su *ScriptUpdate) SetHclID(s string) *ScriptUpdate {
-	su.mutation.SetHclID(s)
+// SetHCLID sets the "hcl_id" field.
+func (su *ScriptUpdate) SetHCLID(s string) *ScriptUpdate {
+	su.mutation.SetHCLID(s)
 	return su
 }
 
@@ -105,6 +106,12 @@ func (su *ScriptUpdate) SetArgs(s []string) *ScriptUpdate {
 	return su
 }
 
+// AppendArgs appends s to the "args" field.
+func (su *ScriptUpdate) AppendArgs(s []string) *ScriptUpdate {
+	su.mutation.AppendArgs(s)
+	return su
+}
+
 // SetDisabled sets the "disabled" field.
 func (su *ScriptUpdate) SetDisabled(b bool) *ScriptUpdate {
 	su.mutation.SetDisabled(b)
@@ -132,6 +139,12 @@ func (su *ScriptUpdate) SetTags(m map[string]string) *ScriptUpdate {
 // SetValidations sets the "validations" field.
 func (su *ScriptUpdate) SetValidations(s []string) *ScriptUpdate {
 	su.mutation.SetValidations(s)
+	return su
+}
+
+// AppendValidations appends s to the "validations" field.
+func (su *ScriptUpdate) AppendValidations(s []string) *ScriptUpdate {
+	su.mutation.AppendValidations(s)
 	return su
 }
 
@@ -245,34 +258,7 @@ func (su *ScriptUpdate) ClearEnvironment() *ScriptUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (su *ScriptUpdate) Save(ctx context.Context) (int, error) {
-	var (
-		err      error
-		affected int
-	)
-	if len(su.hooks) == 0 {
-		affected, err = su.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*ScriptMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			su.mutation = mutation
-			affected, err = su.sqlSave(ctx)
-			mutation.done = true
-			return affected, err
-		})
-		for i := len(su.hooks) - 1; i >= 0; i-- {
-			if su.hooks[i] == nil {
-				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = su.hooks[i](mut)
-		}
-		if _, err := mut.Mutate(ctx, su.mutation); err != nil {
-			return 0, err
-		}
-	}
-	return affected, err
+	return withHooks(ctx, su.sqlSave, su.mutation, su.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -298,16 +284,7 @@ func (su *ScriptUpdate) ExecX(ctx context.Context) {
 }
 
 func (su *ScriptUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   script.Table,
-			Columns: script.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: script.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewUpdateSpec(script.Table, script.Columns, sqlgraph.NewFieldSpec(script.FieldID, field.TypeUUID))
 	if ps := su.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -315,130 +292,69 @@ func (su *ScriptUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := su.mutation.HclID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: script.FieldHclID,
-		})
+	if value, ok := su.mutation.HCLID(); ok {
+		_spec.SetField(script.FieldHCLID, field.TypeString, value)
 	}
 	if value, ok := su.mutation.Name(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: script.FieldName,
-		})
+		_spec.SetField(script.FieldName, field.TypeString, value)
 	}
 	if value, ok := su.mutation.Language(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: script.FieldLanguage,
-		})
+		_spec.SetField(script.FieldLanguage, field.TypeString, value)
 	}
 	if value, ok := su.mutation.Description(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: script.FieldDescription,
-		})
+		_spec.SetField(script.FieldDescription, field.TypeString, value)
 	}
 	if value, ok := su.mutation.Source(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: script.FieldSource,
-		})
+		_spec.SetField(script.FieldSource, field.TypeString, value)
 	}
 	if value, ok := su.mutation.SourceType(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: script.FieldSourceType,
-		})
+		_spec.SetField(script.FieldSourceType, field.TypeString, value)
 	}
 	if value, ok := su.mutation.Cooldown(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: script.FieldCooldown,
-		})
+		_spec.SetField(script.FieldCooldown, field.TypeInt, value)
 	}
 	if value, ok := su.mutation.AddedCooldown(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: script.FieldCooldown,
-		})
+		_spec.AddField(script.FieldCooldown, field.TypeInt, value)
 	}
 	if value, ok := su.mutation.Timeout(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: script.FieldTimeout,
-		})
+		_spec.SetField(script.FieldTimeout, field.TypeInt, value)
 	}
 	if value, ok := su.mutation.AddedTimeout(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: script.FieldTimeout,
-		})
+		_spec.AddField(script.FieldTimeout, field.TypeInt, value)
 	}
 	if value, ok := su.mutation.IgnoreErrors(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeBool,
-			Value:  value,
-			Column: script.FieldIgnoreErrors,
-		})
+		_spec.SetField(script.FieldIgnoreErrors, field.TypeBool, value)
 	}
 	if value, ok := su.mutation.Args(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: script.FieldArgs,
+		_spec.SetField(script.FieldArgs, field.TypeJSON, value)
+	}
+	if value, ok := su.mutation.AppendedArgs(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, script.FieldArgs, value)
 		})
 	}
 	if value, ok := su.mutation.Disabled(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeBool,
-			Value:  value,
-			Column: script.FieldDisabled,
-		})
+		_spec.SetField(script.FieldDisabled, field.TypeBool, value)
 	}
 	if value, ok := su.mutation.Vars(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: script.FieldVars,
-		})
+		_spec.SetField(script.FieldVars, field.TypeJSON, value)
 	}
 	if value, ok := su.mutation.AbsPath(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: script.FieldAbsPath,
-		})
+		_spec.SetField(script.FieldAbsPath, field.TypeString, value)
 	}
 	if value, ok := su.mutation.Tags(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: script.FieldTags,
-		})
+		_spec.SetField(script.FieldTags, field.TypeJSON, value)
 	}
 	if value, ok := su.mutation.Validations(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: script.FieldValidations,
+		_spec.SetField(script.FieldValidations, field.TypeJSON, value)
+	}
+	if value, ok := su.mutation.AppendedValidations(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, script.FieldValidations, value)
 		})
 	}
 	if su.mutation.ValidationsCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Column: script.FieldValidations,
-		})
+		_spec.ClearField(script.FieldValidations, field.TypeJSON)
 	}
 	if su.mutation.UsersCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -448,10 +364,7 @@ func (su *ScriptUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{script.UsersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -464,10 +377,7 @@ func (su *ScriptUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{script.UsersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -483,10 +393,7 @@ func (su *ScriptUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{script.UsersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -502,10 +409,7 @@ func (su *ScriptUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{script.FindingsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: finding.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(finding.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -518,10 +422,7 @@ func (su *ScriptUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{script.FindingsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: finding.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(finding.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -537,10 +438,7 @@ func (su *ScriptUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{script.FindingsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: finding.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(finding.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -556,10 +454,7 @@ func (su *ScriptUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{script.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -572,10 +467,7 @@ func (su *ScriptUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{script.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -591,6 +483,7 @@ func (su *ScriptUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		return 0, err
 	}
+	su.mutation.done = true
 	return n, nil
 }
 
@@ -602,9 +495,9 @@ type ScriptUpdateOne struct {
 	mutation *ScriptMutation
 }
 
-// SetHclID sets the "hcl_id" field.
-func (suo *ScriptUpdateOne) SetHclID(s string) *ScriptUpdateOne {
-	suo.mutation.SetHclID(s)
+// SetHCLID sets the "hcl_id" field.
+func (suo *ScriptUpdateOne) SetHCLID(s string) *ScriptUpdateOne {
+	suo.mutation.SetHCLID(s)
 	return suo
 }
 
@@ -676,6 +569,12 @@ func (suo *ScriptUpdateOne) SetArgs(s []string) *ScriptUpdateOne {
 	return suo
 }
 
+// AppendArgs appends s to the "args" field.
+func (suo *ScriptUpdateOne) AppendArgs(s []string) *ScriptUpdateOne {
+	suo.mutation.AppendArgs(s)
+	return suo
+}
+
 // SetDisabled sets the "disabled" field.
 func (suo *ScriptUpdateOne) SetDisabled(b bool) *ScriptUpdateOne {
 	suo.mutation.SetDisabled(b)
@@ -703,6 +602,12 @@ func (suo *ScriptUpdateOne) SetTags(m map[string]string) *ScriptUpdateOne {
 // SetValidations sets the "validations" field.
 func (suo *ScriptUpdateOne) SetValidations(s []string) *ScriptUpdateOne {
 	suo.mutation.SetValidations(s)
+	return suo
+}
+
+// AppendValidations appends s to the "validations" field.
+func (suo *ScriptUpdateOne) AppendValidations(s []string) *ScriptUpdateOne {
+	suo.mutation.AppendValidations(s)
 	return suo
 }
 
@@ -814,6 +719,12 @@ func (suo *ScriptUpdateOne) ClearEnvironment() *ScriptUpdateOne {
 	return suo
 }
 
+// Where appends a list predicates to the ScriptUpdate builder.
+func (suo *ScriptUpdateOne) Where(ps ...predicate.Script) *ScriptUpdateOne {
+	suo.mutation.Where(ps...)
+	return suo
+}
+
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
 func (suo *ScriptUpdateOne) Select(field string, fields ...string) *ScriptUpdateOne {
@@ -823,40 +734,7 @@ func (suo *ScriptUpdateOne) Select(field string, fields ...string) *ScriptUpdate
 
 // Save executes the query and returns the updated Script entity.
 func (suo *ScriptUpdateOne) Save(ctx context.Context) (*Script, error) {
-	var (
-		err  error
-		node *Script
-	)
-	if len(suo.hooks) == 0 {
-		node, err = suo.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*ScriptMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			suo.mutation = mutation
-			node, err = suo.sqlSave(ctx)
-			mutation.done = true
-			return node, err
-		})
-		for i := len(suo.hooks) - 1; i >= 0; i-- {
-			if suo.hooks[i] == nil {
-				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = suo.hooks[i](mut)
-		}
-		v, err := mut.Mutate(ctx, suo.mutation)
-		if err != nil {
-			return nil, err
-		}
-		nv, ok := v.(*Script)
-		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from ScriptMutation", v)
-		}
-		node = nv
-	}
-	return node, err
+	return withHooks(ctx, suo.sqlSave, suo.mutation, suo.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -882,16 +760,7 @@ func (suo *ScriptUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (suo *ScriptUpdateOne) sqlSave(ctx context.Context) (_node *Script, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   script.Table,
-			Columns: script.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: script.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewUpdateSpec(script.Table, script.Columns, sqlgraph.NewFieldSpec(script.FieldID, field.TypeUUID))
 	id, ok := suo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Script.id" for update`)}
@@ -916,130 +785,69 @@ func (suo *ScriptUpdateOne) sqlSave(ctx context.Context) (_node *Script, err err
 			}
 		}
 	}
-	if value, ok := suo.mutation.HclID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: script.FieldHclID,
-		})
+	if value, ok := suo.mutation.HCLID(); ok {
+		_spec.SetField(script.FieldHCLID, field.TypeString, value)
 	}
 	if value, ok := suo.mutation.Name(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: script.FieldName,
-		})
+		_spec.SetField(script.FieldName, field.TypeString, value)
 	}
 	if value, ok := suo.mutation.Language(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: script.FieldLanguage,
-		})
+		_spec.SetField(script.FieldLanguage, field.TypeString, value)
 	}
 	if value, ok := suo.mutation.Description(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: script.FieldDescription,
-		})
+		_spec.SetField(script.FieldDescription, field.TypeString, value)
 	}
 	if value, ok := suo.mutation.Source(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: script.FieldSource,
-		})
+		_spec.SetField(script.FieldSource, field.TypeString, value)
 	}
 	if value, ok := suo.mutation.SourceType(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: script.FieldSourceType,
-		})
+		_spec.SetField(script.FieldSourceType, field.TypeString, value)
 	}
 	if value, ok := suo.mutation.Cooldown(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: script.FieldCooldown,
-		})
+		_spec.SetField(script.FieldCooldown, field.TypeInt, value)
 	}
 	if value, ok := suo.mutation.AddedCooldown(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: script.FieldCooldown,
-		})
+		_spec.AddField(script.FieldCooldown, field.TypeInt, value)
 	}
 	if value, ok := suo.mutation.Timeout(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: script.FieldTimeout,
-		})
+		_spec.SetField(script.FieldTimeout, field.TypeInt, value)
 	}
 	if value, ok := suo.mutation.AddedTimeout(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: script.FieldTimeout,
-		})
+		_spec.AddField(script.FieldTimeout, field.TypeInt, value)
 	}
 	if value, ok := suo.mutation.IgnoreErrors(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeBool,
-			Value:  value,
-			Column: script.FieldIgnoreErrors,
-		})
+		_spec.SetField(script.FieldIgnoreErrors, field.TypeBool, value)
 	}
 	if value, ok := suo.mutation.Args(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: script.FieldArgs,
+		_spec.SetField(script.FieldArgs, field.TypeJSON, value)
+	}
+	if value, ok := suo.mutation.AppendedArgs(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, script.FieldArgs, value)
 		})
 	}
 	if value, ok := suo.mutation.Disabled(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeBool,
-			Value:  value,
-			Column: script.FieldDisabled,
-		})
+		_spec.SetField(script.FieldDisabled, field.TypeBool, value)
 	}
 	if value, ok := suo.mutation.Vars(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: script.FieldVars,
-		})
+		_spec.SetField(script.FieldVars, field.TypeJSON, value)
 	}
 	if value, ok := suo.mutation.AbsPath(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: script.FieldAbsPath,
-		})
+		_spec.SetField(script.FieldAbsPath, field.TypeString, value)
 	}
 	if value, ok := suo.mutation.Tags(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: script.FieldTags,
-		})
+		_spec.SetField(script.FieldTags, field.TypeJSON, value)
 	}
 	if value, ok := suo.mutation.Validations(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: script.FieldValidations,
+		_spec.SetField(script.FieldValidations, field.TypeJSON, value)
+	}
+	if value, ok := suo.mutation.AppendedValidations(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, script.FieldValidations, value)
 		})
 	}
 	if suo.mutation.ValidationsCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Column: script.FieldValidations,
-		})
+		_spec.ClearField(script.FieldValidations, field.TypeJSON)
 	}
 	if suo.mutation.UsersCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1049,10 +857,7 @@ func (suo *ScriptUpdateOne) sqlSave(ctx context.Context) (_node *Script, err err
 			Columns: []string{script.UsersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1065,10 +870,7 @@ func (suo *ScriptUpdateOne) sqlSave(ctx context.Context) (_node *Script, err err
 			Columns: []string{script.UsersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1084,10 +886,7 @@ func (suo *ScriptUpdateOne) sqlSave(ctx context.Context) (_node *Script, err err
 			Columns: []string{script.UsersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1103,10 +902,7 @@ func (suo *ScriptUpdateOne) sqlSave(ctx context.Context) (_node *Script, err err
 			Columns: []string{script.FindingsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: finding.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(finding.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1119,10 +915,7 @@ func (suo *ScriptUpdateOne) sqlSave(ctx context.Context) (_node *Script, err err
 			Columns: []string{script.FindingsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: finding.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(finding.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1138,10 +931,7 @@ func (suo *ScriptUpdateOne) sqlSave(ctx context.Context) (_node *Script, err err
 			Columns: []string{script.FindingsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: finding.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(finding.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1157,10 +947,7 @@ func (suo *ScriptUpdateOne) sqlSave(ctx context.Context) (_node *Script, err err
 			Columns: []string{script.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1173,10 +960,7 @@ func (suo *ScriptUpdateOne) sqlSave(ctx context.Context) (_node *Script, err err
 			Columns: []string{script.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1195,5 +979,6 @@ func (suo *ScriptUpdateOne) sqlSave(ctx context.Context) (_node *Script, err err
 		}
 		return nil, err
 	}
+	suo.mutation.done = true
 	return _node, nil
 }

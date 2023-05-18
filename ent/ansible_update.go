@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 	"github.com/gen0cide/laforge/ent/ansible"
 	"github.com/gen0cide/laforge/ent/environment"
@@ -36,9 +37,9 @@ func (au *AnsibleUpdate) SetName(s string) *AnsibleUpdate {
 	return au
 }
 
-// SetHclID sets the "hcl_id" field.
-func (au *AnsibleUpdate) SetHclID(s string) *AnsibleUpdate {
-	au.mutation.SetHclID(s)
+// SetHCLID sets the "hcl_id" field.
+func (au *AnsibleUpdate) SetHCLID(s string) *AnsibleUpdate {
+	au.mutation.SetHCLID(s)
 	return au
 }
 
@@ -87,6 +88,12 @@ func (au *AnsibleUpdate) SetTags(m map[string]string) *AnsibleUpdate {
 // SetValidations sets the "validations" field.
 func (au *AnsibleUpdate) SetValidations(s []string) *AnsibleUpdate {
 	au.mutation.SetValidations(s)
+	return au
+}
+
+// AppendValidations appends s to the "validations" field.
+func (au *AnsibleUpdate) AppendValidations(s []string) *AnsibleUpdate {
+	au.mutation.AppendValidations(s)
 	return au
 }
 
@@ -158,40 +165,7 @@ func (au *AnsibleUpdate) ClearEnvironment() *AnsibleUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (au *AnsibleUpdate) Save(ctx context.Context) (int, error) {
-	var (
-		err      error
-		affected int
-	)
-	if len(au.hooks) == 0 {
-		if err = au.check(); err != nil {
-			return 0, err
-		}
-		affected, err = au.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*AnsibleMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = au.check(); err != nil {
-				return 0, err
-			}
-			au.mutation = mutation
-			affected, err = au.sqlSave(ctx)
-			mutation.done = true
-			return affected, err
-		})
-		for i := len(au.hooks) - 1; i >= 0; i-- {
-			if au.hooks[i] == nil {
-				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = au.hooks[i](mut)
-		}
-		if _, err := mut.Mutate(ctx, au.mutation); err != nil {
-			return 0, err
-		}
-	}
-	return affected, err
+	return withHooks(ctx, au.sqlSave, au.mutation, au.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -227,16 +201,10 @@ func (au *AnsibleUpdate) check() error {
 }
 
 func (au *AnsibleUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   ansible.Table,
-			Columns: ansible.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: ansible.FieldID,
-			},
-		},
+	if err := au.check(); err != nil {
+		return n, err
 	}
+	_spec := sqlgraph.NewUpdateSpec(ansible.Table, ansible.Columns, sqlgraph.NewFieldSpec(ansible.FieldID, field.TypeUUID))
 	if ps := au.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -245,73 +213,38 @@ func (au *AnsibleUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 	}
 	if value, ok := au.mutation.Name(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: ansible.FieldName,
-		})
+		_spec.SetField(ansible.FieldName, field.TypeString, value)
 	}
-	if value, ok := au.mutation.HclID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: ansible.FieldHclID,
-		})
+	if value, ok := au.mutation.HCLID(); ok {
+		_spec.SetField(ansible.FieldHCLID, field.TypeString, value)
 	}
 	if value, ok := au.mutation.Description(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: ansible.FieldDescription,
-		})
+		_spec.SetField(ansible.FieldDescription, field.TypeString, value)
 	}
 	if value, ok := au.mutation.Source(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: ansible.FieldSource,
-		})
+		_spec.SetField(ansible.FieldSource, field.TypeString, value)
 	}
 	if value, ok := au.mutation.PlaybookName(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: ansible.FieldPlaybookName,
-		})
+		_spec.SetField(ansible.FieldPlaybookName, field.TypeString, value)
 	}
 	if value, ok := au.mutation.Method(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeEnum,
-			Value:  value,
-			Column: ansible.FieldMethod,
-		})
+		_spec.SetField(ansible.FieldMethod, field.TypeEnum, value)
 	}
 	if value, ok := au.mutation.Inventory(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: ansible.FieldInventory,
-		})
+		_spec.SetField(ansible.FieldInventory, field.TypeString, value)
 	}
 	if value, ok := au.mutation.AbsPath(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: ansible.FieldAbsPath,
-		})
+		_spec.SetField(ansible.FieldAbsPath, field.TypeString, value)
 	}
 	if value, ok := au.mutation.Tags(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: ansible.FieldTags,
-		})
+		_spec.SetField(ansible.FieldTags, field.TypeJSON, value)
 	}
 	if value, ok := au.mutation.Validations(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: ansible.FieldValidations,
+		_spec.SetField(ansible.FieldValidations, field.TypeJSON, value)
+	}
+	if value, ok := au.mutation.AppendedValidations(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, ansible.FieldValidations, value)
 		})
 	}
 	if au.mutation.UsersCleared() {
@@ -322,10 +255,7 @@ func (au *AnsibleUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{ansible.UsersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -338,10 +268,7 @@ func (au *AnsibleUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{ansible.UsersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -357,10 +284,7 @@ func (au *AnsibleUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{ansible.UsersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -376,10 +300,7 @@ func (au *AnsibleUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{ansible.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -392,10 +313,7 @@ func (au *AnsibleUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{ansible.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -411,6 +329,7 @@ func (au *AnsibleUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		return 0, err
 	}
+	au.mutation.done = true
 	return n, nil
 }
 
@@ -428,9 +347,9 @@ func (auo *AnsibleUpdateOne) SetName(s string) *AnsibleUpdateOne {
 	return auo
 }
 
-// SetHclID sets the "hcl_id" field.
-func (auo *AnsibleUpdateOne) SetHclID(s string) *AnsibleUpdateOne {
-	auo.mutation.SetHclID(s)
+// SetHCLID sets the "hcl_id" field.
+func (auo *AnsibleUpdateOne) SetHCLID(s string) *AnsibleUpdateOne {
+	auo.mutation.SetHCLID(s)
 	return auo
 }
 
@@ -479,6 +398,12 @@ func (auo *AnsibleUpdateOne) SetTags(m map[string]string) *AnsibleUpdateOne {
 // SetValidations sets the "validations" field.
 func (auo *AnsibleUpdateOne) SetValidations(s []string) *AnsibleUpdateOne {
 	auo.mutation.SetValidations(s)
+	return auo
+}
+
+// AppendValidations appends s to the "validations" field.
+func (auo *AnsibleUpdateOne) AppendValidations(s []string) *AnsibleUpdateOne {
+	auo.mutation.AppendValidations(s)
 	return auo
 }
 
@@ -548,6 +473,12 @@ func (auo *AnsibleUpdateOne) ClearEnvironment() *AnsibleUpdateOne {
 	return auo
 }
 
+// Where appends a list predicates to the AnsibleUpdate builder.
+func (auo *AnsibleUpdateOne) Where(ps ...predicate.Ansible) *AnsibleUpdateOne {
+	auo.mutation.Where(ps...)
+	return auo
+}
+
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
 func (auo *AnsibleUpdateOne) Select(field string, fields ...string) *AnsibleUpdateOne {
@@ -557,46 +488,7 @@ func (auo *AnsibleUpdateOne) Select(field string, fields ...string) *AnsibleUpda
 
 // Save executes the query and returns the updated Ansible entity.
 func (auo *AnsibleUpdateOne) Save(ctx context.Context) (*Ansible, error) {
-	var (
-		err  error
-		node *Ansible
-	)
-	if len(auo.hooks) == 0 {
-		if err = auo.check(); err != nil {
-			return nil, err
-		}
-		node, err = auo.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*AnsibleMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = auo.check(); err != nil {
-				return nil, err
-			}
-			auo.mutation = mutation
-			node, err = auo.sqlSave(ctx)
-			mutation.done = true
-			return node, err
-		})
-		for i := len(auo.hooks) - 1; i >= 0; i-- {
-			if auo.hooks[i] == nil {
-				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = auo.hooks[i](mut)
-		}
-		v, err := mut.Mutate(ctx, auo.mutation)
-		if err != nil {
-			return nil, err
-		}
-		nv, ok := v.(*Ansible)
-		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from AnsibleMutation", v)
-		}
-		node = nv
-	}
-	return node, err
+	return withHooks(ctx, auo.sqlSave, auo.mutation, auo.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -632,16 +524,10 @@ func (auo *AnsibleUpdateOne) check() error {
 }
 
 func (auo *AnsibleUpdateOne) sqlSave(ctx context.Context) (_node *Ansible, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   ansible.Table,
-			Columns: ansible.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: ansible.FieldID,
-			},
-		},
+	if err := auo.check(); err != nil {
+		return _node, err
 	}
+	_spec := sqlgraph.NewUpdateSpec(ansible.Table, ansible.Columns, sqlgraph.NewFieldSpec(ansible.FieldID, field.TypeUUID))
 	id, ok := auo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Ansible.id" for update`)}
@@ -667,73 +553,38 @@ func (auo *AnsibleUpdateOne) sqlSave(ctx context.Context) (_node *Ansible, err e
 		}
 	}
 	if value, ok := auo.mutation.Name(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: ansible.FieldName,
-		})
+		_spec.SetField(ansible.FieldName, field.TypeString, value)
 	}
-	if value, ok := auo.mutation.HclID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: ansible.FieldHclID,
-		})
+	if value, ok := auo.mutation.HCLID(); ok {
+		_spec.SetField(ansible.FieldHCLID, field.TypeString, value)
 	}
 	if value, ok := auo.mutation.Description(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: ansible.FieldDescription,
-		})
+		_spec.SetField(ansible.FieldDescription, field.TypeString, value)
 	}
 	if value, ok := auo.mutation.Source(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: ansible.FieldSource,
-		})
+		_spec.SetField(ansible.FieldSource, field.TypeString, value)
 	}
 	if value, ok := auo.mutation.PlaybookName(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: ansible.FieldPlaybookName,
-		})
+		_spec.SetField(ansible.FieldPlaybookName, field.TypeString, value)
 	}
 	if value, ok := auo.mutation.Method(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeEnum,
-			Value:  value,
-			Column: ansible.FieldMethod,
-		})
+		_spec.SetField(ansible.FieldMethod, field.TypeEnum, value)
 	}
 	if value, ok := auo.mutation.Inventory(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: ansible.FieldInventory,
-		})
+		_spec.SetField(ansible.FieldInventory, field.TypeString, value)
 	}
 	if value, ok := auo.mutation.AbsPath(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: ansible.FieldAbsPath,
-		})
+		_spec.SetField(ansible.FieldAbsPath, field.TypeString, value)
 	}
 	if value, ok := auo.mutation.Tags(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: ansible.FieldTags,
-		})
+		_spec.SetField(ansible.FieldTags, field.TypeJSON, value)
 	}
 	if value, ok := auo.mutation.Validations(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: ansible.FieldValidations,
+		_spec.SetField(ansible.FieldValidations, field.TypeJSON, value)
+	}
+	if value, ok := auo.mutation.AppendedValidations(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, ansible.FieldValidations, value)
 		})
 	}
 	if auo.mutation.UsersCleared() {
@@ -744,10 +595,7 @@ func (auo *AnsibleUpdateOne) sqlSave(ctx context.Context) (_node *Ansible, err e
 			Columns: []string{ansible.UsersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -760,10 +608,7 @@ func (auo *AnsibleUpdateOne) sqlSave(ctx context.Context) (_node *Ansible, err e
 			Columns: []string{ansible.UsersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -779,10 +624,7 @@ func (auo *AnsibleUpdateOne) sqlSave(ctx context.Context) (_node *Ansible, err e
 			Columns: []string{ansible.UsersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -798,10 +640,7 @@ func (auo *AnsibleUpdateOne) sqlSave(ctx context.Context) (_node *Ansible, err e
 			Columns: []string{ansible.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -814,10 +653,7 @@ func (auo *AnsibleUpdateOne) sqlSave(ctx context.Context) (_node *Ansible, err e
 			Columns: []string{ansible.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -836,5 +672,6 @@ func (auo *AnsibleUpdateOne) sqlSave(ctx context.Context) (_node *Ansible, err e
 		}
 		return nil, err
 	}
+	auo.mutation.done = true
 	return _node, nil
 }

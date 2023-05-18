@@ -31,9 +31,9 @@ func (cu *CompetitionUpdate) Where(ps ...predicate.Competition) *CompetitionUpda
 	return cu
 }
 
-// SetHclID sets the "hcl_id" field.
-func (cu *CompetitionUpdate) SetHclID(s string) *CompetitionUpdate {
-	cu.mutation.SetHclID(s)
+// SetHCLID sets the "hcl_id" field.
+func (cu *CompetitionUpdate) SetHCLID(s string) *CompetitionUpdate {
+	cu.mutation.SetHCLID(s)
 	return cu
 }
 
@@ -213,34 +213,7 @@ func (cu *CompetitionUpdate) RemoveBuilds(b ...*Build) *CompetitionUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (cu *CompetitionUpdate) Save(ctx context.Context) (int, error) {
-	var (
-		err      error
-		affected int
-	)
-	if len(cu.hooks) == 0 {
-		affected, err = cu.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*CompetitionMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			cu.mutation = mutation
-			affected, err = cu.sqlSave(ctx)
-			mutation.done = true
-			return affected, err
-		})
-		for i := len(cu.hooks) - 1; i >= 0; i-- {
-			if cu.hooks[i] == nil {
-				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = cu.hooks[i](mut)
-		}
-		if _, err := mut.Mutate(ctx, cu.mutation); err != nil {
-			return 0, err
-		}
-	}
-	return affected, err
+	return withHooks(ctx, cu.sqlSave, cu.mutation, cu.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -266,16 +239,7 @@ func (cu *CompetitionUpdate) ExecX(ctx context.Context) {
 }
 
 func (cu *CompetitionUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   competition.Table,
-			Columns: competition.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: competition.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewUpdateSpec(competition.Table, competition.Columns, sqlgraph.NewFieldSpec(competition.FieldID, field.TypeUUID))
 	if ps := cu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -283,73 +247,35 @@ func (cu *CompetitionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := cu.mutation.HclID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: competition.FieldHclID,
-		})
+	if value, ok := cu.mutation.HCLID(); ok {
+		_spec.SetField(competition.FieldHCLID, field.TypeString, value)
 	}
 	if value, ok := cu.mutation.RootPassword(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: competition.FieldRootPassword,
-		})
+		_spec.SetField(competition.FieldRootPassword, field.TypeString, value)
 	}
 	if value, ok := cu.mutation.StartTime(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: competition.FieldStartTime,
-		})
+		_spec.SetField(competition.FieldStartTime, field.TypeInt64, value)
 	}
 	if value, ok := cu.mutation.AddedStartTime(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: competition.FieldStartTime,
-		})
+		_spec.AddField(competition.FieldStartTime, field.TypeInt64, value)
 	}
 	if cu.mutation.StartTimeCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Column: competition.FieldStartTime,
-		})
+		_spec.ClearField(competition.FieldStartTime, field.TypeInt64)
 	}
 	if value, ok := cu.mutation.StopTime(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: competition.FieldStopTime,
-		})
+		_spec.SetField(competition.FieldStopTime, field.TypeInt64, value)
 	}
 	if value, ok := cu.mutation.AddedStopTime(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: competition.FieldStopTime,
-		})
+		_spec.AddField(competition.FieldStopTime, field.TypeInt64, value)
 	}
 	if cu.mutation.StopTimeCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Column: competition.FieldStopTime,
-		})
+		_spec.ClearField(competition.FieldStopTime, field.TypeInt64)
 	}
 	if value, ok := cu.mutation.Config(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: competition.FieldConfig,
-		})
+		_spec.SetField(competition.FieldConfig, field.TypeJSON, value)
 	}
 	if value, ok := cu.mutation.Tags(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: competition.FieldTags,
-		})
+		_spec.SetField(competition.FieldTags, field.TypeJSON, value)
 	}
 	if cu.mutation.DNSCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -359,10 +285,7 @@ func (cu *CompetitionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: competition.DNSPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: dns.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(dns.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -375,10 +298,7 @@ func (cu *CompetitionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: competition.DNSPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: dns.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(dns.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -394,10 +314,7 @@ func (cu *CompetitionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: competition.DNSPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: dns.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(dns.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -413,10 +330,7 @@ func (cu *CompetitionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{competition.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -429,10 +343,7 @@ func (cu *CompetitionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{competition.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -448,10 +359,7 @@ func (cu *CompetitionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{competition.BuildsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: build.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(build.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -464,10 +372,7 @@ func (cu *CompetitionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{competition.BuildsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: build.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(build.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -483,10 +388,7 @@ func (cu *CompetitionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{competition.BuildsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: build.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(build.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -502,6 +404,7 @@ func (cu *CompetitionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		return 0, err
 	}
+	cu.mutation.done = true
 	return n, nil
 }
 
@@ -513,9 +416,9 @@ type CompetitionUpdateOne struct {
 	mutation *CompetitionMutation
 }
 
-// SetHclID sets the "hcl_id" field.
-func (cuo *CompetitionUpdateOne) SetHclID(s string) *CompetitionUpdateOne {
-	cuo.mutation.SetHclID(s)
+// SetHCLID sets the "hcl_id" field.
+func (cuo *CompetitionUpdateOne) SetHCLID(s string) *CompetitionUpdateOne {
+	cuo.mutation.SetHCLID(s)
 	return cuo
 }
 
@@ -693,6 +596,12 @@ func (cuo *CompetitionUpdateOne) RemoveBuilds(b ...*Build) *CompetitionUpdateOne
 	return cuo.RemoveBuildIDs(ids...)
 }
 
+// Where appends a list predicates to the CompetitionUpdate builder.
+func (cuo *CompetitionUpdateOne) Where(ps ...predicate.Competition) *CompetitionUpdateOne {
+	cuo.mutation.Where(ps...)
+	return cuo
+}
+
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
 func (cuo *CompetitionUpdateOne) Select(field string, fields ...string) *CompetitionUpdateOne {
@@ -702,40 +611,7 @@ func (cuo *CompetitionUpdateOne) Select(field string, fields ...string) *Competi
 
 // Save executes the query and returns the updated Competition entity.
 func (cuo *CompetitionUpdateOne) Save(ctx context.Context) (*Competition, error) {
-	var (
-		err  error
-		node *Competition
-	)
-	if len(cuo.hooks) == 0 {
-		node, err = cuo.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*CompetitionMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			cuo.mutation = mutation
-			node, err = cuo.sqlSave(ctx)
-			mutation.done = true
-			return node, err
-		})
-		for i := len(cuo.hooks) - 1; i >= 0; i-- {
-			if cuo.hooks[i] == nil {
-				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = cuo.hooks[i](mut)
-		}
-		v, err := mut.Mutate(ctx, cuo.mutation)
-		if err != nil {
-			return nil, err
-		}
-		nv, ok := v.(*Competition)
-		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from CompetitionMutation", v)
-		}
-		node = nv
-	}
-	return node, err
+	return withHooks(ctx, cuo.sqlSave, cuo.mutation, cuo.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -761,16 +637,7 @@ func (cuo *CompetitionUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (cuo *CompetitionUpdateOne) sqlSave(ctx context.Context) (_node *Competition, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   competition.Table,
-			Columns: competition.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: competition.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewUpdateSpec(competition.Table, competition.Columns, sqlgraph.NewFieldSpec(competition.FieldID, field.TypeUUID))
 	id, ok := cuo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Competition.id" for update`)}
@@ -795,73 +662,35 @@ func (cuo *CompetitionUpdateOne) sqlSave(ctx context.Context) (_node *Competitio
 			}
 		}
 	}
-	if value, ok := cuo.mutation.HclID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: competition.FieldHclID,
-		})
+	if value, ok := cuo.mutation.HCLID(); ok {
+		_spec.SetField(competition.FieldHCLID, field.TypeString, value)
 	}
 	if value, ok := cuo.mutation.RootPassword(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: competition.FieldRootPassword,
-		})
+		_spec.SetField(competition.FieldRootPassword, field.TypeString, value)
 	}
 	if value, ok := cuo.mutation.StartTime(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: competition.FieldStartTime,
-		})
+		_spec.SetField(competition.FieldStartTime, field.TypeInt64, value)
 	}
 	if value, ok := cuo.mutation.AddedStartTime(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: competition.FieldStartTime,
-		})
+		_spec.AddField(competition.FieldStartTime, field.TypeInt64, value)
 	}
 	if cuo.mutation.StartTimeCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Column: competition.FieldStartTime,
-		})
+		_spec.ClearField(competition.FieldStartTime, field.TypeInt64)
 	}
 	if value, ok := cuo.mutation.StopTime(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: competition.FieldStopTime,
-		})
+		_spec.SetField(competition.FieldStopTime, field.TypeInt64, value)
 	}
 	if value, ok := cuo.mutation.AddedStopTime(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: competition.FieldStopTime,
-		})
+		_spec.AddField(competition.FieldStopTime, field.TypeInt64, value)
 	}
 	if cuo.mutation.StopTimeCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Column: competition.FieldStopTime,
-		})
+		_spec.ClearField(competition.FieldStopTime, field.TypeInt64)
 	}
 	if value, ok := cuo.mutation.Config(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: competition.FieldConfig,
-		})
+		_spec.SetField(competition.FieldConfig, field.TypeJSON, value)
 	}
 	if value, ok := cuo.mutation.Tags(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: competition.FieldTags,
-		})
+		_spec.SetField(competition.FieldTags, field.TypeJSON, value)
 	}
 	if cuo.mutation.DNSCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -871,10 +700,7 @@ func (cuo *CompetitionUpdateOne) sqlSave(ctx context.Context) (_node *Competitio
 			Columns: competition.DNSPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: dns.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(dns.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -887,10 +713,7 @@ func (cuo *CompetitionUpdateOne) sqlSave(ctx context.Context) (_node *Competitio
 			Columns: competition.DNSPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: dns.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(dns.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -906,10 +729,7 @@ func (cuo *CompetitionUpdateOne) sqlSave(ctx context.Context) (_node *Competitio
 			Columns: competition.DNSPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: dns.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(dns.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -925,10 +745,7 @@ func (cuo *CompetitionUpdateOne) sqlSave(ctx context.Context) (_node *Competitio
 			Columns: []string{competition.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -941,10 +758,7 @@ func (cuo *CompetitionUpdateOne) sqlSave(ctx context.Context) (_node *Competitio
 			Columns: []string{competition.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -960,10 +774,7 @@ func (cuo *CompetitionUpdateOne) sqlSave(ctx context.Context) (_node *Competitio
 			Columns: []string{competition.BuildsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: build.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(build.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -976,10 +787,7 @@ func (cuo *CompetitionUpdateOne) sqlSave(ctx context.Context) (_node *Competitio
 			Columns: []string{competition.BuildsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: build.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(build.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -995,10 +803,7 @@ func (cuo *CompetitionUpdateOne) sqlSave(ctx context.Context) (_node *Competitio
 			Columns: []string{competition.BuildsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: build.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(build.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1017,5 +822,6 @@ func (cuo *CompetitionUpdateOne) sqlSave(ctx context.Context) (_node *Competitio
 		}
 		return nil, err
 	}
+	cuo.mutation.done = true
 	return _node, nil
 }

@@ -21,15 +21,16 @@ import (
 // ValidationQuery is the builder for querying Validation entities.
 type ValidationQuery struct {
 	config
-	limit           *int
-	offset          *int
-	unique          *bool
-	order           []OrderFunc
-	fields          []string
+	ctx             *QueryContext
+	order           []validation.OrderOption
+	inters          []Interceptor
 	predicates      []predicate.Validation
 	withUsers       *UserQuery
 	withEnvironment *EnvironmentQuery
 	withFKs         bool
+	modifiers       []func(*sql.Selector)
+	loadTotal       []func(context.Context, []*Validation) error
+	withNamedUsers  map[string]*UserQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -41,34 +42,34 @@ func (vq *ValidationQuery) Where(ps ...predicate.Validation) *ValidationQuery {
 	return vq
 }
 
-// Limit adds a limit step to the query.
+// Limit the number of records to be returned by this query.
 func (vq *ValidationQuery) Limit(limit int) *ValidationQuery {
-	vq.limit = &limit
+	vq.ctx.Limit = &limit
 	return vq
 }
 
-// Offset adds an offset step to the query.
+// Offset to start from.
 func (vq *ValidationQuery) Offset(offset int) *ValidationQuery {
-	vq.offset = &offset
+	vq.ctx.Offset = &offset
 	return vq
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
 func (vq *ValidationQuery) Unique(unique bool) *ValidationQuery {
-	vq.unique = &unique
+	vq.ctx.Unique = &unique
 	return vq
 }
 
-// Order adds an order step to the query.
-func (vq *ValidationQuery) Order(o ...OrderFunc) *ValidationQuery {
+// Order specifies how the records should be ordered.
+func (vq *ValidationQuery) Order(o ...validation.OrderOption) *ValidationQuery {
 	vq.order = append(vq.order, o...)
 	return vq
 }
 
 // QueryUsers chains the current query on the "Users" edge.
 func (vq *ValidationQuery) QueryUsers() *UserQuery {
-	query := &UserQuery{config: vq.config}
+	query := (&UserClient{config: vq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := vq.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -90,7 +91,7 @@ func (vq *ValidationQuery) QueryUsers() *UserQuery {
 
 // QueryEnvironment chains the current query on the "Environment" edge.
 func (vq *ValidationQuery) QueryEnvironment() *EnvironmentQuery {
-	query := &EnvironmentQuery{config: vq.config}
+	query := (&EnvironmentClient{config: vq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := vq.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -113,7 +114,7 @@ func (vq *ValidationQuery) QueryEnvironment() *EnvironmentQuery {
 // First returns the first Validation entity from the query.
 // Returns a *NotFoundError when no Validation was found.
 func (vq *ValidationQuery) First(ctx context.Context) (*Validation, error) {
-	nodes, err := vq.Limit(1).All(ctx)
+	nodes, err := vq.Limit(1).All(setContextOp(ctx, vq.ctx, "First"))
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +137,7 @@ func (vq *ValidationQuery) FirstX(ctx context.Context) *Validation {
 // Returns a *NotFoundError when no Validation ID was found.
 func (vq *ValidationQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = vq.Limit(1).IDs(ctx); err != nil {
+	if ids, err = vq.Limit(1).IDs(setContextOp(ctx, vq.ctx, "FirstID")); err != nil {
 		return
 	}
 	if len(ids) == 0 {
@@ -159,7 +160,7 @@ func (vq *ValidationQuery) FirstIDX(ctx context.Context) uuid.UUID {
 // Returns a *NotSingularError when more than one Validation entity is found.
 // Returns a *NotFoundError when no Validation entities are found.
 func (vq *ValidationQuery) Only(ctx context.Context) (*Validation, error) {
-	nodes, err := vq.Limit(2).All(ctx)
+	nodes, err := vq.Limit(2).All(setContextOp(ctx, vq.ctx, "Only"))
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +188,7 @@ func (vq *ValidationQuery) OnlyX(ctx context.Context) *Validation {
 // Returns a *NotFoundError when no entities are found.
 func (vq *ValidationQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = vq.Limit(2).IDs(ctx); err != nil {
+	if ids, err = vq.Limit(2).IDs(setContextOp(ctx, vq.ctx, "OnlyID")); err != nil {
 		return
 	}
 	switch len(ids) {
@@ -212,10 +213,12 @@ func (vq *ValidationQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 
 // All executes the query and returns a list of Validations.
 func (vq *ValidationQuery) All(ctx context.Context) ([]*Validation, error) {
+	ctx = setContextOp(ctx, vq.ctx, "All")
 	if err := vq.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	return vq.sqlAll(ctx)
+	qr := querierAll[[]*Validation, *ValidationQuery]()
+	return withInterceptors[[]*Validation](ctx, vq, qr, vq.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
@@ -228,9 +231,12 @@ func (vq *ValidationQuery) AllX(ctx context.Context) []*Validation {
 }
 
 // IDs executes the query and returns a list of Validation IDs.
-func (vq *ValidationQuery) IDs(ctx context.Context) ([]uuid.UUID, error) {
-	var ids []uuid.UUID
-	if err := vq.Select(validation.FieldID).Scan(ctx, &ids); err != nil {
+func (vq *ValidationQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
+	if vq.ctx.Unique == nil && vq.path != nil {
+		vq.Unique(true)
+	}
+	ctx = setContextOp(ctx, vq.ctx, "IDs")
+	if err = vq.Select(validation.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
@@ -247,10 +253,11 @@ func (vq *ValidationQuery) IDsX(ctx context.Context) []uuid.UUID {
 
 // Count returns the count of the given query.
 func (vq *ValidationQuery) Count(ctx context.Context) (int, error) {
+	ctx = setContextOp(ctx, vq.ctx, "Count")
 	if err := vq.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return vq.sqlCount(ctx)
+	return withInterceptors[int](ctx, vq, querierCount[*ValidationQuery](), vq.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
@@ -264,10 +271,15 @@ func (vq *ValidationQuery) CountX(ctx context.Context) int {
 
 // Exist returns true if the query has elements in the graph.
 func (vq *ValidationQuery) Exist(ctx context.Context) (bool, error) {
-	if err := vq.prepareQuery(ctx); err != nil {
-		return false, err
+	ctx = setContextOp(ctx, vq.ctx, "Exist")
+	switch _, err := vq.FirstID(ctx); {
+	case IsNotFound(err):
+		return false, nil
+	case err != nil:
+		return false, fmt.Errorf("ent: check existence: %w", err)
+	default:
+		return true, nil
 	}
-	return vq.sqlExist(ctx)
 }
 
 // ExistX is like Exist, but panics if an error occurs.
@@ -287,23 +299,22 @@ func (vq *ValidationQuery) Clone() *ValidationQuery {
 	}
 	return &ValidationQuery{
 		config:          vq.config,
-		limit:           vq.limit,
-		offset:          vq.offset,
-		order:           append([]OrderFunc{}, vq.order...),
+		ctx:             vq.ctx.Clone(),
+		order:           append([]validation.OrderOption{}, vq.order...),
+		inters:          append([]Interceptor{}, vq.inters...),
 		predicates:      append([]predicate.Validation{}, vq.predicates...),
 		withUsers:       vq.withUsers.Clone(),
 		withEnvironment: vq.withEnvironment.Clone(),
 		// clone intermediate query.
-		sql:    vq.sql.Clone(),
-		path:   vq.path,
-		unique: vq.unique,
+		sql:  vq.sql.Clone(),
+		path: vq.path,
 	}
 }
 
 // WithUsers tells the query-builder to eager-load the nodes that are connected to
 // the "Users" edge. The optional arguments are used to configure the query builder of the edge.
 func (vq *ValidationQuery) WithUsers(opts ...func(*UserQuery)) *ValidationQuery {
-	query := &UserQuery{config: vq.config}
+	query := (&UserClient{config: vq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
@@ -314,7 +325,7 @@ func (vq *ValidationQuery) WithUsers(opts ...func(*UserQuery)) *ValidationQuery 
 // WithEnvironment tells the query-builder to eager-load the nodes that are connected to
 // the "Environment" edge. The optional arguments are used to configure the query builder of the edge.
 func (vq *ValidationQuery) WithEnvironment(opts ...func(*EnvironmentQuery)) *ValidationQuery {
-	query := &EnvironmentQuery{config: vq.config}
+	query := (&EnvironmentClient{config: vq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
@@ -328,25 +339,20 @@ func (vq *ValidationQuery) WithEnvironment(opts ...func(*EnvironmentQuery)) *Val
 // Example:
 //
 //	var v []struct {
-//		HclID string `json:"hcl_id,omitempty" hcl:"id,label"`
+//		HCLID string `json:"hcl_id,omitempty" hcl:"id,label"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Validation.Query().
-//		GroupBy(validation.FieldHclID).
+//		GroupBy(validation.FieldHCLID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (vq *ValidationQuery) GroupBy(field string, fields ...string) *ValidationGroupBy {
-	grbuild := &ValidationGroupBy{config: vq.config}
-	grbuild.fields = append([]string{field}, fields...)
-	grbuild.path = func(ctx context.Context) (prev *sql.Selector, err error) {
-		if err := vq.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		return vq.sqlQuery(ctx), nil
-	}
+	vq.ctx.Fields = append([]string{field}, fields...)
+	grbuild := &ValidationGroupBy{build: vq}
+	grbuild.flds = &vq.ctx.Fields
 	grbuild.label = validation.Label
-	grbuild.flds, grbuild.scan = &grbuild.fields, grbuild.Scan
+	grbuild.scan = grbuild.Scan
 	return grbuild
 }
 
@@ -356,22 +362,37 @@ func (vq *ValidationQuery) GroupBy(field string, fields ...string) *ValidationGr
 // Example:
 //
 //	var v []struct {
-//		HclID string `json:"hcl_id,omitempty" hcl:"id,label"`
+//		HCLID string `json:"hcl_id,omitempty" hcl:"id,label"`
 //	}
 //
 //	client.Validation.Query().
-//		Select(validation.FieldHclID).
+//		Select(validation.FieldHCLID).
 //		Scan(ctx, &v)
 func (vq *ValidationQuery) Select(fields ...string) *ValidationSelect {
-	vq.fields = append(vq.fields, fields...)
-	selbuild := &ValidationSelect{ValidationQuery: vq}
-	selbuild.label = validation.Label
-	selbuild.flds, selbuild.scan = &vq.fields, selbuild.Scan
-	return selbuild
+	vq.ctx.Fields = append(vq.ctx.Fields, fields...)
+	sbuild := &ValidationSelect{ValidationQuery: vq}
+	sbuild.label = validation.Label
+	sbuild.flds, sbuild.scan = &vq.ctx.Fields, sbuild.Scan
+	return sbuild
+}
+
+// Aggregate returns a ValidationSelect configured with the given aggregations.
+func (vq *ValidationQuery) Aggregate(fns ...AggregateFunc) *ValidationSelect {
+	return vq.Select().Aggregate(fns...)
 }
 
 func (vq *ValidationQuery) prepareQuery(ctx context.Context) error {
-	for _, f := range vq.fields {
+	for _, inter := range vq.inters {
+		if inter == nil {
+			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
+		}
+		if trv, ok := inter.(Traverser); ok {
+			if err := trv.Traverse(ctx, vq); err != nil {
+				return err
+			}
+		}
+	}
+	for _, f := range vq.ctx.Fields {
 		if !validation.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
@@ -402,14 +423,17 @@ func (vq *ValidationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*V
 	if withFKs {
 		_spec.Node.Columns = append(_spec.Node.Columns, validation.ForeignKeys...)
 	}
-	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
+	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Validation).scanValues(nil, columns)
 	}
-	_spec.Assign = func(columns []string, values []interface{}) error {
+	_spec.Assign = func(columns []string, values []any) error {
 		node := &Validation{config: vq.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
+	}
+	if len(vq.modifiers) > 0 {
+		_spec.Modifiers = vq.modifiers
 	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
@@ -433,6 +457,18 @@ func (vq *ValidationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*V
 			return nil, err
 		}
 	}
+	for name, query := range vq.withNamedUsers {
+		if err := vq.loadUsers(ctx, query, nodes,
+			func(n *Validation) { n.appendNamedUsers(name) },
+			func(n *Validation, e *User) { n.appendNamedUsers(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for i := range vq.loadTotal {
+		if err := vq.loadTotal[i](ctx, nodes); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
@@ -448,7 +484,7 @@ func (vq *ValidationQuery) loadUsers(ctx context.Context, query *UserQuery, node
 	}
 	query.withFKs = true
 	query.Where(predicate.User(func(s *sql.Selector) {
-		s.Where(sql.InValues(validation.UsersColumn, fks...))
+		s.Where(sql.InValues(s.C(validation.UsersColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
@@ -461,7 +497,7 @@ func (vq *ValidationQuery) loadUsers(ctx context.Context, query *UserQuery, node
 		}
 		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "validation_users" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "validation_users" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}
@@ -479,6 +515,9 @@ func (vq *ValidationQuery) loadEnvironment(ctx context.Context, query *Environme
 			ids = append(ids, fk)
 		}
 		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
 	}
 	query.Where(environment.IDIn(ids...))
 	neighbors, err := query.All(ctx)
@@ -499,38 +538,25 @@ func (vq *ValidationQuery) loadEnvironment(ctx context.Context, query *Environme
 
 func (vq *ValidationQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := vq.querySpec()
-	_spec.Node.Columns = vq.fields
-	if len(vq.fields) > 0 {
-		_spec.Unique = vq.unique != nil && *vq.unique
+	if len(vq.modifiers) > 0 {
+		_spec.Modifiers = vq.modifiers
+	}
+	_spec.Node.Columns = vq.ctx.Fields
+	if len(vq.ctx.Fields) > 0 {
+		_spec.Unique = vq.ctx.Unique != nil && *vq.ctx.Unique
 	}
 	return sqlgraph.CountNodes(ctx, vq.driver, _spec)
 }
 
-func (vq *ValidationQuery) sqlExist(ctx context.Context) (bool, error) {
-	n, err := vq.sqlCount(ctx)
-	if err != nil {
-		return false, fmt.Errorf("ent: check existence: %w", err)
-	}
-	return n > 0, nil
-}
-
 func (vq *ValidationQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := &sqlgraph.QuerySpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   validation.Table,
-			Columns: validation.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: validation.FieldID,
-			},
-		},
-		From:   vq.sql,
-		Unique: true,
-	}
-	if unique := vq.unique; unique != nil {
+	_spec := sqlgraph.NewQuerySpec(validation.Table, validation.Columns, sqlgraph.NewFieldSpec(validation.FieldID, field.TypeUUID))
+	_spec.From = vq.sql
+	if unique := vq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
+	} else if vq.path != nil {
+		_spec.Unique = true
 	}
-	if fields := vq.fields; len(fields) > 0 {
+	if fields := vq.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, validation.FieldID)
 		for i := range fields {
@@ -546,10 +572,10 @@ func (vq *ValidationQuery) querySpec() *sqlgraph.QuerySpec {
 			}
 		}
 	}
-	if limit := vq.limit; limit != nil {
+	if limit := vq.ctx.Limit; limit != nil {
 		_spec.Limit = *limit
 	}
-	if offset := vq.offset; offset != nil {
+	if offset := vq.ctx.Offset; offset != nil {
 		_spec.Offset = *offset
 	}
 	if ps := vq.order; len(ps) > 0 {
@@ -565,7 +591,7 @@ func (vq *ValidationQuery) querySpec() *sqlgraph.QuerySpec {
 func (vq *ValidationQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(vq.driver.Dialect())
 	t1 := builder.Table(validation.Table)
-	columns := vq.fields
+	columns := vq.ctx.Fields
 	if len(columns) == 0 {
 		columns = validation.Columns
 	}
@@ -574,7 +600,7 @@ func (vq *ValidationQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector = vq.sql
 		selector.Select(selector.Columns(columns...)...)
 	}
-	if vq.unique != nil && *vq.unique {
+	if vq.ctx.Unique != nil && *vq.ctx.Unique {
 		selector.Distinct()
 	}
 	for _, p := range vq.predicates {
@@ -583,26 +609,35 @@ func (vq *ValidationQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	for _, p := range vq.order {
 		p(selector)
 	}
-	if offset := vq.offset; offset != nil {
+	if offset := vq.ctx.Offset; offset != nil {
 		// limit is mandatory for offset clause. We start
 		// with default value, and override it below if needed.
 		selector.Offset(*offset).Limit(math.MaxInt32)
 	}
-	if limit := vq.limit; limit != nil {
+	if limit := vq.ctx.Limit; limit != nil {
 		selector.Limit(*limit)
 	}
 	return selector
 }
 
+// WithNamedUsers tells the query-builder to eager-load the nodes that are connected to the "Users"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (vq *ValidationQuery) WithNamedUsers(name string, opts ...func(*UserQuery)) *ValidationQuery {
+	query := (&UserClient{config: vq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if vq.withNamedUsers == nil {
+		vq.withNamedUsers = make(map[string]*UserQuery)
+	}
+	vq.withNamedUsers[name] = query
+	return vq
+}
+
 // ValidationGroupBy is the group-by builder for Validation entities.
 type ValidationGroupBy struct {
-	config
 	selector
-	fields []string
-	fns    []AggregateFunc
-	// intermediate query (i.e. traversal path).
-	sql  *sql.Selector
-	path func(context.Context) (*sql.Selector, error)
+	build *ValidationQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
@@ -611,74 +646,77 @@ func (vgb *ValidationGroupBy) Aggregate(fns ...AggregateFunc) *ValidationGroupBy
 	return vgb
 }
 
-// Scan applies the group-by query and scans the result into the given value.
-func (vgb *ValidationGroupBy) Scan(ctx context.Context, v interface{}) error {
-	query, err := vgb.path(ctx)
-	if err != nil {
+// Scan applies the selector query and scans the result into the given value.
+func (vgb *ValidationGroupBy) Scan(ctx context.Context, v any) error {
+	ctx = setContextOp(ctx, vgb.build.ctx, "GroupBy")
+	if err := vgb.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	vgb.sql = query
-	return vgb.sqlScan(ctx, v)
+	return scanWithInterceptors[*ValidationQuery, *ValidationGroupBy](ctx, vgb.build, vgb, vgb.build.inters, v)
 }
 
-func (vgb *ValidationGroupBy) sqlScan(ctx context.Context, v interface{}) error {
-	for _, f := range vgb.fields {
-		if !validation.ValidColumn(f) {
-			return &ValidationError{Name: f, err: fmt.Errorf("invalid field %q for group-by", f)}
-		}
+func (vgb *ValidationGroupBy) sqlScan(ctx context.Context, root *ValidationQuery, v any) error {
+	selector := root.sqlQuery(ctx).Select()
+	aggregation := make([]string, 0, len(vgb.fns))
+	for _, fn := range vgb.fns {
+		aggregation = append(aggregation, fn(selector))
 	}
-	selector := vgb.sqlQuery()
+	if len(selector.SelectedColumns()) == 0 {
+		columns := make([]string, 0, len(*vgb.flds)+len(vgb.fns))
+		for _, f := range *vgb.flds {
+			columns = append(columns, selector.C(f))
+		}
+		columns = append(columns, aggregation...)
+		selector.Select(columns...)
+	}
+	selector.GroupBy(selector.Columns(*vgb.flds...)...)
 	if err := selector.Err(); err != nil {
 		return err
 	}
 	rows := &sql.Rows{}
 	query, args := selector.Query()
-	if err := vgb.driver.Query(ctx, query, args, rows); err != nil {
+	if err := vgb.build.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
 }
 
-func (vgb *ValidationGroupBy) sqlQuery() *sql.Selector {
-	selector := vgb.sql.Select()
-	aggregation := make([]string, 0, len(vgb.fns))
-	for _, fn := range vgb.fns {
-		aggregation = append(aggregation, fn(selector))
-	}
-	// If no columns were selected in a custom aggregation function, the default
-	// selection is the fields used for "group-by", and the aggregation functions.
-	if len(selector.SelectedColumns()) == 0 {
-		columns := make([]string, 0, len(vgb.fields)+len(vgb.fns))
-		for _, f := range vgb.fields {
-			columns = append(columns, selector.C(f))
-		}
-		columns = append(columns, aggregation...)
-		selector.Select(columns...)
-	}
-	return selector.GroupBy(selector.Columns(vgb.fields...)...)
-}
-
 // ValidationSelect is the builder for selecting fields of Validation entities.
 type ValidationSelect struct {
 	*ValidationQuery
 	selector
-	// intermediate query (i.e. traversal path).
-	sql *sql.Selector
+}
+
+// Aggregate adds the given aggregation functions to the selector query.
+func (vs *ValidationSelect) Aggregate(fns ...AggregateFunc) *ValidationSelect {
+	vs.fns = append(vs.fns, fns...)
+	return vs
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (vs *ValidationSelect) Scan(ctx context.Context, v interface{}) error {
+func (vs *ValidationSelect) Scan(ctx context.Context, v any) error {
+	ctx = setContextOp(ctx, vs.ctx, "Select")
 	if err := vs.prepareQuery(ctx); err != nil {
 		return err
 	}
-	vs.sql = vs.ValidationQuery.sqlQuery(ctx)
-	return vs.sqlScan(ctx, v)
+	return scanWithInterceptors[*ValidationQuery, *ValidationSelect](ctx, vs.ValidationQuery, vs, vs.inters, v)
 }
 
-func (vs *ValidationSelect) sqlScan(ctx context.Context, v interface{}) error {
+func (vs *ValidationSelect) sqlScan(ctx context.Context, root *ValidationQuery, v any) error {
+	selector := root.sqlQuery(ctx)
+	aggregation := make([]string, 0, len(vs.fns))
+	for _, fn := range vs.fns {
+		aggregation = append(aggregation, fn(selector))
+	}
+	switch n := len(*vs.selector.flds); {
+	case n == 0 && len(aggregation) > 0:
+		selector.Select(aggregation...)
+	case n != 0 && len(aggregation) > 0:
+		selector.AppendSelect(aggregation...)
+	}
 	rows := &sql.Rows{}
-	query, args := vs.sql.Query()
+	query, args := selector.Query()
 	if err := vs.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}

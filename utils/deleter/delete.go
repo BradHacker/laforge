@@ -134,7 +134,7 @@ func main() {
 	}
 	println(deletedCount)
 
-	// entEnvironment, err := client.Environment.Query().Where(environment.HclIDEQ("/envs/jrwr-2021-regional-dev")).Only(ctx)
+	// entEnvironment, err := client.Environment.Query().Where(environment.HCLID("/envs/jrwr-2021-regional-dev")).Only(ctx)
 	// if err != nil {
 	// 	log.Fatalf("failed to get env: %v", err)
 	// }
@@ -155,7 +155,7 @@ func main() {
 	// 	if err != nil {
 	// 		logrus.Fatalf("failed to delete middleware: %v", err)
 	// 	}
-	// 	logrus.Infof("Deleted %v amount of GinMiddleware for Build %v for env %v", amountDeleted, entBuild.Revision, entEnvironment.HclID)
+	// 	logrus.Infof("Deleted %v amount of GinMiddleware for Build %v for env %v", amountDeleted, entBuild.Revision, entEnvironment.HCLID)
 	// 	amountDeleted, err = client.AgentStatus.Delete().Where(
 	// 		agentstatus.HasAgentBuildWith(
 	// 			build.IDEQ(entBuild.ID),
@@ -164,7 +164,7 @@ func main() {
 	// 	if err != nil {
 	// 		logrus.Fatalf("failed to delete agentstatus: %v", err)
 	// 	}
-	// 	logrus.Infof("Deleted %v amount of agentstatus for Build %v for env %v", amountDeleted, entBuild.Revision, entEnvironment.HclID)
+	// 	logrus.Infof("Deleted %v amount of agentstatus for Build %v for env %v", amountDeleted, entBuild.Revision, entEnvironment.HCLID)
 	// 	amountDeleted, err = client.AgentTask.Delete().Where(
 	// 		agenttask.HasAgentTaskToProvisionedHostWith(
 	// 			provisionedhost.HasProvisionedNetworkWith(
@@ -177,7 +177,7 @@ func main() {
 	// 	if err != nil {
 	// 		logrus.Fatalf("failed to delete agenttask: %v", err)
 	// 	}
-	// 	logrus.Infof("Deleted %v amount of agenttask for Build %v for env %v", amountDeleted, entBuild.Revision, entEnvironment.HclID)
+	// 	logrus.Infof("Deleted %v amount of agenttask for Build %v for env %v", amountDeleted, entBuild.Revision, entEnvironment.HCLID)
 	// 	amountDeleted, err = client.ProvisioningStep.Delete().Where(
 	// 		provisioningstep.HasProvisionedHostWith(
 	// 			provisionedhost.HasProvisionedNetworkWith(
@@ -190,7 +190,7 @@ func main() {
 	// 	if err != nil {
 	// 		logrus.Fatalf("failed to delete pstep: %v", err)
 	// 	}
-	// 	logrus.Infof("Deleted %v amount of pstep for Build %v for env %v", amountDeleted, entBuild.Revision, entEnvironment.HclID)
+	// 	logrus.Infof("Deleted %v amount of pstep for Build %v for env %v", amountDeleted, entBuild.Revision, entEnvironment.HCLID)
 	// 	amountDeleted, err = client.ProvisionedHost.Delete().Where(
 	// 		provisionedhost.HasProvisionedNetworkWith(
 	// 			provisionednetwork.HasBuildWith(
@@ -201,7 +201,7 @@ func main() {
 	// 	if err != nil {
 	// 		logrus.Fatalf("failed to delete phost: %v", err)
 	// 	}
-	// 	logrus.Infof("Deleted %v amount of phost for Build %v for env %v", amountDeleted, entBuild.Revision, entEnvironment.HclID)
+	// 	logrus.Infof("Deleted %v amount of phost for Build %v for env %v", amountDeleted, entBuild.Revision, entEnvironment.HCLID)
 	// 	amountDeleted, err = client.ProvisionedNetwork.Delete().Where(
 	// 		provisionednetwork.HasBuildWith(
 	// 			build.IDEQ(entBuild.ID),
@@ -215,7 +215,7 @@ func main() {
 	// 	if err != nil {
 	// 		logrus.Fatalf("failed to delete ProvisionedNetwork: %v", err)
 	// 	}
-	// 	logrus.Infof("Deleted %v amount of ProvisionedNetwork for Build %v for env %v", amountDeleted, entBuild.Revision, entEnvironment.HclID)
+	// 	logrus.Infof("Deleted %v amount of ProvisionedNetwork for Build %v for env %v", amountDeleted, entBuild.Revision, entEnvironment.HCLID)
 	// 	amountDeleted, err = client.BuildCommit.Delete().Where(
 	// 		buildcommit.HasBuildCommitToBuildWith(
 	// 			build.IDEQ(entBuild.ID),
@@ -224,7 +224,7 @@ func main() {
 	// 	if err != nil {
 	// 		logrus.Fatalf("failed to delete BuildCommit: %v", err)
 	// 	}
-	// 	logrus.Infof("Deleted %v amount of BuildCommit for Build %v for env %v", amountDeleted, entBuild.Revision, entEnvironment.HclID)
+	// 	logrus.Infof("Deleted %v amount of BuildCommit for Build %v for env %v", amountDeleted, entBuild.Revision, entEnvironment.HCLID)
 	// 	amountDeleted, err = client.Plan.Delete().Where(
 	// 		plan.HasBuildWith(
 	// 			build.IDEQ(entBuild.ID),
@@ -233,7 +233,7 @@ func main() {
 	// 	if err != nil {
 	// 		logrus.Fatalf("failed to delete plan: %v", err)
 	// 	}
-	// 	logrus.Infof("Deleted %v amount of plan for Build %v for env %v", amountDeleted, entBuild.Revision, entEnvironment.HclID)
+	// 	logrus.Infof("Deleted %v amount of plan for Build %v for env %v", amountDeleted, entBuild.Revision, entEnvironment.HCLID)
 	// 	amountDeleted, err = client.AdhocPlan.Delete().Where(
 	// 		adhocplan.HasAdhocBuildWith(
 	// 			build.IDEQ(entBuild.ID),
@@ -242,14 +242,14 @@ func main() {
 	// 	if err != nil {
 	// 		logrus.Fatalf("failed to delete AdhocPlan: %v", err)
 	// 	}
-	// 	logrus.Infof("Deleted %v amount of AdhocPlan for Build %v for env %v", amountDeleted, entBuild.Revision, entEnvironment.HclID)
+	// 	logrus.Infof("Deleted %v amount of AdhocPlan for Build %v for env %v", amountDeleted, entBuild.Revision, entEnvironment.HCLID)
 	// 	amountDeleted, err = client.Build.Delete().Where(
 	// 		build.IDEQ(entBuild.ID),
 	// 	).Exec(ctx)
 	// 	if err != nil {
 	// 		logrus.Fatalf("failed to delete Build: %v", err)
 	// 	}
-	// 	logrus.Infof("Deleted Build %v for env %v", amountDeleted, entBuild.Revision, entEnvironment.HclID)
+	// 	logrus.Infof("Deleted Build %v for env %v", amountDeleted, entBuild.Revision, entEnvironment.HCLID)
 	// }
 	// amountDeleted, err := client.Environment.Delete().Where(
 	// 	environment.IDEQ(entEnvironment.ID),
@@ -257,5 +257,5 @@ func main() {
 	// if err != nil {
 	// 	logrus.Fatalf("failed to delete Build: %v", err)
 	// }
-	// logrus.Infof("Deleted Env %v", amountDeleted, entEnvironment.HclID)
+	// logrus.Infof("Deleted Env %v", amountDeleted, entEnvironment.HCLID)
 }

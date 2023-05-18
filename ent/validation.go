@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 
+	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/gen0cide/laforge/ent/environment"
 	"github.com/gen0cide/laforge/ent/validation"
@@ -18,8 +19,8 @@ type Validation struct {
 	config ` json:"-"`
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
-	// HclID holds the value of the "hcl_id" field.
-	HclID string `json:"hcl_id,omitempty" hcl:"id,label"`
+	// HCLID holds the value of the "hcl_id" field.
+	HCLID string `json:"hcl_id,omitempty" hcl:"id,label"`
 	// ValidationType holds the value of the "validation_type" field.
 	ValidationType validation.ValidationType `json:"validation_type,omitempty" hcl:"validation_type"`
 	// Hash holds the value of the "hash" field.
@@ -62,9 +63,9 @@ type Validation struct {
 	// Users holds the value of the Users edge.
 	HCLUsers []*User `json:"Users,omitempty" hcl:"maintainer,block"`
 	// Environment holds the value of the Environment edge.
-	HCLEnvironment *Environment `json:"Environment,omitempty"`
-	//
+	HCLEnvironment          *Environment `json:"Environment,omitempty"`
 	environment_validations *uuid.UUID
+	selectValues            sql.SelectValues
 }
 
 // ValidationEdges holds the relations/edges for other nodes in the graph.
@@ -76,6 +77,10 @@ type ValidationEdges struct {
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [2]bool
+	// totalCount holds the count of the edges above.
+	totalCount [2]map[string]int
+
+	namedUsers map[string][]*User
 }
 
 // UsersOrErr returns the Users value or an error if the edge
@@ -92,8 +97,7 @@ func (e ValidationEdges) UsersOrErr() ([]*User, error) {
 func (e ValidationEdges) EnvironmentOrErr() (*Environment, error) {
 	if e.loadedTypes[1] {
 		if e.Environment == nil {
-			// The edge Environment was loaded in eager-loading,
-			// but was not found.
+			// Edge was loaded but was not found.
 			return nil, &NotFoundError{label: environment.Label}
 		}
 		return e.Environment, nil
@@ -102,22 +106,22 @@ func (e ValidationEdges) EnvironmentOrErr() (*Environment, error) {
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
-func (*Validation) scanValues(columns []string) ([]interface{}, error) {
-	values := make([]interface{}, len(columns))
+func (*Validation) scanValues(columns []string) ([]any, error) {
+	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
 		case validation.FieldNameservers:
 			values[i] = new([]byte)
 		case validation.FieldPort:
 			values[i] = new(sql.NullInt64)
-		case validation.FieldHclID, validation.FieldValidationType, validation.FieldHash, validation.FieldRegex, validation.FieldIP, validation.FieldURL, validation.FieldHostname, validation.FieldPackageName, validation.FieldUsername, validation.FieldGroupName, validation.FieldFilePath, validation.FieldSearchString, validation.FieldServiceName, validation.FieldFilePermission, validation.FieldServiceStatus, validation.FieldProcessName:
+		case validation.FieldHCLID, validation.FieldValidationType, validation.FieldHash, validation.FieldRegex, validation.FieldIP, validation.FieldURL, validation.FieldHostname, validation.FieldPackageName, validation.FieldUsername, validation.FieldGroupName, validation.FieldFilePath, validation.FieldSearchString, validation.FieldServiceName, validation.FieldFilePermission, validation.FieldServiceStatus, validation.FieldProcessName:
 			values[i] = new(sql.NullString)
 		case validation.FieldID:
 			values[i] = new(uuid.UUID)
 		case validation.ForeignKeys[0]: // environment_validations
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
-			return nil, fmt.Errorf("unexpected column %q for type Validation", columns[i])
+			values[i] = new(sql.UnknownType)
 		}
 	}
 	return values, nil
@@ -125,7 +129,7 @@ func (*Validation) scanValues(columns []string) ([]interface{}, error) {
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the Validation fields.
-func (v *Validation) assignValues(columns []string, values []interface{}) error {
+func (v *Validation) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
@@ -137,11 +141,11 @@ func (v *Validation) assignValues(columns []string, values []interface{}) error 
 			} else if value != nil {
 				v.ID = *value
 			}
-		case validation.FieldHclID:
+		case validation.FieldHCLID:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field hcl_id", values[i])
 			} else if value.Valid {
-				v.HclID = value.String
+				v.HCLID = value.String
 			}
 		case validation.FieldValidationType:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -254,36 +258,44 @@ func (v *Validation) assignValues(columns []string, values []interface{}) error 
 				v.environment_validations = new(uuid.UUID)
 				*v.environment_validations = *value.S.(*uuid.UUID)
 			}
+		default:
+			v.selectValues.Set(columns[i], values[i])
 		}
 	}
 	return nil
 }
 
+// Value returns the ent.Value that was dynamically selected and assigned to the Validation.
+// This includes values selected through modifiers, order, etc.
+func (v *Validation) Value(name string) (ent.Value, error) {
+	return v.selectValues.Get(name)
+}
+
 // QueryUsers queries the "Users" edge of the Validation entity.
 func (v *Validation) QueryUsers() *UserQuery {
-	return (&ValidationClient{config: v.config}).QueryUsers(v)
+	return NewValidationClient(v.config).QueryUsers(v)
 }
 
 // QueryEnvironment queries the "Environment" edge of the Validation entity.
 func (v *Validation) QueryEnvironment() *EnvironmentQuery {
-	return (&ValidationClient{config: v.config}).QueryEnvironment(v)
+	return NewValidationClient(v.config).QueryEnvironment(v)
 }
 
 // Update returns a builder for updating this Validation.
 // Note that you need to call Validation.Unwrap() before calling this method if this Validation
 // was returned from a transaction, and the transaction was committed or rolled back.
 func (v *Validation) Update() *ValidationUpdateOne {
-	return (&ValidationClient{config: v.config}).UpdateOne(v)
+	return NewValidationClient(v.config).UpdateOne(v)
 }
 
 // Unwrap unwraps the Validation entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
 func (v *Validation) Unwrap() *Validation {
-	tx, ok := v.config.driver.(*txDriver)
+	_tx, ok := v.config.driver.(*txDriver)
 	if !ok {
 		panic("ent: Validation is not a transactional entity")
 	}
-	v.config.driver = tx.drv
+	v.config.driver = _tx.drv
 	return v
 }
 
@@ -291,52 +303,87 @@ func (v *Validation) Unwrap() *Validation {
 func (v *Validation) String() string {
 	var builder strings.Builder
 	builder.WriteString("Validation(")
-	builder.WriteString(fmt.Sprintf("id=%v", v.ID))
-	builder.WriteString(", hcl_id=")
-	builder.WriteString(v.HclID)
-	builder.WriteString(", validation_type=")
+	builder.WriteString(fmt.Sprintf("id=%v, ", v.ID))
+	builder.WriteString("hcl_id=")
+	builder.WriteString(v.HCLID)
+	builder.WriteString(", ")
+	builder.WriteString("validation_type=")
 	builder.WriteString(fmt.Sprintf("%v", v.ValidationType))
-	builder.WriteString(", hash=")
+	builder.WriteString(", ")
+	builder.WriteString("hash=")
 	builder.WriteString(v.Hash)
-	builder.WriteString(", regex=")
+	builder.WriteString(", ")
+	builder.WriteString("regex=")
 	builder.WriteString(v.Regex)
-	builder.WriteString(", ip=")
+	builder.WriteString(", ")
+	builder.WriteString("ip=")
 	builder.WriteString(v.IP)
-	builder.WriteString(", url=")
+	builder.WriteString(", ")
+	builder.WriteString("url=")
 	builder.WriteString(v.URL)
-	builder.WriteString(", port=")
+	builder.WriteString(", ")
+	builder.WriteString("port=")
 	builder.WriteString(fmt.Sprintf("%v", v.Port))
-	builder.WriteString(", hostname=")
+	builder.WriteString(", ")
+	builder.WriteString("hostname=")
 	builder.WriteString(v.Hostname)
-	builder.WriteString(", nameservers=")
+	builder.WriteString(", ")
+	builder.WriteString("nameservers=")
 	builder.WriteString(fmt.Sprintf("%v", v.Nameservers))
-	builder.WriteString(", package_name=")
+	builder.WriteString(", ")
+	builder.WriteString("package_name=")
 	builder.WriteString(v.PackageName)
-	builder.WriteString(", username=")
+	builder.WriteString(", ")
+	builder.WriteString("username=")
 	builder.WriteString(v.Username)
-	builder.WriteString(", group_name=")
+	builder.WriteString(", ")
+	builder.WriteString("group_name=")
 	builder.WriteString(v.GroupName)
-	builder.WriteString(", file_path=")
+	builder.WriteString(", ")
+	builder.WriteString("file_path=")
 	builder.WriteString(v.FilePath)
-	builder.WriteString(", search_string=")
+	builder.WriteString(", ")
+	builder.WriteString("search_string=")
 	builder.WriteString(v.SearchString)
-	builder.WriteString(", service_name=")
+	builder.WriteString(", ")
+	builder.WriteString("service_name=")
 	builder.WriteString(v.ServiceName)
-	builder.WriteString(", file_permission=")
+	builder.WriteString(", ")
+	builder.WriteString("file_permission=")
 	builder.WriteString(v.FilePermission)
-	builder.WriteString(", service_status=")
+	builder.WriteString(", ")
+	builder.WriteString("service_status=")
 	builder.WriteString(fmt.Sprintf("%v", v.ServiceStatus))
-	builder.WriteString(", process_name=")
+	builder.WriteString(", ")
+	builder.WriteString("process_name=")
 	builder.WriteString(v.ProcessName)
 	builder.WriteByte(')')
 	return builder.String()
 }
 
-// Validations is a parsable slice of Validation.
-type Validations []*Validation
+// NamedUsers returns the Users named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (v *Validation) NamedUsers(name string) ([]*User, error) {
+	if v.Edges.namedUsers == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := v.Edges.namedUsers[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
 
-func (v Validations) config(cfg config) {
-	for _i := range v {
-		v[_i].config = cfg
+func (v *Validation) appendNamedUsers(name string, edges ...*User) {
+	if v.Edges.namedUsers == nil {
+		v.Edges.namedUsers = make(map[string][]*User)
+	}
+	if len(edges) == 0 {
+		v.Edges.namedUsers[name] = []*User{}
+	} else {
+		v.Edges.namedUsers[name] = append(v.Edges.namedUsers[name], edges...)
 	}
 }
+
+// Validations is a parsable slice of Validation.
+type Validations []*Validation

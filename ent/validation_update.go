@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 	"github.com/gen0cide/laforge/ent/environment"
 	"github.com/gen0cide/laforge/ent/predicate"
@@ -30,9 +31,9 @@ func (vu *ValidationUpdate) Where(ps ...predicate.Validation) *ValidationUpdate 
 	return vu
 }
 
-// SetHclID sets the "hcl_id" field.
-func (vu *ValidationUpdate) SetHclID(s string) *ValidationUpdate {
-	vu.mutation.SetHclID(s)
+// SetHCLID sets the "hcl_id" field.
+func (vu *ValidationUpdate) SetHCLID(s string) *ValidationUpdate {
+	vu.mutation.SetHCLID(s)
 	return vu
 }
 
@@ -172,6 +173,12 @@ func (vu *ValidationUpdate) ClearHostname() *ValidationUpdate {
 // SetNameservers sets the "nameservers" field.
 func (vu *ValidationUpdate) SetNameservers(s []string) *ValidationUpdate {
 	vu.mutation.SetNameservers(s)
+	return vu
+}
+
+// AppendNameservers appends s to the "nameservers" field.
+func (vu *ValidationUpdate) AppendNameservers(s []string) *ValidationUpdate {
+	vu.mutation.AppendNameservers(s)
 	return vu
 }
 
@@ -423,40 +430,7 @@ func (vu *ValidationUpdate) ClearEnvironment() *ValidationUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (vu *ValidationUpdate) Save(ctx context.Context) (int, error) {
-	var (
-		err      error
-		affected int
-	)
-	if len(vu.hooks) == 0 {
-		if err = vu.check(); err != nil {
-			return 0, err
-		}
-		affected, err = vu.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*ValidationMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = vu.check(); err != nil {
-				return 0, err
-			}
-			vu.mutation = mutation
-			affected, err = vu.sqlSave(ctx)
-			mutation.done = true
-			return affected, err
-		})
-		for i := len(vu.hooks) - 1; i >= 0; i-- {
-			if vu.hooks[i] == nil {
-				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = vu.hooks[i](mut)
-		}
-		if _, err := mut.Mutate(ctx, vu.mutation); err != nil {
-			return 0, err
-		}
-	}
-	return affected, err
+	return withHooks(ctx, vu.sqlSave, vu.mutation, vu.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -497,16 +471,10 @@ func (vu *ValidationUpdate) check() error {
 }
 
 func (vu *ValidationUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   validation.Table,
-			Columns: validation.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: validation.FieldID,
-			},
-		},
+	if err := vu.check(); err != nil {
+		return n, err
 	}
+	_spec := sqlgraph.NewUpdateSpec(validation.Table, validation.Columns, sqlgraph.NewFieldSpec(validation.FieldID, field.TypeUUID))
 	if ps := vu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -514,228 +482,112 @@ func (vu *ValidationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := vu.mutation.HclID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldHclID,
-		})
+	if value, ok := vu.mutation.HCLID(); ok {
+		_spec.SetField(validation.FieldHCLID, field.TypeString, value)
 	}
 	if value, ok := vu.mutation.ValidationType(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeEnum,
-			Value:  value,
-			Column: validation.FieldValidationType,
-		})
+		_spec.SetField(validation.FieldValidationType, field.TypeEnum, value)
 	}
 	if value, ok := vu.mutation.Hash(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldHash,
-		})
+		_spec.SetField(validation.FieldHash, field.TypeString, value)
 	}
 	if vu.mutation.HashCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: validation.FieldHash,
-		})
+		_spec.ClearField(validation.FieldHash, field.TypeString)
 	}
 	if value, ok := vu.mutation.Regex(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldRegex,
-		})
+		_spec.SetField(validation.FieldRegex, field.TypeString, value)
 	}
 	if vu.mutation.RegexCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: validation.FieldRegex,
-		})
+		_spec.ClearField(validation.FieldRegex, field.TypeString)
 	}
 	if value, ok := vu.mutation.IP(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldIP,
-		})
+		_spec.SetField(validation.FieldIP, field.TypeString, value)
 	}
 	if vu.mutation.IPCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: validation.FieldIP,
-		})
+		_spec.ClearField(validation.FieldIP, field.TypeString)
 	}
 	if value, ok := vu.mutation.URL(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldURL,
-		})
+		_spec.SetField(validation.FieldURL, field.TypeString, value)
 	}
 	if vu.mutation.URLCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: validation.FieldURL,
-		})
+		_spec.ClearField(validation.FieldURL, field.TypeString)
 	}
 	if value, ok := vu.mutation.Port(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: validation.FieldPort,
-		})
+		_spec.SetField(validation.FieldPort, field.TypeInt, value)
 	}
 	if value, ok := vu.mutation.AddedPort(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: validation.FieldPort,
-		})
+		_spec.AddField(validation.FieldPort, field.TypeInt, value)
 	}
 	if vu.mutation.PortCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Column: validation.FieldPort,
-		})
+		_spec.ClearField(validation.FieldPort, field.TypeInt)
 	}
 	if value, ok := vu.mutation.Hostname(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldHostname,
-		})
+		_spec.SetField(validation.FieldHostname, field.TypeString, value)
 	}
 	if vu.mutation.HostnameCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: validation.FieldHostname,
-		})
+		_spec.ClearField(validation.FieldHostname, field.TypeString)
 	}
 	if value, ok := vu.mutation.Nameservers(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: validation.FieldNameservers,
+		_spec.SetField(validation.FieldNameservers, field.TypeJSON, value)
+	}
+	if value, ok := vu.mutation.AppendedNameservers(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, validation.FieldNameservers, value)
 		})
 	}
 	if vu.mutation.NameserversCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Column: validation.FieldNameservers,
-		})
+		_spec.ClearField(validation.FieldNameservers, field.TypeJSON)
 	}
 	if value, ok := vu.mutation.PackageName(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldPackageName,
-		})
+		_spec.SetField(validation.FieldPackageName, field.TypeString, value)
 	}
 	if vu.mutation.PackageNameCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: validation.FieldPackageName,
-		})
+		_spec.ClearField(validation.FieldPackageName, field.TypeString)
 	}
 	if value, ok := vu.mutation.Username(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldUsername,
-		})
+		_spec.SetField(validation.FieldUsername, field.TypeString, value)
 	}
 	if vu.mutation.UsernameCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: validation.FieldUsername,
-		})
+		_spec.ClearField(validation.FieldUsername, field.TypeString)
 	}
 	if value, ok := vu.mutation.GroupName(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldGroupName,
-		})
+		_spec.SetField(validation.FieldGroupName, field.TypeString, value)
 	}
 	if vu.mutation.GroupNameCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: validation.FieldGroupName,
-		})
+		_spec.ClearField(validation.FieldGroupName, field.TypeString)
 	}
 	if value, ok := vu.mutation.FilePath(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldFilePath,
-		})
+		_spec.SetField(validation.FieldFilePath, field.TypeString, value)
 	}
 	if vu.mutation.FilePathCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: validation.FieldFilePath,
-		})
+		_spec.ClearField(validation.FieldFilePath, field.TypeString)
 	}
 	if value, ok := vu.mutation.SearchString(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldSearchString,
-		})
+		_spec.SetField(validation.FieldSearchString, field.TypeString, value)
 	}
 	if vu.mutation.SearchStringCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: validation.FieldSearchString,
-		})
+		_spec.ClearField(validation.FieldSearchString, field.TypeString)
 	}
 	if value, ok := vu.mutation.ServiceName(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldServiceName,
-		})
+		_spec.SetField(validation.FieldServiceName, field.TypeString, value)
 	}
 	if vu.mutation.ServiceNameCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: validation.FieldServiceName,
-		})
+		_spec.ClearField(validation.FieldServiceName, field.TypeString)
 	}
 	if value, ok := vu.mutation.FilePermission(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldFilePermission,
-		})
+		_spec.SetField(validation.FieldFilePermission, field.TypeString, value)
 	}
 	if vu.mutation.FilePermissionCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: validation.FieldFilePermission,
-		})
+		_spec.ClearField(validation.FieldFilePermission, field.TypeString)
 	}
 	if value, ok := vu.mutation.ServiceStatus(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeEnum,
-			Value:  value,
-			Column: validation.FieldServiceStatus,
-		})
+		_spec.SetField(validation.FieldServiceStatus, field.TypeEnum, value)
 	}
 	if value, ok := vu.mutation.ProcessName(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldProcessName,
-		})
+		_spec.SetField(validation.FieldProcessName, field.TypeString, value)
 	}
 	if vu.mutation.ProcessNameCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: validation.FieldProcessName,
-		})
+		_spec.ClearField(validation.FieldProcessName, field.TypeString)
 	}
 	if vu.mutation.UsersCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -745,10 +597,7 @@ func (vu *ValidationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{validation.UsersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -761,10 +610,7 @@ func (vu *ValidationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{validation.UsersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -780,10 +626,7 @@ func (vu *ValidationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{validation.UsersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -799,10 +642,7 @@ func (vu *ValidationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{validation.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -815,10 +655,7 @@ func (vu *ValidationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{validation.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -834,6 +671,7 @@ func (vu *ValidationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		return 0, err
 	}
+	vu.mutation.done = true
 	return n, nil
 }
 
@@ -845,9 +683,9 @@ type ValidationUpdateOne struct {
 	mutation *ValidationMutation
 }
 
-// SetHclID sets the "hcl_id" field.
-func (vuo *ValidationUpdateOne) SetHclID(s string) *ValidationUpdateOne {
-	vuo.mutation.SetHclID(s)
+// SetHCLID sets the "hcl_id" field.
+func (vuo *ValidationUpdateOne) SetHCLID(s string) *ValidationUpdateOne {
+	vuo.mutation.SetHCLID(s)
 	return vuo
 }
 
@@ -987,6 +825,12 @@ func (vuo *ValidationUpdateOne) ClearHostname() *ValidationUpdateOne {
 // SetNameservers sets the "nameservers" field.
 func (vuo *ValidationUpdateOne) SetNameservers(s []string) *ValidationUpdateOne {
 	vuo.mutation.SetNameservers(s)
+	return vuo
+}
+
+// AppendNameservers appends s to the "nameservers" field.
+func (vuo *ValidationUpdateOne) AppendNameservers(s []string) *ValidationUpdateOne {
+	vuo.mutation.AppendNameservers(s)
 	return vuo
 }
 
@@ -1236,6 +1080,12 @@ func (vuo *ValidationUpdateOne) ClearEnvironment() *ValidationUpdateOne {
 	return vuo
 }
 
+// Where appends a list predicates to the ValidationUpdate builder.
+func (vuo *ValidationUpdateOne) Where(ps ...predicate.Validation) *ValidationUpdateOne {
+	vuo.mutation.Where(ps...)
+	return vuo
+}
+
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
 func (vuo *ValidationUpdateOne) Select(field string, fields ...string) *ValidationUpdateOne {
@@ -1245,46 +1095,7 @@ func (vuo *ValidationUpdateOne) Select(field string, fields ...string) *Validati
 
 // Save executes the query and returns the updated Validation entity.
 func (vuo *ValidationUpdateOne) Save(ctx context.Context) (*Validation, error) {
-	var (
-		err  error
-		node *Validation
-	)
-	if len(vuo.hooks) == 0 {
-		if err = vuo.check(); err != nil {
-			return nil, err
-		}
-		node, err = vuo.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*ValidationMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = vuo.check(); err != nil {
-				return nil, err
-			}
-			vuo.mutation = mutation
-			node, err = vuo.sqlSave(ctx)
-			mutation.done = true
-			return node, err
-		})
-		for i := len(vuo.hooks) - 1; i >= 0; i-- {
-			if vuo.hooks[i] == nil {
-				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = vuo.hooks[i](mut)
-		}
-		v, err := mut.Mutate(ctx, vuo.mutation)
-		if err != nil {
-			return nil, err
-		}
-		nv, ok := v.(*Validation)
-		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from ValidationMutation", v)
-		}
-		node = nv
-	}
-	return node, err
+	return withHooks(ctx, vuo.sqlSave, vuo.mutation, vuo.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -1325,16 +1136,10 @@ func (vuo *ValidationUpdateOne) check() error {
 }
 
 func (vuo *ValidationUpdateOne) sqlSave(ctx context.Context) (_node *Validation, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   validation.Table,
-			Columns: validation.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: validation.FieldID,
-			},
-		},
+	if err := vuo.check(); err != nil {
+		return _node, err
 	}
+	_spec := sqlgraph.NewUpdateSpec(validation.Table, validation.Columns, sqlgraph.NewFieldSpec(validation.FieldID, field.TypeUUID))
 	id, ok := vuo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Validation.id" for update`)}
@@ -1359,228 +1164,112 @@ func (vuo *ValidationUpdateOne) sqlSave(ctx context.Context) (_node *Validation,
 			}
 		}
 	}
-	if value, ok := vuo.mutation.HclID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldHclID,
-		})
+	if value, ok := vuo.mutation.HCLID(); ok {
+		_spec.SetField(validation.FieldHCLID, field.TypeString, value)
 	}
 	if value, ok := vuo.mutation.ValidationType(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeEnum,
-			Value:  value,
-			Column: validation.FieldValidationType,
-		})
+		_spec.SetField(validation.FieldValidationType, field.TypeEnum, value)
 	}
 	if value, ok := vuo.mutation.Hash(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldHash,
-		})
+		_spec.SetField(validation.FieldHash, field.TypeString, value)
 	}
 	if vuo.mutation.HashCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: validation.FieldHash,
-		})
+		_spec.ClearField(validation.FieldHash, field.TypeString)
 	}
 	if value, ok := vuo.mutation.Regex(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldRegex,
-		})
+		_spec.SetField(validation.FieldRegex, field.TypeString, value)
 	}
 	if vuo.mutation.RegexCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: validation.FieldRegex,
-		})
+		_spec.ClearField(validation.FieldRegex, field.TypeString)
 	}
 	if value, ok := vuo.mutation.IP(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldIP,
-		})
+		_spec.SetField(validation.FieldIP, field.TypeString, value)
 	}
 	if vuo.mutation.IPCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: validation.FieldIP,
-		})
+		_spec.ClearField(validation.FieldIP, field.TypeString)
 	}
 	if value, ok := vuo.mutation.URL(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldURL,
-		})
+		_spec.SetField(validation.FieldURL, field.TypeString, value)
 	}
 	if vuo.mutation.URLCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: validation.FieldURL,
-		})
+		_spec.ClearField(validation.FieldURL, field.TypeString)
 	}
 	if value, ok := vuo.mutation.Port(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: validation.FieldPort,
-		})
+		_spec.SetField(validation.FieldPort, field.TypeInt, value)
 	}
 	if value, ok := vuo.mutation.AddedPort(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: validation.FieldPort,
-		})
+		_spec.AddField(validation.FieldPort, field.TypeInt, value)
 	}
 	if vuo.mutation.PortCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Column: validation.FieldPort,
-		})
+		_spec.ClearField(validation.FieldPort, field.TypeInt)
 	}
 	if value, ok := vuo.mutation.Hostname(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldHostname,
-		})
+		_spec.SetField(validation.FieldHostname, field.TypeString, value)
 	}
 	if vuo.mutation.HostnameCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: validation.FieldHostname,
-		})
+		_spec.ClearField(validation.FieldHostname, field.TypeString)
 	}
 	if value, ok := vuo.mutation.Nameservers(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: validation.FieldNameservers,
+		_spec.SetField(validation.FieldNameservers, field.TypeJSON, value)
+	}
+	if value, ok := vuo.mutation.AppendedNameservers(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, validation.FieldNameservers, value)
 		})
 	}
 	if vuo.mutation.NameserversCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Column: validation.FieldNameservers,
-		})
+		_spec.ClearField(validation.FieldNameservers, field.TypeJSON)
 	}
 	if value, ok := vuo.mutation.PackageName(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldPackageName,
-		})
+		_spec.SetField(validation.FieldPackageName, field.TypeString, value)
 	}
 	if vuo.mutation.PackageNameCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: validation.FieldPackageName,
-		})
+		_spec.ClearField(validation.FieldPackageName, field.TypeString)
 	}
 	if value, ok := vuo.mutation.Username(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldUsername,
-		})
+		_spec.SetField(validation.FieldUsername, field.TypeString, value)
 	}
 	if vuo.mutation.UsernameCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: validation.FieldUsername,
-		})
+		_spec.ClearField(validation.FieldUsername, field.TypeString)
 	}
 	if value, ok := vuo.mutation.GroupName(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldGroupName,
-		})
+		_spec.SetField(validation.FieldGroupName, field.TypeString, value)
 	}
 	if vuo.mutation.GroupNameCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: validation.FieldGroupName,
-		})
+		_spec.ClearField(validation.FieldGroupName, field.TypeString)
 	}
 	if value, ok := vuo.mutation.FilePath(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldFilePath,
-		})
+		_spec.SetField(validation.FieldFilePath, field.TypeString, value)
 	}
 	if vuo.mutation.FilePathCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: validation.FieldFilePath,
-		})
+		_spec.ClearField(validation.FieldFilePath, field.TypeString)
 	}
 	if value, ok := vuo.mutation.SearchString(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldSearchString,
-		})
+		_spec.SetField(validation.FieldSearchString, field.TypeString, value)
 	}
 	if vuo.mutation.SearchStringCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: validation.FieldSearchString,
-		})
+		_spec.ClearField(validation.FieldSearchString, field.TypeString)
 	}
 	if value, ok := vuo.mutation.ServiceName(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldServiceName,
-		})
+		_spec.SetField(validation.FieldServiceName, field.TypeString, value)
 	}
 	if vuo.mutation.ServiceNameCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: validation.FieldServiceName,
-		})
+		_spec.ClearField(validation.FieldServiceName, field.TypeString)
 	}
 	if value, ok := vuo.mutation.FilePermission(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldFilePermission,
-		})
+		_spec.SetField(validation.FieldFilePermission, field.TypeString, value)
 	}
 	if vuo.mutation.FilePermissionCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: validation.FieldFilePermission,
-		})
+		_spec.ClearField(validation.FieldFilePermission, field.TypeString)
 	}
 	if value, ok := vuo.mutation.ServiceStatus(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeEnum,
-			Value:  value,
-			Column: validation.FieldServiceStatus,
-		})
+		_spec.SetField(validation.FieldServiceStatus, field.TypeEnum, value)
 	}
 	if value, ok := vuo.mutation.ProcessName(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: validation.FieldProcessName,
-		})
+		_spec.SetField(validation.FieldProcessName, field.TypeString, value)
 	}
 	if vuo.mutation.ProcessNameCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: validation.FieldProcessName,
-		})
+		_spec.ClearField(validation.FieldProcessName, field.TypeString)
 	}
 	if vuo.mutation.UsersCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1590,10 +1279,7 @@ func (vuo *ValidationUpdateOne) sqlSave(ctx context.Context) (_node *Validation,
 			Columns: []string{validation.UsersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1606,10 +1292,7 @@ func (vuo *ValidationUpdateOne) sqlSave(ctx context.Context) (_node *Validation,
 			Columns: []string{validation.UsersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1625,10 +1308,7 @@ func (vuo *ValidationUpdateOne) sqlSave(ctx context.Context) (_node *Validation,
 			Columns: []string{validation.UsersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: user.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1644,10 +1324,7 @@ func (vuo *ValidationUpdateOne) sqlSave(ctx context.Context) (_node *Validation,
 			Columns: []string{validation.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1660,10 +1337,7 @@ func (vuo *ValidationUpdateOne) sqlSave(ctx context.Context) (_node *Validation,
 			Columns: []string{validation.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1682,5 +1356,6 @@ func (vuo *ValidationUpdateOne) sqlSave(ctx context.Context) (_node *Validation,
 		}
 		return nil, err
 	}
+	vuo.mutation.done = true
 	return _node, nil
 }

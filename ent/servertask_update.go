@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 	"github.com/gen0cide/laforge/ent/authuser"
 	"github.com/gen0cide/laforge/ent/build"
@@ -84,6 +85,12 @@ func (stu *ServerTaskUpdate) ClearEndTime() *ServerTaskUpdate {
 // SetErrors sets the "errors" field.
 func (stu *ServerTaskUpdate) SetErrors(s []string) *ServerTaskUpdate {
 	stu.mutation.SetErrors(s)
+	return stu
+}
+
+// AppendErrors appends s to the "errors" field.
+func (stu *ServerTaskUpdate) AppendErrors(s []string) *ServerTaskUpdate {
+	stu.mutation.AppendErrors(s)
 	return stu
 }
 
@@ -265,40 +272,7 @@ func (stu *ServerTaskUpdate) RemoveGinFileMiddleware(g ...*GinFileMiddleware) *S
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (stu *ServerTaskUpdate) Save(ctx context.Context) (int, error) {
-	var (
-		err      error
-		affected int
-	)
-	if len(stu.hooks) == 0 {
-		if err = stu.check(); err != nil {
-			return 0, err
-		}
-		affected, err = stu.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*ServerTaskMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = stu.check(); err != nil {
-				return 0, err
-			}
-			stu.mutation = mutation
-			affected, err = stu.sqlSave(ctx)
-			mutation.done = true
-			return affected, err
-		})
-		for i := len(stu.hooks) - 1; i >= 0; i-- {
-			if stu.hooks[i] == nil {
-				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = stu.hooks[i](mut)
-		}
-		if _, err := mut.Mutate(ctx, stu.mutation); err != nil {
-			return 0, err
-		}
-	}
-	return affected, err
+	return withHooks(ctx, stu.sqlSave, stu.mutation, stu.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -340,16 +314,10 @@ func (stu *ServerTaskUpdate) check() error {
 }
 
 func (stu *ServerTaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   servertask.Table,
-			Columns: servertask.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: servertask.FieldID,
-			},
-		},
+	if err := stu.check(); err != nil {
+		return n, err
 	}
+	_spec := sqlgraph.NewUpdateSpec(servertask.Table, servertask.Columns, sqlgraph.NewFieldSpec(servertask.FieldID, field.TypeUUID))
 	if ps := stu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -358,63 +326,36 @@ func (stu *ServerTaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 	}
 	if value, ok := stu.mutation.GetType(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeEnum,
-			Value:  value,
-			Column: servertask.FieldType,
-		})
+		_spec.SetField(servertask.FieldType, field.TypeEnum, value)
 	}
 	if value, ok := stu.mutation.StartTime(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: servertask.FieldStartTime,
-		})
+		_spec.SetField(servertask.FieldStartTime, field.TypeTime, value)
 	}
 	if stu.mutation.StartTimeCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Column: servertask.FieldStartTime,
-		})
+		_spec.ClearField(servertask.FieldStartTime, field.TypeTime)
 	}
 	if value, ok := stu.mutation.EndTime(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: servertask.FieldEndTime,
-		})
+		_spec.SetField(servertask.FieldEndTime, field.TypeTime, value)
 	}
 	if stu.mutation.EndTimeCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Column: servertask.FieldEndTime,
-		})
+		_spec.ClearField(servertask.FieldEndTime, field.TypeTime)
 	}
 	if value, ok := stu.mutation.Errors(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: servertask.FieldErrors,
+		_spec.SetField(servertask.FieldErrors, field.TypeJSON, value)
+	}
+	if value, ok := stu.mutation.AppendedErrors(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, servertask.FieldErrors, value)
 		})
 	}
 	if stu.mutation.ErrorsCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Column: servertask.FieldErrors,
-		})
+		_spec.ClearField(servertask.FieldErrors, field.TypeJSON)
 	}
 	if value, ok := stu.mutation.LogFilePath(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: servertask.FieldLogFilePath,
-		})
+		_spec.SetField(servertask.FieldLogFilePath, field.TypeString, value)
 	}
 	if stu.mutation.LogFilePathCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: servertask.FieldLogFilePath,
-		})
+		_spec.ClearField(servertask.FieldLogFilePath, field.TypeString)
 	}
 	if stu.mutation.AuthUserCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -424,10 +365,7 @@ func (stu *ServerTaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{servertask.AuthUserColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: authuser.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(authuser.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -440,10 +378,7 @@ func (stu *ServerTaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{servertask.AuthUserColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: authuser.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(authuser.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -459,10 +394,7 @@ func (stu *ServerTaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{servertask.StatusColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: status.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(status.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -475,10 +407,7 @@ func (stu *ServerTaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{servertask.StatusColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: status.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(status.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -494,10 +423,7 @@ func (stu *ServerTaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{servertask.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -510,10 +436,7 @@ func (stu *ServerTaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{servertask.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -529,10 +452,7 @@ func (stu *ServerTaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{servertask.BuildColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: build.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(build.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -545,10 +465,7 @@ func (stu *ServerTaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{servertask.BuildColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: build.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(build.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -564,10 +481,7 @@ func (stu *ServerTaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{servertask.BuildCommitColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: buildcommit.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(buildcommit.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -580,10 +494,7 @@ func (stu *ServerTaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{servertask.BuildCommitColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: buildcommit.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(buildcommit.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -599,10 +510,7 @@ func (stu *ServerTaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{servertask.GinFileMiddlewareColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: ginfilemiddleware.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(ginfilemiddleware.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -615,10 +523,7 @@ func (stu *ServerTaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{servertask.GinFileMiddlewareColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: ginfilemiddleware.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(ginfilemiddleware.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -634,10 +539,7 @@ func (stu *ServerTaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{servertask.GinFileMiddlewareColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: ginfilemiddleware.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(ginfilemiddleware.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -653,6 +555,7 @@ func (stu *ServerTaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		return 0, err
 	}
+	stu.mutation.done = true
 	return n, nil
 }
 
@@ -713,6 +616,12 @@ func (stuo *ServerTaskUpdateOne) ClearEndTime() *ServerTaskUpdateOne {
 // SetErrors sets the "errors" field.
 func (stuo *ServerTaskUpdateOne) SetErrors(s []string) *ServerTaskUpdateOne {
 	stuo.mutation.SetErrors(s)
+	return stuo
+}
+
+// AppendErrors appends s to the "errors" field.
+func (stuo *ServerTaskUpdateOne) AppendErrors(s []string) *ServerTaskUpdateOne {
+	stuo.mutation.AppendErrors(s)
 	return stuo
 }
 
@@ -892,6 +801,12 @@ func (stuo *ServerTaskUpdateOne) RemoveGinFileMiddleware(g ...*GinFileMiddleware
 	return stuo.RemoveGinFileMiddlewareIDs(ids...)
 }
 
+// Where appends a list predicates to the ServerTaskUpdate builder.
+func (stuo *ServerTaskUpdateOne) Where(ps ...predicate.ServerTask) *ServerTaskUpdateOne {
+	stuo.mutation.Where(ps...)
+	return stuo
+}
+
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
 func (stuo *ServerTaskUpdateOne) Select(field string, fields ...string) *ServerTaskUpdateOne {
@@ -901,46 +816,7 @@ func (stuo *ServerTaskUpdateOne) Select(field string, fields ...string) *ServerT
 
 // Save executes the query and returns the updated ServerTask entity.
 func (stuo *ServerTaskUpdateOne) Save(ctx context.Context) (*ServerTask, error) {
-	var (
-		err  error
-		node *ServerTask
-	)
-	if len(stuo.hooks) == 0 {
-		if err = stuo.check(); err != nil {
-			return nil, err
-		}
-		node, err = stuo.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*ServerTaskMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = stuo.check(); err != nil {
-				return nil, err
-			}
-			stuo.mutation = mutation
-			node, err = stuo.sqlSave(ctx)
-			mutation.done = true
-			return node, err
-		})
-		for i := len(stuo.hooks) - 1; i >= 0; i-- {
-			if stuo.hooks[i] == nil {
-				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = stuo.hooks[i](mut)
-		}
-		v, err := mut.Mutate(ctx, stuo.mutation)
-		if err != nil {
-			return nil, err
-		}
-		nv, ok := v.(*ServerTask)
-		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from ServerTaskMutation", v)
-		}
-		node = nv
-	}
-	return node, err
+	return withHooks(ctx, stuo.sqlSave, stuo.mutation, stuo.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -982,16 +858,10 @@ func (stuo *ServerTaskUpdateOne) check() error {
 }
 
 func (stuo *ServerTaskUpdateOne) sqlSave(ctx context.Context) (_node *ServerTask, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   servertask.Table,
-			Columns: servertask.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeUUID,
-				Column: servertask.FieldID,
-			},
-		},
+	if err := stuo.check(); err != nil {
+		return _node, err
 	}
+	_spec := sqlgraph.NewUpdateSpec(servertask.Table, servertask.Columns, sqlgraph.NewFieldSpec(servertask.FieldID, field.TypeUUID))
 	id, ok := stuo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "ServerTask.id" for update`)}
@@ -1017,63 +887,36 @@ func (stuo *ServerTaskUpdateOne) sqlSave(ctx context.Context) (_node *ServerTask
 		}
 	}
 	if value, ok := stuo.mutation.GetType(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeEnum,
-			Value:  value,
-			Column: servertask.FieldType,
-		})
+		_spec.SetField(servertask.FieldType, field.TypeEnum, value)
 	}
 	if value, ok := stuo.mutation.StartTime(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: servertask.FieldStartTime,
-		})
+		_spec.SetField(servertask.FieldStartTime, field.TypeTime, value)
 	}
 	if stuo.mutation.StartTimeCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Column: servertask.FieldStartTime,
-		})
+		_spec.ClearField(servertask.FieldStartTime, field.TypeTime)
 	}
 	if value, ok := stuo.mutation.EndTime(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: servertask.FieldEndTime,
-		})
+		_spec.SetField(servertask.FieldEndTime, field.TypeTime, value)
 	}
 	if stuo.mutation.EndTimeCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Column: servertask.FieldEndTime,
-		})
+		_spec.ClearField(servertask.FieldEndTime, field.TypeTime)
 	}
 	if value, ok := stuo.mutation.Errors(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: servertask.FieldErrors,
+		_spec.SetField(servertask.FieldErrors, field.TypeJSON, value)
+	}
+	if value, ok := stuo.mutation.AppendedErrors(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, servertask.FieldErrors, value)
 		})
 	}
 	if stuo.mutation.ErrorsCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Column: servertask.FieldErrors,
-		})
+		_spec.ClearField(servertask.FieldErrors, field.TypeJSON)
 	}
 	if value, ok := stuo.mutation.LogFilePath(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: servertask.FieldLogFilePath,
-		})
+		_spec.SetField(servertask.FieldLogFilePath, field.TypeString, value)
 	}
 	if stuo.mutation.LogFilePathCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Column: servertask.FieldLogFilePath,
-		})
+		_spec.ClearField(servertask.FieldLogFilePath, field.TypeString)
 	}
 	if stuo.mutation.AuthUserCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1083,10 +926,7 @@ func (stuo *ServerTaskUpdateOne) sqlSave(ctx context.Context) (_node *ServerTask
 			Columns: []string{servertask.AuthUserColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: authuser.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(authuser.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1099,10 +939,7 @@ func (stuo *ServerTaskUpdateOne) sqlSave(ctx context.Context) (_node *ServerTask
 			Columns: []string{servertask.AuthUserColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: authuser.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(authuser.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1118,10 +955,7 @@ func (stuo *ServerTaskUpdateOne) sqlSave(ctx context.Context) (_node *ServerTask
 			Columns: []string{servertask.StatusColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: status.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(status.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1134,10 +968,7 @@ func (stuo *ServerTaskUpdateOne) sqlSave(ctx context.Context) (_node *ServerTask
 			Columns: []string{servertask.StatusColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: status.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(status.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1153,10 +984,7 @@ func (stuo *ServerTaskUpdateOne) sqlSave(ctx context.Context) (_node *ServerTask
 			Columns: []string{servertask.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1169,10 +997,7 @@ func (stuo *ServerTaskUpdateOne) sqlSave(ctx context.Context) (_node *ServerTask
 			Columns: []string{servertask.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: environment.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1188,10 +1013,7 @@ func (stuo *ServerTaskUpdateOne) sqlSave(ctx context.Context) (_node *ServerTask
 			Columns: []string{servertask.BuildColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: build.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(build.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1204,10 +1026,7 @@ func (stuo *ServerTaskUpdateOne) sqlSave(ctx context.Context) (_node *ServerTask
 			Columns: []string{servertask.BuildColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: build.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(build.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1223,10 +1042,7 @@ func (stuo *ServerTaskUpdateOne) sqlSave(ctx context.Context) (_node *ServerTask
 			Columns: []string{servertask.BuildCommitColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: buildcommit.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(buildcommit.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1239,10 +1055,7 @@ func (stuo *ServerTaskUpdateOne) sqlSave(ctx context.Context) (_node *ServerTask
 			Columns: []string{servertask.BuildCommitColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: buildcommit.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(buildcommit.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1258,10 +1071,7 @@ func (stuo *ServerTaskUpdateOne) sqlSave(ctx context.Context) (_node *ServerTask
 			Columns: []string{servertask.GinFileMiddlewareColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: ginfilemiddleware.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(ginfilemiddleware.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1274,10 +1084,7 @@ func (stuo *ServerTaskUpdateOne) sqlSave(ctx context.Context) (_node *ServerTask
 			Columns: []string{servertask.GinFileMiddlewareColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: ginfilemiddleware.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(ginfilemiddleware.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1293,10 +1100,7 @@ func (stuo *ServerTaskUpdateOne) sqlSave(ctx context.Context) (_node *ServerTask
 			Columns: []string{servertask.GinFileMiddlewareColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: ginfilemiddleware.FieldID,
-				},
+				IDSpec: sqlgraph.NewFieldSpec(ginfilemiddleware.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1315,5 +1119,6 @@ func (stuo *ServerTaskUpdateOne) sqlSave(ctx context.Context) (_node *ServerTask
 		}
 		return nil, err
 	}
+	stuo.mutation.done = true
 	return _node, nil
 }

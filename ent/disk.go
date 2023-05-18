@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/gen0cide/laforge/ent/disk"
 	"github.com/gen0cide/laforge/ent/host"
@@ -25,9 +26,9 @@ type Disk struct {
 
 	// Edges put into the main struct to be loaded via hcl
 	// Host holds the value of the Host edge.
-	HCLHost *Host `json:"Host,omitempty"`
-	//
-	host_disk *uuid.UUID
+	HCLHost      *Host `json:"Host,omitempty"`
+	host_disk    *uuid.UUID
+	selectValues sql.SelectValues
 }
 
 // DiskEdges holds the relations/edges for other nodes in the graph.
@@ -37,6 +38,8 @@ type DiskEdges struct {
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [1]bool
+	// totalCount holds the count of the edges above.
+	totalCount [1]map[string]int
 }
 
 // HostOrErr returns the Host value or an error if the edge
@@ -44,8 +47,7 @@ type DiskEdges struct {
 func (e DiskEdges) HostOrErr() (*Host, error) {
 	if e.loadedTypes[0] {
 		if e.Host == nil {
-			// The edge Host was loaded in eager-loading,
-			// but was not found.
+			// Edge was loaded but was not found.
 			return nil, &NotFoundError{label: host.Label}
 		}
 		return e.Host, nil
@@ -54,8 +56,8 @@ func (e DiskEdges) HostOrErr() (*Host, error) {
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
-func (*Disk) scanValues(columns []string) ([]interface{}, error) {
-	values := make([]interface{}, len(columns))
+func (*Disk) scanValues(columns []string) ([]any, error) {
+	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
 		case disk.FieldSize:
@@ -65,7 +67,7 @@ func (*Disk) scanValues(columns []string) ([]interface{}, error) {
 		case disk.ForeignKeys[0]: // host_disk
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
-			return nil, fmt.Errorf("unexpected column %q for type Disk", columns[i])
+			values[i] = new(sql.UnknownType)
 		}
 	}
 	return values, nil
@@ -73,7 +75,7 @@ func (*Disk) scanValues(columns []string) ([]interface{}, error) {
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the Disk fields.
-func (d *Disk) assignValues(columns []string, values []interface{}) error {
+func (d *Disk) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
@@ -98,31 +100,39 @@ func (d *Disk) assignValues(columns []string, values []interface{}) error {
 				d.host_disk = new(uuid.UUID)
 				*d.host_disk = *value.S.(*uuid.UUID)
 			}
+		default:
+			d.selectValues.Set(columns[i], values[i])
 		}
 	}
 	return nil
 }
 
+// Value returns the ent.Value that was dynamically selected and assigned to the Disk.
+// This includes values selected through modifiers, order, etc.
+func (d *Disk) Value(name string) (ent.Value, error) {
+	return d.selectValues.Get(name)
+}
+
 // QueryHost queries the "Host" edge of the Disk entity.
 func (d *Disk) QueryHost() *HostQuery {
-	return (&DiskClient{config: d.config}).QueryHost(d)
+	return NewDiskClient(d.config).QueryHost(d)
 }
 
 // Update returns a builder for updating this Disk.
 // Note that you need to call Disk.Unwrap() before calling this method if this Disk
 // was returned from a transaction, and the transaction was committed or rolled back.
 func (d *Disk) Update() *DiskUpdateOne {
-	return (&DiskClient{config: d.config}).UpdateOne(d)
+	return NewDiskClient(d.config).UpdateOne(d)
 }
 
 // Unwrap unwraps the Disk entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
 func (d *Disk) Unwrap() *Disk {
-	tx, ok := d.config.driver.(*txDriver)
+	_tx, ok := d.config.driver.(*txDriver)
 	if !ok {
 		panic("ent: Disk is not a transactional entity")
 	}
-	d.config.driver = tx.drv
+	d.config.driver = _tx.drv
 	return d
 }
 
@@ -130,8 +140,8 @@ func (d *Disk) Unwrap() *Disk {
 func (d *Disk) String() string {
 	var builder strings.Builder
 	builder.WriteString("Disk(")
-	builder.WriteString(fmt.Sprintf("id=%v", d.ID))
-	builder.WriteString(", size=")
+	builder.WriteString(fmt.Sprintf("id=%v, ", d.ID))
+	builder.WriteString("size=")
 	builder.WriteString(fmt.Sprintf("%v", d.Size))
 	builder.WriteByte(')')
 	return builder.String()
@@ -139,9 +149,3 @@ func (d *Disk) String() string {
 
 // Disks is a parsable slice of Disk.
 type Disks []*Disk
-
-func (d Disks) config(cfg config) {
-	for _i := range d {
-		d[_i].config = cfg
-	}
-}
