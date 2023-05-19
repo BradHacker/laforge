@@ -469,6 +469,34 @@ func HasAnsibleWith(preds ...predicate.Ansible) predicate.ProvisioningScheduledS
 	})
 }
 
+// HasReplayPcap applies the HasEdge predicate on the "ReplayPcap" edge.
+func HasReplayPcap() predicate.ProvisioningScheduledStep {
+	return predicate.ProvisioningScheduledStep(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(ReplayPcapTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, ReplayPcapTable, ReplayPcapColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasReplayPcapWith applies the HasEdge predicate on the "ReplayPcap" edge with a given conditions (other predicates).
+func HasReplayPcapWith(preds ...predicate.ReplayPcap) predicate.ProvisioningScheduledStep {
+	return predicate.ProvisioningScheduledStep(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(ReplayPcapInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, ReplayPcapTable, ReplayPcapColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasAgentTasks applies the HasEdge predicate on the "AgentTasks" edge.
 func HasAgentTasks() predicate.ProvisioningScheduledStep {
 	return predicate.ProvisioningScheduledStep(func(s *sql.Selector) {

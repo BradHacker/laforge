@@ -29,6 +29,19 @@ func (ReplayPcap) Fields() []ent.Field {
 			StructTag(`hcl:"disabled,optional"`),
 		field.String("abs_path").
 			StructTag(`hcl:"abs_path,optional"`),
+		field.Enum("type").
+			Values("BASIC", "ADVANCED").
+			StructTag(`hcl:"type,attr"`),
+		/*
+			Basic Replay Arguments:
+			1. Input PCAP byte array. ([]byte)
+
+			Advanced Replay Arguments:
+			1. Source IP to look for in PCAP. (string)
+			2. Input PCAP byte array. ([]byte)
+			3. Destination address to replay PCAP data to (host:port). (string)
+			4. TLS connection (bool)
+		*/
 		field.JSON("tags", map[string]string{}).
 			StructTag(`hcl:"tags,optional"`),
 	}

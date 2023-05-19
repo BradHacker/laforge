@@ -21,6 +21,7 @@ import (
 	"github.com/gen0cide/laforge/ent/plan"
 	"github.com/gen0cide/laforge/ent/provisionedhost"
 	"github.com/gen0cide/laforge/ent/provisioningscheduledstep"
+	"github.com/gen0cide/laforge/ent/replaypcap"
 	"github.com/gen0cide/laforge/ent/scheduledstep"
 	"github.com/gen0cide/laforge/ent/script"
 	"github.com/gen0cide/laforge/ent/status"
@@ -232,6 +233,25 @@ func (pssc *ProvisioningScheduledStepCreate) SetNillableAnsibleID(id *uuid.UUID)
 // SetAnsible sets the "Ansible" edge to the Ansible entity.
 func (pssc *ProvisioningScheduledStepCreate) SetAnsible(a *Ansible) *ProvisioningScheduledStepCreate {
 	return pssc.SetAnsibleID(a.ID)
+}
+
+// SetReplayPcapID sets the "ReplayPcap" edge to the ReplayPcap entity by ID.
+func (pssc *ProvisioningScheduledStepCreate) SetReplayPcapID(id uuid.UUID) *ProvisioningScheduledStepCreate {
+	pssc.mutation.SetReplayPcapID(id)
+	return pssc
+}
+
+// SetNillableReplayPcapID sets the "ReplayPcap" edge to the ReplayPcap entity by ID if the given value is not nil.
+func (pssc *ProvisioningScheduledStepCreate) SetNillableReplayPcapID(id *uuid.UUID) *ProvisioningScheduledStepCreate {
+	if id != nil {
+		pssc = pssc.SetReplayPcapID(*id)
+	}
+	return pssc
+}
+
+// SetReplayPcap sets the "ReplayPcap" edge to the ReplayPcap entity.
+func (pssc *ProvisioningScheduledStepCreate) SetReplayPcap(r *ReplayPcap) *ProvisioningScheduledStepCreate {
+	return pssc.SetReplayPcapID(r.ID)
 }
 
 // AddAgentTaskIDs adds the "AgentTasks" edge to the AgentTask entity by IDs.
@@ -638,6 +658,26 @@ func (pssc *ProvisioningScheduledStepCreate) createSpec() (*ProvisioningSchedule
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.provisioning_scheduled_step_ansible = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := pssc.mutation.ReplayPcapIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   provisioningscheduledstep.ReplayPcapTable,
+			Columns: []string{provisioningscheduledstep.ReplayPcapColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: replaypcap.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.provisioning_scheduled_step_replay_pcap = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := pssc.mutation.AgentTasksIDs(); len(nodes) > 0 {

@@ -4999,6 +4999,22 @@ func (c *ProvisioningScheduledStepClient) QueryAnsible(pss *ProvisioningSchedule
 	return query
 }
 
+// QueryReplayPcap queries the ReplayPcap edge of a ProvisioningScheduledStep.
+func (c *ProvisioningScheduledStepClient) QueryReplayPcap(pss *ProvisioningScheduledStep) *ReplayPcapQuery {
+	query := &ReplayPcapQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := pss.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(provisioningscheduledstep.Table, provisioningscheduledstep.FieldID, id),
+			sqlgraph.To(replaypcap.Table, replaypcap.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, provisioningscheduledstep.ReplayPcapTable, provisioningscheduledstep.ReplayPcapColumn),
+		)
+		fromV = sqlgraph.Neighbors(pss.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryAgentTasks queries the AgentTasks edge of a ProvisioningScheduledStep.
 func (c *ProvisioningScheduledStepClient) QueryAgentTasks(pss *ProvisioningScheduledStep) *AgentTaskQuery {
 	query := &AgentTaskQuery{config: c.config}
@@ -5274,6 +5290,22 @@ func (c *ProvisioningStepClient) QueryAnsible(ps *ProvisioningStep) *AnsibleQuer
 			sqlgraph.From(provisioningstep.Table, provisioningstep.FieldID, id),
 			sqlgraph.To(ansible.Table, ansible.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, provisioningstep.AnsibleTable, provisioningstep.AnsibleColumn),
+		)
+		fromV = sqlgraph.Neighbors(ps.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryReplayPcap queries the ReplayPcap edge of a ProvisioningStep.
+func (c *ProvisioningStepClient) QueryReplayPcap(ps *ProvisioningStep) *ReplayPcapQuery {
+	query := &ReplayPcapQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := ps.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(provisioningstep.Table, provisioningstep.FieldID, id),
+			sqlgraph.To(replaypcap.Table, replaypcap.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, provisioningstep.ReplayPcapTable, provisioningstep.ReplayPcapColumn),
 		)
 		fromV = sqlgraph.Neighbors(ps.driver.Dialect(), step)
 		return fromV, nil

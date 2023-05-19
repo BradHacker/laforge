@@ -3,6 +3,10 @@
 package replaypcap
 
 import (
+	"fmt"
+	"io"
+	"strconv"
+
 	"github.com/google/uuid"
 )
 
@@ -23,6 +27,8 @@ const (
 	FieldDisabled = "disabled"
 	// FieldAbsPath holds the string denoting the abs_path field in the database.
 	FieldAbsPath = "abs_path"
+	// FieldType holds the string denoting the type field in the database.
+	FieldType = "type"
 	// FieldTags holds the string denoting the tags field in the database.
 	FieldTags = "tags"
 	// EdgeEnvironment holds the string denoting the environment edge name in mutations.
@@ -47,6 +53,7 @@ var Columns = []string{
 	FieldTemplate,
 	FieldDisabled,
 	FieldAbsPath,
+	FieldType,
 	FieldTags,
 }
 
@@ -75,3 +82,44 @@ var (
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
+
+// Type defines the type for the "type" enum field.
+type Type string
+
+// Type values.
+const (
+	TypeBASIC    Type = "BASIC"
+	TypeADVANCED Type = "ADVANCED"
+)
+
+func (_type Type) String() string {
+	return string(_type)
+}
+
+// TypeValidator is a validator for the "type" field enum values. It is called by the builders before save.
+func TypeValidator(_type Type) error {
+	switch _type {
+	case TypeBASIC, TypeADVANCED:
+		return nil
+	default:
+		return fmt.Errorf("replaypcap: invalid enum value for type field: %q", _type)
+	}
+}
+
+// MarshalGQL implements graphql.Marshaler interface.
+func (_type Type) MarshalGQL(w io.Writer) {
+	io.WriteString(w, strconv.Quote(_type.String()))
+}
+
+// UnmarshalGQL implements graphql.Unmarshaler interface.
+func (_type *Type) UnmarshalGQL(val interface{}) error {
+	str, ok := val.(string)
+	if !ok {
+		return fmt.Errorf("enum %T must be a string", val)
+	}
+	*_type = Type(str)
+	if err := TypeValidator(*_type); err != nil {
+		return fmt.Errorf("%s is not a valid Type", str)
+	}
+	return nil
+}

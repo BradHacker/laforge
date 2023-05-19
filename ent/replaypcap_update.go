@@ -65,6 +65,12 @@ func (rpu *ReplayPcapUpdate) SetAbsPath(s string) *ReplayPcapUpdate {
 	return rpu
 }
 
+// SetType sets the "type" field.
+func (rpu *ReplayPcapUpdate) SetType(r replaypcap.Type) *ReplayPcapUpdate {
+	rpu.mutation.SetType(r)
+	return rpu
+}
+
 // SetTags sets the "tags" field.
 func (rpu *ReplayPcapUpdate) SetTags(m map[string]string) *ReplayPcapUpdate {
 	rpu.mutation.SetTags(m)
@@ -108,12 +114,18 @@ func (rpu *ReplayPcapUpdate) Save(ctx context.Context) (int, error) {
 		affected int
 	)
 	if len(rpu.hooks) == 0 {
+		if err = rpu.check(); err != nil {
+			return 0, err
+		}
 		affected, err = rpu.sqlSave(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 			mutation, ok := m.(*ReplayPcapMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = rpu.check(); err != nil {
+				return 0, err
 			}
 			rpu.mutation = mutation
 			affected, err = rpu.sqlSave(ctx)
@@ -153,6 +165,16 @@ func (rpu *ReplayPcapUpdate) ExecX(ctx context.Context) {
 	if err := rpu.Exec(ctx); err != nil {
 		panic(err)
 	}
+}
+
+// check runs all checks and user-defined validators on the builder.
+func (rpu *ReplayPcapUpdate) check() error {
+	if v, ok := rpu.mutation.GetType(); ok {
+		if err := replaypcap.TypeValidator(v); err != nil {
+			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "ReplayPcap.type": %w`, err)}
+		}
+	}
+	return nil
 }
 
 func (rpu *ReplayPcapUpdate) sqlSave(ctx context.Context) (n int, err error) {
@@ -213,6 +235,13 @@ func (rpu *ReplayPcapUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Type:   field.TypeString,
 			Value:  value,
 			Column: replaypcap.FieldAbsPath,
+		})
+	}
+	if value, ok := rpu.mutation.GetType(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeEnum,
+			Value:  value,
+			Column: replaypcap.FieldType,
 		})
 	}
 	if value, ok := rpu.mutation.Tags(); ok {
@@ -312,6 +341,12 @@ func (rpuo *ReplayPcapUpdateOne) SetAbsPath(s string) *ReplayPcapUpdateOne {
 	return rpuo
 }
 
+// SetType sets the "type" field.
+func (rpuo *ReplayPcapUpdateOne) SetType(r replaypcap.Type) *ReplayPcapUpdateOne {
+	rpuo.mutation.SetType(r)
+	return rpuo
+}
+
 // SetTags sets the "tags" field.
 func (rpuo *ReplayPcapUpdateOne) SetTags(m map[string]string) *ReplayPcapUpdateOne {
 	rpuo.mutation.SetTags(m)
@@ -362,12 +397,18 @@ func (rpuo *ReplayPcapUpdateOne) Save(ctx context.Context) (*ReplayPcap, error) 
 		node *ReplayPcap
 	)
 	if len(rpuo.hooks) == 0 {
+		if err = rpuo.check(); err != nil {
+			return nil, err
+		}
 		node, err = rpuo.sqlSave(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 			mutation, ok := m.(*ReplayPcapMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = rpuo.check(); err != nil {
+				return nil, err
 			}
 			rpuo.mutation = mutation
 			node, err = rpuo.sqlSave(ctx)
@@ -413,6 +454,16 @@ func (rpuo *ReplayPcapUpdateOne) ExecX(ctx context.Context) {
 	if err := rpuo.Exec(ctx); err != nil {
 		panic(err)
 	}
+}
+
+// check runs all checks and user-defined validators on the builder.
+func (rpuo *ReplayPcapUpdateOne) check() error {
+	if v, ok := rpuo.mutation.GetType(); ok {
+		if err := replaypcap.TypeValidator(v); err != nil {
+			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "ReplayPcap.type": %w`, err)}
+		}
+	}
+	return nil
 }
 
 func (rpuo *ReplayPcapUpdateOne) sqlSave(ctx context.Context) (_node *ReplayPcap, err error) {
@@ -490,6 +541,13 @@ func (rpuo *ReplayPcapUpdateOne) sqlSave(ctx context.Context) (_node *ReplayPcap
 			Type:   field.TypeString,
 			Value:  value,
 			Column: replaypcap.FieldAbsPath,
+		})
+	}
+	if value, ok := rpuo.mutation.GetType(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeEnum,
+			Value:  value,
+			Column: replaypcap.FieldType,
 		})
 	}
 	if value, ok := rpuo.mutation.Tags(); ok {

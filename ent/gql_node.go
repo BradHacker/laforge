@@ -2926,7 +2926,7 @@ func (pss *ProvisioningScheduledStep) Node(ctx context.Context) (node *Node, err
 		ID:     pss.ID,
 		Type:   "ProvisioningScheduledStep",
 		Fields: make([]*Field, 2),
-		Edges:  make([]*Edge, 13),
+		Edges:  make([]*Edge, 14),
 	}
 	var buf []byte
 	if buf, err = json.Marshal(pss.Type); err != nil {
@@ -3046,32 +3046,42 @@ func (pss *ProvisioningScheduledStep) Node(ctx context.Context) (node *Node, err
 		return nil, err
 	}
 	node.Edges[10] = &Edge{
-		Type: "AgentTask",
-		Name: "AgentTasks",
+		Type: "ReplayPcap",
+		Name: "ReplayPcap",
 	}
-	err = pss.QueryAgentTasks().
-		Select(agenttask.FieldID).
+	err = pss.QueryReplayPcap().
+		Select(replaypcap.FieldID).
 		Scan(ctx, &node.Edges[10].IDs)
 	if err != nil {
 		return nil, err
 	}
 	node.Edges[11] = &Edge{
-		Type: "Plan",
-		Name: "Plan",
+		Type: "AgentTask",
+		Name: "AgentTasks",
 	}
-	err = pss.QueryPlan().
-		Select(plan.FieldID).
+	err = pss.QueryAgentTasks().
+		Select(agenttask.FieldID).
 		Scan(ctx, &node.Edges[11].IDs)
 	if err != nil {
 		return nil, err
 	}
 	node.Edges[12] = &Edge{
+		Type: "Plan",
+		Name: "Plan",
+	}
+	err = pss.QueryPlan().
+		Select(plan.FieldID).
+		Scan(ctx, &node.Edges[12].IDs)
+	if err != nil {
+		return nil, err
+	}
+	node.Edges[13] = &Edge{
 		Type: "GinFileMiddleware",
 		Name: "GinFileMiddleware",
 	}
 	err = pss.QueryGinFileMiddleware().
 		Select(ginfilemiddleware.FieldID).
-		Scan(ctx, &node.Edges[12].IDs)
+		Scan(ctx, &node.Edges[13].IDs)
 	if err != nil {
 		return nil, err
 	}
@@ -3083,7 +3093,7 @@ func (ps *ProvisioningStep) Node(ctx context.Context) (node *Node, err error) {
 		ID:     ps.ID,
 		Type:   "ProvisioningStep",
 		Fields: make([]*Field, 2),
-		Edges:  make([]*Edge, 12),
+		Edges:  make([]*Edge, 13),
 	}
 	var buf []byte
 	if buf, err = json.Marshal(ps.Type); err != nil {
@@ -3193,32 +3203,42 @@ func (ps *ProvisioningStep) Node(ctx context.Context) (node *Node, err error) {
 		return nil, err
 	}
 	node.Edges[9] = &Edge{
-		Type: "Plan",
-		Name: "Plan",
+		Type: "ReplayPcap",
+		Name: "ReplayPcap",
 	}
-	err = ps.QueryPlan().
-		Select(plan.FieldID).
+	err = ps.QueryReplayPcap().
+		Select(replaypcap.FieldID).
 		Scan(ctx, &node.Edges[9].IDs)
 	if err != nil {
 		return nil, err
 	}
 	node.Edges[10] = &Edge{
-		Type: "AgentTask",
-		Name: "AgentTasks",
+		Type: "Plan",
+		Name: "Plan",
 	}
-	err = ps.QueryAgentTasks().
-		Select(agenttask.FieldID).
+	err = ps.QueryPlan().
+		Select(plan.FieldID).
 		Scan(ctx, &node.Edges[10].IDs)
 	if err != nil {
 		return nil, err
 	}
 	node.Edges[11] = &Edge{
+		Type: "AgentTask",
+		Name: "AgentTasks",
+	}
+	err = ps.QueryAgentTasks().
+		Select(agenttask.FieldID).
+		Scan(ctx, &node.Edges[11].IDs)
+	if err != nil {
+		return nil, err
+	}
+	node.Edges[12] = &Edge{
 		Type: "GinFileMiddleware",
 		Name: "GinFileMiddleware",
 	}
 	err = ps.QueryGinFileMiddleware().
 		Select(ginfilemiddleware.FieldID).
-		Scan(ctx, &node.Edges[11].IDs)
+		Scan(ctx, &node.Edges[12].IDs)
 	if err != nil {
 		return nil, err
 	}
@@ -3229,7 +3249,7 @@ func (rp *ReplayPcap) Node(ctx context.Context) (node *Node, err error) {
 	node = &Node{
 		ID:     rp.ID,
 		Type:   "ReplayPcap",
-		Fields: make([]*Field, 7),
+		Fields: make([]*Field, 8),
 		Edges:  make([]*Edge, 1),
 	}
 	var buf []byte
@@ -3281,10 +3301,18 @@ func (rp *ReplayPcap) Node(ctx context.Context) (node *Node, err error) {
 		Name:  "abs_path",
 		Value: string(buf),
 	}
-	if buf, err = json.Marshal(rp.Tags); err != nil {
+	if buf, err = json.Marshal(rp.Type); err != nil {
 		return nil, err
 	}
 	node.Fields[6] = &Field{
+		Type:  "replaypcap.Type",
+		Name:  "type",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(rp.Tags); err != nil {
+		return nil, err
+	}
+	node.Fields[7] = &Field{
 		Type:  "map[string]string",
 		Name:  "tags",
 		Value: string(buf),

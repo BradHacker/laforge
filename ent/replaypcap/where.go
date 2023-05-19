@@ -546,6 +546,42 @@ func AbsPathContainsFold(v string) predicate.ReplayPcap {
 	})
 }
 
+// TypeEQ applies the EQ predicate on the "type" field.
+func TypeEQ(v Type) predicate.ReplayPcap {
+	return predicate.ReplayPcap(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldType), v))
+	})
+}
+
+// TypeNEQ applies the NEQ predicate on the "type" field.
+func TypeNEQ(v Type) predicate.ReplayPcap {
+	return predicate.ReplayPcap(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldType), v))
+	})
+}
+
+// TypeIn applies the In predicate on the "type" field.
+func TypeIn(vs ...Type) predicate.ReplayPcap {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.ReplayPcap(func(s *sql.Selector) {
+		s.Where(sql.In(s.C(FieldType), v...))
+	})
+}
+
+// TypeNotIn applies the NotIn predicate on the "type" field.
+func TypeNotIn(vs ...Type) predicate.ReplayPcap {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.ReplayPcap(func(s *sql.Selector) {
+		s.Where(sql.NotIn(s.C(FieldType), v...))
+	})
+}
+
 // HasEnvironment applies the HasEdge predicate on the "Environment" edge.
 func HasEnvironment() predicate.ReplayPcap {
 	return predicate.ReplayPcap(func(s *sql.Selector) {

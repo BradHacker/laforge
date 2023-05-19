@@ -30,6 +30,8 @@ type ReplayPcap struct {
 	Disabled bool `json:"disabled,omitempty" hcl:"disabled,optional"`
 	// AbsPath holds the value of the "abs_path" field.
 	AbsPath string `json:"abs_path,omitempty" hcl:"abs_path,optional"`
+	// Type holds the value of the "type" field.
+	Type replaypcap.Type `json:"type,omitempty" hcl:"type,attr"`
 	// Tags holds the value of the "tags" field.
 	Tags map[string]string `json:"tags,omitempty" hcl:"tags,optional"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -75,7 +77,7 @@ func (*ReplayPcap) scanValues(columns []string) ([]interface{}, error) {
 			values[i] = new([]byte)
 		case replaypcap.FieldTemplate, replaypcap.FieldDisabled:
 			values[i] = new(sql.NullBool)
-		case replaypcap.FieldHclID, replaypcap.FieldSourceType, replaypcap.FieldSource, replaypcap.FieldAbsPath:
+		case replaypcap.FieldHclID, replaypcap.FieldSourceType, replaypcap.FieldSource, replaypcap.FieldAbsPath, replaypcap.FieldType:
 			values[i] = new(sql.NullString)
 		case replaypcap.FieldID:
 			values[i] = new(uuid.UUID)
@@ -138,6 +140,12 @@ func (rp *ReplayPcap) assignValues(columns []string, values []interface{}) error
 			} else if value.Valid {
 				rp.AbsPath = value.String
 			}
+		case replaypcap.FieldType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field type", values[i])
+			} else if value.Valid {
+				rp.Type = replaypcap.Type(value.String)
+			}
 		case replaypcap.FieldTags:
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field tags", values[i])
@@ -198,6 +206,8 @@ func (rp *ReplayPcap) String() string {
 	builder.WriteString(fmt.Sprintf("%v", rp.Disabled))
 	builder.WriteString(", abs_path=")
 	builder.WriteString(rp.AbsPath)
+	builder.WriteString(", type=")
+	builder.WriteString(fmt.Sprintf("%v", rp.Type))
 	builder.WriteString(", tags=")
 	builder.WriteString(fmt.Sprintf("%v", rp.Tags))
 	builder.WriteByte(')')

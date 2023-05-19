@@ -18,6 +18,7 @@ import (
 	"github.com/gen0cide/laforge/ent/plan"
 	"github.com/gen0cide/laforge/ent/provisionedhost"
 	"github.com/gen0cide/laforge/ent/provisioningscheduledstep"
+	"github.com/gen0cide/laforge/ent/replaypcap"
 	"github.com/gen0cide/laforge/ent/scheduledstep"
 	"github.com/gen0cide/laforge/ent/script"
 	"github.com/gen0cide/laforge/ent/status"
@@ -58,6 +59,8 @@ type ProvisioningScheduledStep struct {
 	HCLFileExtract *FileExtract `json:"FileExtract,omitempty"`
 	// Ansible holds the value of the Ansible edge.
 	HCLAnsible *Ansible `json:"Ansible,omitempty"`
+	// ReplayPcap holds the value of the ReplayPcap edge.
+	HCLReplayPcap *ReplayPcap `json:"ReplayPcap,omitempty"`
 	// AgentTasks holds the value of the AgentTasks edge.
 	HCLAgentTasks []*AgentTask `json:"AgentTasks,omitempty"`
 	// Plan holds the value of the Plan edge.
@@ -76,6 +79,7 @@ type ProvisioningScheduledStep struct {
 	provisioning_scheduled_step_file_download       *uuid.UUID
 	provisioning_scheduled_step_file_extract        *uuid.UUID
 	provisioning_scheduled_step_ansible             *uuid.UUID
+	provisioning_scheduled_step_replay_pcap         *uuid.UUID
 }
 
 // ProvisioningScheduledStepEdges holds the relations/edges for other nodes in the graph.
@@ -100,6 +104,8 @@ type ProvisioningScheduledStepEdges struct {
 	FileExtract *FileExtract `json:"FileExtract,omitempty"`
 	// Ansible holds the value of the Ansible edge.
 	Ansible *Ansible `json:"Ansible,omitempty"`
+	// ReplayPcap holds the value of the ReplayPcap edge.
+	ReplayPcap *ReplayPcap `json:"ReplayPcap,omitempty"`
 	// AgentTasks holds the value of the AgentTasks edge.
 	AgentTasks []*AgentTask `json:"AgentTasks,omitempty"`
 	// Plan holds the value of the Plan edge.
@@ -108,7 +114,7 @@ type ProvisioningScheduledStepEdges struct {
 	GinFileMiddleware *GinFileMiddleware `json:"GinFileMiddleware,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [13]bool
+	loadedTypes [14]bool
 }
 
 // StatusOrErr returns the Status value or an error if the edge
@@ -251,10 +257,24 @@ func (e ProvisioningScheduledStepEdges) AnsibleOrErr() (*Ansible, error) {
 	return nil, &NotLoadedError{edge: "Ansible"}
 }
 
+// ReplayPcapOrErr returns the ReplayPcap value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e ProvisioningScheduledStepEdges) ReplayPcapOrErr() (*ReplayPcap, error) {
+	if e.loadedTypes[10] {
+		if e.ReplayPcap == nil {
+			// The edge ReplayPcap was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: replaypcap.Label}
+		}
+		return e.ReplayPcap, nil
+	}
+	return nil, &NotLoadedError{edge: "ReplayPcap"}
+}
+
 // AgentTasksOrErr returns the AgentTasks value or an error if the edge
 // was not loaded in eager-loading.
 func (e ProvisioningScheduledStepEdges) AgentTasksOrErr() ([]*AgentTask, error) {
-	if e.loadedTypes[10] {
+	if e.loadedTypes[11] {
 		return e.AgentTasks, nil
 	}
 	return nil, &NotLoadedError{edge: "AgentTasks"}
@@ -263,7 +283,7 @@ func (e ProvisioningScheduledStepEdges) AgentTasksOrErr() ([]*AgentTask, error) 
 // PlanOrErr returns the Plan value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
 func (e ProvisioningScheduledStepEdges) PlanOrErr() (*Plan, error) {
-	if e.loadedTypes[11] {
+	if e.loadedTypes[12] {
 		if e.Plan == nil {
 			// The edge Plan was loaded in eager-loading,
 			// but was not found.
@@ -277,7 +297,7 @@ func (e ProvisioningScheduledStepEdges) PlanOrErr() (*Plan, error) {
 // GinFileMiddlewareOrErr returns the GinFileMiddleware value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
 func (e ProvisioningScheduledStepEdges) GinFileMiddlewareOrErr() (*GinFileMiddleware, error) {
-	if e.loadedTypes[12] {
+	if e.loadedTypes[13] {
 		if e.GinFileMiddleware == nil {
 			// The edge GinFileMiddleware was loaded in eager-loading,
 			// but was not found.
@@ -320,6 +340,8 @@ func (*ProvisioningScheduledStep) scanValues(columns []string) ([]interface{}, e
 		case provisioningscheduledstep.ForeignKeys[9]: // provisioning_scheduled_step_file_extract
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case provisioningscheduledstep.ForeignKeys[10]: // provisioning_scheduled_step_ansible
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
+		case provisioningscheduledstep.ForeignKeys[11]: // provisioning_scheduled_step_replay_pcap
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type ProvisioningScheduledStep", columns[i])
@@ -431,6 +453,13 @@ func (pss *ProvisioningScheduledStep) assignValues(columns []string, values []in
 				pss.provisioning_scheduled_step_ansible = new(uuid.UUID)
 				*pss.provisioning_scheduled_step_ansible = *value.S.(*uuid.UUID)
 			}
+		case provisioningscheduledstep.ForeignKeys[11]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field provisioning_scheduled_step_replay_pcap", values[i])
+			} else if value.Valid {
+				pss.provisioning_scheduled_step_replay_pcap = new(uuid.UUID)
+				*pss.provisioning_scheduled_step_replay_pcap = *value.S.(*uuid.UUID)
+			}
 		}
 	}
 	return nil
@@ -484,6 +513,11 @@ func (pss *ProvisioningScheduledStep) QueryFileExtract() *FileExtractQuery {
 // QueryAnsible queries the "Ansible" edge of the ProvisioningScheduledStep entity.
 func (pss *ProvisioningScheduledStep) QueryAnsible() *AnsibleQuery {
 	return (&ProvisioningScheduledStepClient{config: pss.config}).QueryAnsible(pss)
+}
+
+// QueryReplayPcap queries the "ReplayPcap" edge of the ProvisioningScheduledStep entity.
+func (pss *ProvisioningScheduledStep) QueryReplayPcap() *ReplayPcapQuery {
+	return (&ProvisioningScheduledStepClient{config: pss.config}).QueryReplayPcap(pss)
 }
 
 // QueryAgentTasks queries the "AgentTasks" edge of the ProvisioningScheduledStep entity.

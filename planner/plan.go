@@ -1075,6 +1075,7 @@ func createProvisioningStep(ctx context.Context, client *ent.Client, logger *log
 		}).Errorf("Failed to Query Ansible %v. Err: %v", hclID, err)
 		return nil, err
 	}
+	// TODO: Check if step is ReplayPCAP
 	logger.Log.WithFields(logrus.Fields{
 		"pHost":               pHost.ID,
 		"pHost.HCLID":         entHost.HclID,
@@ -1733,6 +1734,8 @@ func renderAnsible(ctx context.Context, client *ent.Client, logger *logging.Logg
 
 	return zipFileName, nil
 }
+
+// TODO: Generate renderPcap function (call it everywhere)
 
 // IPv42Int converts net.IP address objects to their uint32 representation
 func IPv42Int(ip net.IP) uint32 {

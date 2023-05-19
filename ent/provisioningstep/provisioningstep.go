@@ -37,6 +37,8 @@ const (
 	EdgeFileExtract = "FileExtract"
 	// EdgeAnsible holds the string denoting the ansible edge name in mutations.
 	EdgeAnsible = "Ansible"
+	// EdgeReplayPcap holds the string denoting the replaypcap edge name in mutations.
+	EdgeReplayPcap = "ReplayPcap"
 	// EdgePlan holds the string denoting the plan edge name in mutations.
 	EdgePlan = "Plan"
 	// EdgeAgentTasks holds the string denoting the agenttasks edge name in mutations.
@@ -108,6 +110,13 @@ const (
 	AnsibleInverseTable = "ansibles"
 	// AnsibleColumn is the table column denoting the Ansible relation/edge.
 	AnsibleColumn = "provisioning_step_ansible"
+	// ReplayPcapTable is the table that holds the ReplayPcap relation/edge.
+	ReplayPcapTable = "provisioning_steps"
+	// ReplayPcapInverseTable is the table name for the ReplayPcap entity.
+	// It exists in this package in order to avoid circular dependency with the "replaypcap" package.
+	ReplayPcapInverseTable = "replay_pcaps"
+	// ReplayPcapColumn is the table column denoting the ReplayPcap relation/edge.
+	ReplayPcapColumn = "provisioning_step_replay_pcap"
 	// PlanTable is the table that holds the Plan relation/edge.
 	PlanTable = "provisioning_steps"
 	// PlanInverseTable is the table name for the Plan entity.
@@ -151,6 +160,7 @@ var ForeignKeys = []string{
 	"provisioning_step_file_download",
 	"provisioning_step_file_extract",
 	"provisioning_step_ansible",
+	"provisioning_step_replay_pcap",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -185,6 +195,7 @@ const (
 	TypeFileDownload Type = "FileDownload"
 	TypeFileExtract  Type = "FileExtract"
 	TypeAnsible      Type = "Ansible"
+	TypeReplayPCAP   Type = "ReplayPCAP"
 )
 
 func (_type Type) String() string {
@@ -194,7 +205,7 @@ func (_type Type) String() string {
 // TypeValidator is a validator for the "type" field enum values. It is called by the builders before save.
 func TypeValidator(_type Type) error {
 	switch _type {
-	case TypeScript, TypeCommand, TypeDNSRecord, TypeFileDelete, TypeFileDownload, TypeFileExtract, TypeAnsible:
+	case TypeScript, TypeCommand, TypeDNSRecord, TypeFileDelete, TypeFileDownload, TypeFileExtract, TypeAnsible, TypeReplayPCAP:
 		return nil
 	default:
 		return fmt.Errorf("provisioningstep: invalid enum value for type field: %q", _type)

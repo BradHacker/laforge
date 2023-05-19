@@ -57,6 +57,12 @@ func (rpc *ReplayPcapCreate) SetAbsPath(s string) *ReplayPcapCreate {
 	return rpc
 }
 
+// SetType sets the "type" field.
+func (rpc *ReplayPcapCreate) SetType(r replaypcap.Type) *ReplayPcapCreate {
+	rpc.mutation.SetType(r)
+	return rpc
+}
+
 // SetTags sets the "tags" field.
 func (rpc *ReplayPcapCreate) SetTags(m map[string]string) *ReplayPcapCreate {
 	rpc.mutation.SetTags(m)
@@ -199,6 +205,14 @@ func (rpc *ReplayPcapCreate) check() error {
 	if _, ok := rpc.mutation.AbsPath(); !ok {
 		return &ValidationError{Name: "abs_path", err: errors.New(`ent: missing required field "ReplayPcap.abs_path"`)}
 	}
+	if _, ok := rpc.mutation.GetType(); !ok {
+		return &ValidationError{Name: "type", err: errors.New(`ent: missing required field "ReplayPcap.type"`)}
+	}
+	if v, ok := rpc.mutation.GetType(); ok {
+		if err := replaypcap.TypeValidator(v); err != nil {
+			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "ReplayPcap.type": %w`, err)}
+		}
+	}
 	if _, ok := rpc.mutation.Tags(); !ok {
 		return &ValidationError{Name: "tags", err: errors.New(`ent: missing required field "ReplayPcap.tags"`)}
 	}
@@ -285,6 +299,14 @@ func (rpc *ReplayPcapCreate) createSpec() (*ReplayPcap, *sqlgraph.CreateSpec) {
 			Column: replaypcap.FieldAbsPath,
 		})
 		_node.AbsPath = value
+	}
+	if value, ok := rpc.mutation.GetType(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeEnum,
+			Value:  value,
+			Column: replaypcap.FieldType,
+		})
+		_node.Type = value
 	}
 	if value, ok := rpc.mutation.Tags(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{

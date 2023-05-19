@@ -1044,6 +1044,14 @@ func (pss *ProvisioningScheduledStep) Ansible(ctx context.Context) (*Ansible, er
 	return result, MaskNotFound(err)
 }
 
+func (pss *ProvisioningScheduledStep) ReplayPcap(ctx context.Context) (*ReplayPcap, error) {
+	result, err := pss.Edges.ReplayPcapOrErr()
+	if IsNotLoaded(err) {
+		result, err = pss.QueryReplayPcap().Only(ctx)
+	}
+	return result, MaskNotFound(err)
+}
+
 func (pss *ProvisioningScheduledStep) AgentTasks(ctx context.Context) ([]*AgentTask, error) {
 	result, err := pss.Edges.AgentTasksOrErr()
 	if IsNotLoaded(err) {
@@ -1136,6 +1144,14 @@ func (ps *ProvisioningStep) Ansible(ctx context.Context) (*Ansible, error) {
 	result, err := ps.Edges.AnsibleOrErr()
 	if IsNotLoaded(err) {
 		result, err = ps.QueryAnsible().Only(ctx)
+	}
+	return result, MaskNotFound(err)
+}
+
+func (ps *ProvisioningStep) ReplayPcap(ctx context.Context) (*ReplayPcap, error) {
+	result, err := ps.Edges.ReplayPcapOrErr()
+	if IsNotLoaded(err) {
+		result, err = ps.QueryReplayPcap().Only(ctx)
 	}
 	return result, MaskNotFound(err)
 }

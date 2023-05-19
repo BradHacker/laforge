@@ -27,6 +27,7 @@ func (ProvisioningScheduledStep) Fields() []ent.Field {
 				"FileDownload",
 				"FileExtract",
 				"Ansible",
+				"ReplayPCAP",
 			),
 		field.Time("run_time"),
 	}
@@ -62,6 +63,8 @@ func (ProvisioningScheduledStep) Edges() []ent.Edge {
 		edge.To("FileExtract", FileExtract.Type).
 			Unique(),
 		edge.To("Ansible", Ansible.Type).
+			Unique(),
+		edge.To("ReplayPcap", ReplayPcap.Type).
 			Unique(),
 		// AgentTask
 		edge.From("AgentTasks", AgentTask.Type).
