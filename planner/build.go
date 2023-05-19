@@ -923,7 +923,6 @@ func execStep(client *ent.Client, laforgeConfig *utils.ServerConfig, logger *log
 			if err != nil {
 				logger.Log.Errorf("failed Creating Agent Task for Script Validation: %v", err)
 			}
-
 		}
 	case provisioningstep.TypeCommand:
 		entCommand, err := entStep.QueryCommand().Only(ctx)
@@ -1136,6 +1135,65 @@ func execStep(client *ent.Client, laforgeConfig *utils.ServerConfig, logger *log
 				logger.Log.Errorf("failed Creating Agent Task for Ansible Validation: %v", err)
 			}
 
+		}
+	case provisioningstep.TypeReplayPCAP:
+		entReplayPcap, err := entStep.QueryReplayPcap().Only(ctx)
+		if err != nil {
+			logger.Log.Errorf("failed querying ReplayPcap for Provioning Step: %v", err)
+			return err
+		}
+		entGinMiddleware, err := entStep.QueryGinFileMiddleware().Only(ctx)
+		if err != nil {
+			logger.Log.Errorf("failed querying Gin File Middleware for Script: %v", err)
+			return err
+		}
+		_, err = client.AgentTask.Create().
+			SetCommand(agenttask.CommandDOWNLOAD).
+			SetArgs(entReplayPcap.Source + "💔" + laforgeConfig.Agent.ApiDownloadUrl + entGinMiddleware.URLID + "💔" + "true").
+			SetNumber(taskCount).
+			SetState(agenttask.StateAWAITING).
+			SetProvisionedHost(entProvisionedHost).
+			SetProvisioningStep(entStep).
+			Save(ctx)
+		if err != nil {
+			logger.Log.Errorf("failed Creating Agent Task for ReplayPcap Download: %v", err)
+			return err
+		}
+		// TODO: Add argument logic here
+		/*
+			Basic Replay Arguments:
+			// 1. Input PCAP byte array. ([]byte)
+
+			Advanced Replay Arguments:
+			1. Source IP to look for in PCAP. (string)
+			// 2. Input PCAP byte array. ([]byte)
+			3. Destination address to replay PCAP data to (host:port). (string)
+			4. TLS connection (bool)
+		*/
+		_, err = client.AgentTask.Create().
+			SetCommand(agenttask.CommandREPLAYPCAP).
+			SetArgs(entReplayPcap.Source + "💔" + entReplayPcap.Type).
+			// filename | type | args...
+			SetNumber(taskCount + 1).
+			SetState(agenttask.StateAWAITING).
+			SetProvisionedHost(entProvisionedHost).
+			SetProvisioningStep(entStep).
+			Save(ctx)
+		if err != nil {
+			logger.Log.Errorf("failed Creating Agent Task for ReplayPCAP Replay: %v", err)
+			return err
+		}
+		_, err = client.AgentTask.Create().
+			SetCommand(agenttask.CommandDELETE).
+			SetArgs(entReplayPcap.Source).
+			SetNumber(taskCount + 2).
+			SetState(agenttask.StateAWAITING).
+			SetProvisionedHost(entProvisionedHost).
+			SetProvisioningStep(entStep).
+			Save(ctx)
+		if err != nil {
+			logger.Log.Errorf("failed Creating Agent Task for ReplayPCAP Delete: %v", err)
+			return err
 		}
 	default:
 		break

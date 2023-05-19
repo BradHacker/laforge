@@ -25,6 +25,7 @@ import (
 	"github.com/gen0cide/laforge/ent/identity"
 	"github.com/gen0cide/laforge/ent/includednetwork"
 	"github.com/gen0cide/laforge/ent/network"
+	"github.com/gen0cide/laforge/ent/replaypcap"
 	"github.com/gen0cide/laforge/ent/repository"
 	"github.com/gen0cide/laforge/ent/scheduledstep"
 	"github.com/gen0cide/laforge/ent/script"
@@ -434,6 +435,21 @@ func (ec *EnvironmentCreate) AddValidations(v ...*Validation) *EnvironmentCreate
 		ids[i] = v[i].ID
 	}
 	return ec.AddValidationIDs(ids...)
+}
+
+// AddReplayPcapIDs adds the "ReplayPcaps" edge to the ReplayPcap entity by IDs.
+func (ec *EnvironmentCreate) AddReplayPcapIDs(ids ...uuid.UUID) *EnvironmentCreate {
+	ec.mutation.AddReplayPcapIDs(ids...)
+	return ec
+}
+
+// AddReplayPcaps adds the "ReplayPcaps" edges to the ReplayPcap entity.
+func (ec *EnvironmentCreate) AddReplayPcaps(r ...*ReplayPcap) *EnvironmentCreate {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return ec.AddReplayPcapIDs(ids...)
 }
 
 // Mutation returns the EnvironmentMutation object of the builder.
@@ -1069,6 +1085,25 @@ func (ec *EnvironmentCreate) createSpec() (*Environment, *sqlgraph.CreateSpec) {
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeUUID,
 					Column: validation.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := ec.mutation.ReplayPcapsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   environment.ReplayPcapsTable,
+			Columns: []string{environment.ReplayPcapsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: replaypcap.FieldID,
 				},
 			},
 		}

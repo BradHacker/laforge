@@ -1340,6 +1340,34 @@ func HasValidationsWith(preds ...predicate.Validation) predicate.Environment {
 	})
 }
 
+// HasReplayPcaps applies the HasEdge predicate on the "ReplayPcaps" edge.
+func HasReplayPcaps() predicate.Environment {
+	return predicate.Environment(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(ReplayPcapsTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ReplayPcapsTable, ReplayPcapsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasReplayPcapsWith applies the HasEdge predicate on the "ReplayPcaps" edge with a given conditions (other predicates).
+func HasReplayPcapsWith(preds ...predicate.ReplayPcap) predicate.Environment {
+	return predicate.Environment(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(ReplayPcapsInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ReplayPcapsTable, ReplayPcapsColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Environment) predicate.Environment {
 	return predicate.Environment(func(s *sql.Selector) {

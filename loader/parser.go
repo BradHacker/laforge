@@ -25,6 +25,7 @@ import (
 	"github.com/gen0cide/laforge/ent/identity"
 	"github.com/gen0cide/laforge/ent/includednetwork"
 	"github.com/gen0cide/laforge/ent/network"
+	"github.com/gen0cide/laforge/ent/replaypcap"
 	"github.com/gen0cide/laforge/ent/scheduledstep"
 	"github.com/gen0cide/laforge/ent/script"
 	"github.com/gen0cide/laforge/ent/validation"
@@ -69,6 +70,7 @@ type DefinedConfigs struct {
 	DefinedIdentities     []*ent.Identity               `hcl:"identity,block" json:"identities,omitempty"`
 	DefinedAnsible        []*ent.Ansible                `hcl:"ansible,block" json:"ansible,omitempty"`
 	DefinedScheduledSteps []*ent.ScheduledStep          `hcl:"scheduled,block" json:"scheduled,omitempty"`
+	DefinedReplayPcaps    []*ent.ReplayPcap             `hcl:"replay_pcap,block" json:"replay_pcap,omitempty"`
 	Competitions          map[string]*ent.Competition   `json:"-"`
 	Hosts                 map[string]*ent.Host          `json:"-"`
 	Networks              map[string]*ent.Network       `json:"-"`
@@ -80,6 +82,7 @@ type DefinedConfigs struct {
 	FileDownload          map[string]*ent.FileDownload  `json:"-"`
 	FileDelete            map[string]*ent.FileDelete    `json:"-"`
 	FileExtract           map[string]*ent.FileExtract   `json:"-"`
+	ReplayPcap            map[string]*ent.ReplayPcap    `json:"-"`
 	Identities            map[string]*ent.Identity      `json:"-"`
 	Ansible               map[string]*ent.Ansible       `json:"-"`
 	ScheduledSteps        map[string]*ent.ScheduledStep `json:"-"`
@@ -268,6 +271,7 @@ func (l *Loader) merger(filenames []string) (*DefinedConfigs, error) {
 		FileExtract:    map[string]*ent.FileExtract{},
 		Identities:     map[string]*ent.Identity{},
 		Ansible:        map[string]*ent.Ansible{},
+		ReplayPcap:     map[string]*ent.ReplayPcap{},
 		ScheduledSteps: map[string]*ent.ScheduledStep{},
 	}
 	for _, filename := range filenames {
@@ -376,6 +380,16 @@ func (l *Loader) merger(filenames []string) (*DefinedConfigs, error) {
 			_, found := combinedConfigs.Ansible[x.HclID]
 			if !found {
 				combinedConfigs.Ansible[x.HclID] = x
+				continue
+			}
+		}
+		for _, x := range element.DefinedReplayPcaps {
+			_, found := combinedConfigs.ReplayPcap[x.HclID]
+			dir := path.Dir(element.Filename)
+			absPath := path.Join(dir, x.Source)
+			x.AbsPath = absPath
+			if !found {
+				combinedConfigs.ReplayPcap[x.HclID] = x
 				continue
 			}
 		}
@@ -512,6 +526,12 @@ func createEnviroments(ctx context.Context, client *ent.Client, log *logging.Log
 			log.Log.Errorf("Error loading in Ansible into env: %v, Err: %v", cEnviroment.HclID, err)
 			return nil, err
 		}
+		returnedReplayPcaps, err := createReplayPcap(txClient, ctx, log, loadedConfig.ReplayPcap, cEnviroment.HclID)
+		if err != nil {
+			err = rollback(txClient, err)
+			log.Log.Errorf("Error loading in replay_pcaps into env: %v, Err: %v", cEnviroment.HclID, err)
+			return nil, err
+		}
 		returnedScheduledSteps, err := createScheduledStep(txClient, ctx, log, loadedConfig.ScheduledSteps, cEnviroment.HclID)
 		if err != nil {
 			err = rollback(txClient, err)
@@ -567,6 +587,7 @@ func createEnviroments(ctx context.Context, client *ent.Client, log *logging.Log
 					AddAnsibles(returnedAnsible...).
 					AddScheduledSteps(returnedScheduledSteps...).
 					AddValidations(returnedValidations...).
+					AddReplayPcaps(returnedReplayPcaps...).
 					Save(ctx)
 				if err != nil {
 					err = rollback(txClient, err)
@@ -612,6 +633,7 @@ func createEnviroments(ctx context.Context, client *ent.Client, log *logging.Log
 			ClearAnsibles().
 			ClearScheduledSteps().
 			ClearValidations().
+			ClearReplayPcaps().
 			Save(ctx)
 		if err != nil {
 			err = rollback(txClient, err)
@@ -636,6 +658,7 @@ func createEnviroments(ctx context.Context, client *ent.Client, log *logging.Log
 			AddAnsibles(returnedAnsible...).
 			AddScheduledSteps(returnedScheduledSteps...).
 			AddValidations(returnedValidations...).
+			AddReplayPcaps(returnedReplayPcaps...).
 			Save(ctx)
 		if err != nil {
 			err = rollback(txClient, err)
@@ -1898,6 +1921,61 @@ func createIncludedNetwork(txClient *ent.Tx, ctx context.Context, log *logging.L
 		returnedIncludedNetworks = append(returnedIncludedNetworks, dbIncludedNetwork...)
 	}
 	return returnedIncludedNetworks, nil
+}
+
+func createReplayPcap(txClient *ent.Tx, ctx context.Context, log *logging.Logger, configReplayPcaps map[string]*ent.ReplayPcap, envHclID string) ([]*ent.ReplayPcap, error) {
+	bulk := []*ent.ReplayPcapCreate{}
+	returnedReplayPcaps := []*ent.ReplayPcap{}
+	for _, cReplayPcap := range configReplayPcaps {
+		log.Log.Debugf("Creating ReplayPcap: %v for Env: %v", cReplayPcap.HclID, envHclID)
+
+		entReplayPcap, err := txClient.ReplayPcap.
+			Query().
+			Where(
+				replaypcap.And(
+					replaypcap.HclIDEQ(cReplayPcap.HclID),
+					replaypcap.HasEnvironmentWith(environment.HclIDEQ(envHclID)),
+				),
+			).
+			Only(ctx)
+		if err != nil {
+			if err == err.(*ent.NotFoundError) {
+				createdQuery := txClient.ReplayPcap.Create().
+					SetHclID(cReplayPcap.HclID).
+					SetSourceType(cReplayPcap.SourceType).
+					SetSource(cReplayPcap.Source).
+					SetTemplate(cReplayPcap.Template).
+					SetDisabled(cReplayPcap.Disabled).
+					SetAbsPath(cReplayPcap.AbsPath).
+					SetTags(cReplayPcap.Tags)
+				bulk = append(bulk, createdQuery)
+				continue
+			}
+		}
+		entReplayPcap, err = entReplayPcap.Update().
+			SetHclID(cReplayPcap.HclID).
+			SetSourceType(cReplayPcap.SourceType).
+			SetSource(cReplayPcap.Source).
+			SetTemplate(cReplayPcap.Template).
+			SetDisabled(cReplayPcap.Disabled).
+			SetAbsPath(cReplayPcap.AbsPath).
+			SetTags(cReplayPcap.Tags).
+			Save(ctx)
+		if err != nil {
+			log.Log.Errorf("Failed to Update Replay Pcap %v. Err: %v", cReplayPcap.HclID, err)
+			return nil, err
+		}
+		returnedReplayPcaps = append(returnedReplayPcaps, entReplayPcap)
+	}
+	if len(bulk) > 0 {
+		dbReplayPcaps, err := txClient.ReplayPcap.CreateBulk(bulk...).Save(ctx)
+		if err != nil {
+			log.Log.Errorf("Failed to create bulk Replay Pcap. Err: %v", err)
+			return nil, err
+		}
+		returnedReplayPcaps = append(returnedReplayPcaps, dbReplayPcaps...)
+	}
+	return returnedReplayPcaps, nil
 }
 
 func validateHostDependencies(txClient *ent.Tx, ctx context.Context, log *logging.Logger, uncheckedHostDependencies []*ent.HostDependency, envHclID string) ([]*ent.HostDependency, error) {

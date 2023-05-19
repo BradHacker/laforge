@@ -357,6 +357,18 @@ func (ps *ProvisioningStepQuery) collectField(ctx *graphql.OperationContext, fie
 }
 
 // CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
+func (rp *ReplayPcapQuery) CollectFields(ctx context.Context, satisfies ...string) *ReplayPcapQuery {
+	if fc := graphql.GetFieldContext(ctx); fc != nil {
+		rp = rp.collectField(graphql.GetOperationContext(ctx), fc.Field, satisfies...)
+	}
+	return rp
+}
+
+func (rp *ReplayPcapQuery) collectField(ctx *graphql.OperationContext, field graphql.CollectedField, satisfies ...string) *ReplayPcapQuery {
+	return rp
+}
+
+// CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
 func (rc *RepoCommitQuery) CollectFields(ctx context.Context, satisfies ...string) *RepoCommitQuery {
 	if fc := graphql.GetFieldContext(ctx); fc != nil {
 		rc = rc.collectField(graphql.GetOperationContext(ctx), fc.Field, satisfies...)

@@ -39,6 +39,7 @@ import (
 	"github.com/gen0cide/laforge/ent/provisionednetwork"
 	"github.com/gen0cide/laforge/ent/provisioningscheduledstep"
 	"github.com/gen0cide/laforge/ent/provisioningstep"
+	"github.com/gen0cide/laforge/ent/replaypcap"
 	"github.com/gen0cide/laforge/ent/repocommit"
 	"github.com/gen0cide/laforge/ent/repository"
 	"github.com/gen0cide/laforge/ent/scheduledstep"
@@ -94,6 +95,7 @@ const (
 	TypeProvisionedNetwork        = "ProvisionedNetwork"
 	TypeProvisioningScheduledStep = "ProvisioningScheduledStep"
 	TypeProvisioningStep          = "ProvisioningStep"
+	TypeReplayPcap                = "ReplayPcap"
 	TypeRepoCommit                = "RepoCommit"
 	TypeRepository                = "Repository"
 	TypeScheduledStep             = "ScheduledStep"
@@ -11530,6 +11532,9 @@ type EnvironmentMutation struct {
 	_Validations             map[uuid.UUID]struct{}
 	removed_Validations      map[uuid.UUID]struct{}
 	cleared_Validations      bool
+	_ReplayPcaps             map[uuid.UUID]struct{}
+	removed_ReplayPcaps      map[uuid.UUID]struct{}
+	cleared_ReplayPcaps      bool
 	done                     bool
 	oldValue                 func(context.Context) (*Environment, error)
 	predicates               []predicate.Environment
@@ -13209,6 +13214,60 @@ func (m *EnvironmentMutation) ResetValidations() {
 	m.removed_Validations = nil
 }
 
+// AddReplayPcapIDs adds the "ReplayPcaps" edge to the ReplayPcap entity by ids.
+func (m *EnvironmentMutation) AddReplayPcapIDs(ids ...uuid.UUID) {
+	if m._ReplayPcaps == nil {
+		m._ReplayPcaps = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m._ReplayPcaps[ids[i]] = struct{}{}
+	}
+}
+
+// ClearReplayPcaps clears the "ReplayPcaps" edge to the ReplayPcap entity.
+func (m *EnvironmentMutation) ClearReplayPcaps() {
+	m.cleared_ReplayPcaps = true
+}
+
+// ReplayPcapsCleared reports if the "ReplayPcaps" edge to the ReplayPcap entity was cleared.
+func (m *EnvironmentMutation) ReplayPcapsCleared() bool {
+	return m.cleared_ReplayPcaps
+}
+
+// RemoveReplayPcapIDs removes the "ReplayPcaps" edge to the ReplayPcap entity by IDs.
+func (m *EnvironmentMutation) RemoveReplayPcapIDs(ids ...uuid.UUID) {
+	if m.removed_ReplayPcaps == nil {
+		m.removed_ReplayPcaps = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m._ReplayPcaps, ids[i])
+		m.removed_ReplayPcaps[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedReplayPcaps returns the removed IDs of the "ReplayPcaps" edge to the ReplayPcap entity.
+func (m *EnvironmentMutation) RemovedReplayPcapsIDs() (ids []uuid.UUID) {
+	for id := range m.removed_ReplayPcaps {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ReplayPcapsIDs returns the "ReplayPcaps" edge IDs in the mutation.
+func (m *EnvironmentMutation) ReplayPcapsIDs() (ids []uuid.UUID) {
+	for id := range m._ReplayPcaps {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetReplayPcaps resets all changes to the "ReplayPcaps" edge.
+func (m *EnvironmentMutation) ResetReplayPcaps() {
+	m._ReplayPcaps = nil
+	m.cleared_ReplayPcaps = false
+	m.removed_ReplayPcaps = nil
+}
+
 // Where appends a list predicates to the EnvironmentMutation builder.
 func (m *EnvironmentMutation) Where(ps ...predicate.Environment) {
 	m.predicates = append(m.predicates, ps...)
@@ -13524,7 +13583,7 @@ func (m *EnvironmentMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *EnvironmentMutation) AddedEdges() []string {
-	edges := make([]string, 0, 21)
+	edges := make([]string, 0, 22)
 	if m._Users != nil {
 		edges = append(edges, environment.EdgeUsers)
 	}
@@ -13587,6 +13646,9 @@ func (m *EnvironmentMutation) AddedEdges() []string {
 	}
 	if m._Validations != nil {
 		edges = append(edges, environment.EdgeValidations)
+	}
+	if m._ReplayPcaps != nil {
+		edges = append(edges, environment.EdgeReplayPcaps)
 	}
 	return edges
 }
@@ -13721,13 +13783,19 @@ func (m *EnvironmentMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case environment.EdgeReplayPcaps:
+		ids := make([]ent.Value, 0, len(m._ReplayPcaps))
+		for id := range m._ReplayPcaps {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *EnvironmentMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 21)
+	edges := make([]string, 0, 22)
 	if m.removed_Users != nil {
 		edges = append(edges, environment.EdgeUsers)
 	}
@@ -13790,6 +13858,9 @@ func (m *EnvironmentMutation) RemovedEdges() []string {
 	}
 	if m.removed_Validations != nil {
 		edges = append(edges, environment.EdgeValidations)
+	}
+	if m.removed_ReplayPcaps != nil {
+		edges = append(edges, environment.EdgeReplayPcaps)
 	}
 	return edges
 }
@@ -13924,13 +13995,19 @@ func (m *EnvironmentMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case environment.EdgeReplayPcaps:
+		ids := make([]ent.Value, 0, len(m.removed_ReplayPcaps))
+		for id := range m.removed_ReplayPcaps {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *EnvironmentMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 21)
+	edges := make([]string, 0, 22)
 	if m.cleared_Users {
 		edges = append(edges, environment.EdgeUsers)
 	}
@@ -13994,6 +14071,9 @@ func (m *EnvironmentMutation) ClearedEdges() []string {
 	if m.cleared_Validations {
 		edges = append(edges, environment.EdgeValidations)
 	}
+	if m.cleared_ReplayPcaps {
+		edges = append(edges, environment.EdgeReplayPcaps)
+	}
 	return edges
 }
 
@@ -14043,6 +14123,8 @@ func (m *EnvironmentMutation) EdgeCleared(name string) bool {
 		return m.cleared_ServerTasks
 	case environment.EdgeValidations:
 		return m.cleared_Validations
+	case environment.EdgeReplayPcaps:
+		return m.cleared_ReplayPcaps
 	}
 	return false
 }
@@ -14121,6 +14203,9 @@ func (m *EnvironmentMutation) ResetEdge(name string) error {
 		return nil
 	case environment.EdgeValidations:
 		m.ResetValidations()
+		return nil
+	case environment.EdgeReplayPcaps:
+		m.ResetReplayPcaps()
 		return nil
 	}
 	return fmt.Errorf("unknown Environment edge %s", name)
@@ -25939,6 +26024,8 @@ type ProvisioningScheduledStepMutation struct {
 	cleared_FileExtract       bool
 	_Ansible                  *uuid.UUID
 	cleared_Ansible           bool
+	_ReplayPcap               *uuid.UUID
+	cleared_ReplayPcap        bool
 	_AgentTasks               map[uuid.UUID]struct{}
 	removed_AgentTasks        map[uuid.UUID]struct{}
 	cleared_AgentTasks        bool
@@ -26517,6 +26604,45 @@ func (m *ProvisioningScheduledStepMutation) ResetAnsible() {
 	m.cleared_Ansible = false
 }
 
+// SetReplayPcapID sets the "ReplayPcap" edge to the ReplayPcap entity by id.
+func (m *ProvisioningScheduledStepMutation) SetReplayPcapID(id uuid.UUID) {
+	m._ReplayPcap = &id
+}
+
+// ClearReplayPcap clears the "ReplayPcap" edge to the ReplayPcap entity.
+func (m *ProvisioningScheduledStepMutation) ClearReplayPcap() {
+	m.cleared_ReplayPcap = true
+}
+
+// ReplayPcapCleared reports if the "ReplayPcap" edge to the ReplayPcap entity was cleared.
+func (m *ProvisioningScheduledStepMutation) ReplayPcapCleared() bool {
+	return m.cleared_ReplayPcap
+}
+
+// ReplayPcapID returns the "ReplayPcap" edge ID in the mutation.
+func (m *ProvisioningScheduledStepMutation) ReplayPcapID() (id uuid.UUID, exists bool) {
+	if m._ReplayPcap != nil {
+		return *m._ReplayPcap, true
+	}
+	return
+}
+
+// ReplayPcapIDs returns the "ReplayPcap" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ReplayPcapID instead. It exists only for internal usage by the builders.
+func (m *ProvisioningScheduledStepMutation) ReplayPcapIDs() (ids []uuid.UUID) {
+	if id := m._ReplayPcap; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetReplayPcap resets all changes to the "ReplayPcap" edge.
+func (m *ProvisioningScheduledStepMutation) ResetReplayPcap() {
+	m._ReplayPcap = nil
+	m.cleared_ReplayPcap = false
+}
+
 // AddAgentTaskIDs adds the "AgentTasks" edge to the AgentTask entity by ids.
 func (m *ProvisioningScheduledStepMutation) AddAgentTaskIDs(ids ...uuid.UUID) {
 	if m._AgentTasks == nil {
@@ -26784,7 +26910,7 @@ func (m *ProvisioningScheduledStepMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ProvisioningScheduledStepMutation) AddedEdges() []string {
-	edges := make([]string, 0, 13)
+	edges := make([]string, 0, 14)
 	if m._Status != nil {
 		edges = append(edges, provisioningscheduledstep.EdgeStatus)
 	}
@@ -26814,6 +26940,9 @@ func (m *ProvisioningScheduledStepMutation) AddedEdges() []string {
 	}
 	if m._Ansible != nil {
 		edges = append(edges, provisioningscheduledstep.EdgeAnsible)
+	}
+	if m._ReplayPcap != nil {
+		edges = append(edges, provisioningscheduledstep.EdgeReplayPcap)
 	}
 	if m._AgentTasks != nil {
 		edges = append(edges, provisioningscheduledstep.EdgeAgentTasks)
@@ -26871,6 +27000,10 @@ func (m *ProvisioningScheduledStepMutation) AddedIDs(name string) []ent.Value {
 		if id := m._Ansible; id != nil {
 			return []ent.Value{*id}
 		}
+	case provisioningscheduledstep.EdgeReplayPcap:
+		if id := m._ReplayPcap; id != nil {
+			return []ent.Value{*id}
+		}
 	case provisioningscheduledstep.EdgeAgentTasks:
 		ids := make([]ent.Value, 0, len(m._AgentTasks))
 		for id := range m._AgentTasks {
@@ -26891,7 +27024,7 @@ func (m *ProvisioningScheduledStepMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ProvisioningScheduledStepMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 13)
+	edges := make([]string, 0, 14)
 	if m.removed_AgentTasks != nil {
 		edges = append(edges, provisioningscheduledstep.EdgeAgentTasks)
 	}
@@ -26914,7 +27047,7 @@ func (m *ProvisioningScheduledStepMutation) RemovedIDs(name string) []ent.Value 
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ProvisioningScheduledStepMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 13)
+	edges := make([]string, 0, 14)
 	if m.cleared_Status {
 		edges = append(edges, provisioningscheduledstep.EdgeStatus)
 	}
@@ -26944,6 +27077,9 @@ func (m *ProvisioningScheduledStepMutation) ClearedEdges() []string {
 	}
 	if m.cleared_Ansible {
 		edges = append(edges, provisioningscheduledstep.EdgeAnsible)
+	}
+	if m.cleared_ReplayPcap {
+		edges = append(edges, provisioningscheduledstep.EdgeReplayPcap)
 	}
 	if m.cleared_AgentTasks {
 		edges = append(edges, provisioningscheduledstep.EdgeAgentTasks)
@@ -26981,6 +27117,8 @@ func (m *ProvisioningScheduledStepMutation) EdgeCleared(name string) bool {
 		return m.cleared_FileExtract
 	case provisioningscheduledstep.EdgeAnsible:
 		return m.cleared_Ansible
+	case provisioningscheduledstep.EdgeReplayPcap:
+		return m.cleared_ReplayPcap
 	case provisioningscheduledstep.EdgeAgentTasks:
 		return m.cleared_AgentTasks
 	case provisioningscheduledstep.EdgePlan:
@@ -27024,6 +27162,9 @@ func (m *ProvisioningScheduledStepMutation) ClearEdge(name string) error {
 		return nil
 	case provisioningscheduledstep.EdgeAnsible:
 		m.ClearAnsible()
+		return nil
+	case provisioningscheduledstep.EdgeReplayPcap:
+		m.ClearReplayPcap()
 		return nil
 	case provisioningscheduledstep.EdgePlan:
 		m.ClearPlan()
@@ -27069,6 +27210,9 @@ func (m *ProvisioningScheduledStepMutation) ResetEdge(name string) error {
 	case provisioningscheduledstep.EdgeAnsible:
 		m.ResetAnsible()
 		return nil
+	case provisioningscheduledstep.EdgeReplayPcap:
+		m.ResetReplayPcap()
+		return nil
 	case provisioningscheduledstep.EdgeAgentTasks:
 		m.ResetAgentTasks()
 		return nil
@@ -27110,6 +27254,8 @@ type ProvisioningStepMutation struct {
 	cleared_FileExtract       bool
 	_Ansible                  *uuid.UUID
 	cleared_Ansible           bool
+	_ReplayPcap               *uuid.UUID
+	cleared_ReplayPcap        bool
 	_Plan                     *uuid.UUID
 	cleared_Plan              bool
 	_AgentTasks               map[uuid.UUID]struct{}
@@ -27669,6 +27815,45 @@ func (m *ProvisioningStepMutation) ResetAnsible() {
 	m.cleared_Ansible = false
 }
 
+// SetReplayPcapID sets the "ReplayPcap" edge to the ReplayPcap entity by id.
+func (m *ProvisioningStepMutation) SetReplayPcapID(id uuid.UUID) {
+	m._ReplayPcap = &id
+}
+
+// ClearReplayPcap clears the "ReplayPcap" edge to the ReplayPcap entity.
+func (m *ProvisioningStepMutation) ClearReplayPcap() {
+	m.cleared_ReplayPcap = true
+}
+
+// ReplayPcapCleared reports if the "ReplayPcap" edge to the ReplayPcap entity was cleared.
+func (m *ProvisioningStepMutation) ReplayPcapCleared() bool {
+	return m.cleared_ReplayPcap
+}
+
+// ReplayPcapID returns the "ReplayPcap" edge ID in the mutation.
+func (m *ProvisioningStepMutation) ReplayPcapID() (id uuid.UUID, exists bool) {
+	if m._ReplayPcap != nil {
+		return *m._ReplayPcap, true
+	}
+	return
+}
+
+// ReplayPcapIDs returns the "ReplayPcap" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ReplayPcapID instead. It exists only for internal usage by the builders.
+func (m *ProvisioningStepMutation) ReplayPcapIDs() (ids []uuid.UUID) {
+	if id := m._ReplayPcap; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetReplayPcap resets all changes to the "ReplayPcap" edge.
+func (m *ProvisioningStepMutation) ResetReplayPcap() {
+	m._ReplayPcap = nil
+	m.cleared_ReplayPcap = false
+}
+
 // SetPlanID sets the "Plan" edge to the Plan entity by id.
 func (m *ProvisioningStepMutation) SetPlanID(id uuid.UUID) {
 	m._Plan = &id
@@ -27951,7 +28136,7 @@ func (m *ProvisioningStepMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ProvisioningStepMutation) AddedEdges() []string {
-	edges := make([]string, 0, 12)
+	edges := make([]string, 0, 13)
 	if m._Status != nil {
 		edges = append(edges, provisioningstep.EdgeStatus)
 	}
@@ -27978,6 +28163,9 @@ func (m *ProvisioningStepMutation) AddedEdges() []string {
 	}
 	if m._Ansible != nil {
 		edges = append(edges, provisioningstep.EdgeAnsible)
+	}
+	if m._ReplayPcap != nil {
+		edges = append(edges, provisioningstep.EdgeReplayPcap)
 	}
 	if m._Plan != nil {
 		edges = append(edges, provisioningstep.EdgePlan)
@@ -28031,6 +28219,10 @@ func (m *ProvisioningStepMutation) AddedIDs(name string) []ent.Value {
 		if id := m._Ansible; id != nil {
 			return []ent.Value{*id}
 		}
+	case provisioningstep.EdgeReplayPcap:
+		if id := m._ReplayPcap; id != nil {
+			return []ent.Value{*id}
+		}
 	case provisioningstep.EdgePlan:
 		if id := m._Plan; id != nil {
 			return []ent.Value{*id}
@@ -28051,7 +28243,7 @@ func (m *ProvisioningStepMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ProvisioningStepMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 12)
+	edges := make([]string, 0, 13)
 	if m.removed_AgentTasks != nil {
 		edges = append(edges, provisioningstep.EdgeAgentTasks)
 	}
@@ -28074,7 +28266,7 @@ func (m *ProvisioningStepMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ProvisioningStepMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 12)
+	edges := make([]string, 0, 13)
 	if m.cleared_Status {
 		edges = append(edges, provisioningstep.EdgeStatus)
 	}
@@ -28101,6 +28293,9 @@ func (m *ProvisioningStepMutation) ClearedEdges() []string {
 	}
 	if m.cleared_Ansible {
 		edges = append(edges, provisioningstep.EdgeAnsible)
+	}
+	if m.cleared_ReplayPcap {
+		edges = append(edges, provisioningstep.EdgeReplayPcap)
 	}
 	if m.cleared_Plan {
 		edges = append(edges, provisioningstep.EdgePlan)
@@ -28136,6 +28331,8 @@ func (m *ProvisioningStepMutation) EdgeCleared(name string) bool {
 		return m.cleared_FileExtract
 	case provisioningstep.EdgeAnsible:
 		return m.cleared_Ansible
+	case provisioningstep.EdgeReplayPcap:
+		return m.cleared_ReplayPcap
 	case provisioningstep.EdgePlan:
 		return m.cleared_Plan
 	case provisioningstep.EdgeAgentTasks:
@@ -28176,6 +28373,9 @@ func (m *ProvisioningStepMutation) ClearEdge(name string) error {
 		return nil
 	case provisioningstep.EdgeAnsible:
 		m.ClearAnsible()
+		return nil
+	case provisioningstep.EdgeReplayPcap:
+		m.ClearReplayPcap()
 		return nil
 	case provisioningstep.EdgePlan:
 		m.ClearPlan()
@@ -28218,6 +28418,9 @@ func (m *ProvisioningStepMutation) ResetEdge(name string) error {
 	case provisioningstep.EdgeAnsible:
 		m.ResetAnsible()
 		return nil
+	case provisioningstep.EdgeReplayPcap:
+		m.ResetReplayPcap()
+		return nil
 	case provisioningstep.EdgePlan:
 		m.ResetPlan()
 		return nil
@@ -28229,6 +28432,770 @@ func (m *ProvisioningStepMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown ProvisioningStep edge %s", name)
+}
+
+// ReplayPcapMutation represents an operation that mutates the ReplayPcap nodes in the graph.
+type ReplayPcapMutation struct {
+	config
+	op                  Op
+	typ                 string
+	id                  *uuid.UUID
+	hcl_id              *string
+	source_type         *string
+	source              *string
+	template            *bool
+	disabled            *bool
+	abs_path            *string
+	_type               *replaypcap.Type
+	tags                *map[string]string
+	clearedFields       map[string]struct{}
+	_Environment        *uuid.UUID
+	cleared_Environment bool
+	done                bool
+	oldValue            func(context.Context) (*ReplayPcap, error)
+	predicates          []predicate.ReplayPcap
+}
+
+var _ ent.Mutation = (*ReplayPcapMutation)(nil)
+
+// replaypcapOption allows management of the mutation configuration using functional options.
+type replaypcapOption func(*ReplayPcapMutation)
+
+// newReplayPcapMutation creates new mutation for the ReplayPcap entity.
+func newReplayPcapMutation(c config, op Op, opts ...replaypcapOption) *ReplayPcapMutation {
+	m := &ReplayPcapMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeReplayPcap,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withReplayPcapID sets the ID field of the mutation.
+func withReplayPcapID(id uuid.UUID) replaypcapOption {
+	return func(m *ReplayPcapMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *ReplayPcap
+		)
+		m.oldValue = func(ctx context.Context) (*ReplayPcap, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().ReplayPcap.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withReplayPcap sets the old ReplayPcap of the mutation.
+func withReplayPcap(node *ReplayPcap) replaypcapOption {
+	return func(m *ReplayPcapMutation) {
+		m.oldValue = func(context.Context) (*ReplayPcap, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ReplayPcapMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ReplayPcapMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of ReplayPcap entities.
+func (m *ReplayPcapMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ReplayPcapMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ReplayPcapMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().ReplayPcap.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetHclID sets the "hcl_id" field.
+func (m *ReplayPcapMutation) SetHclID(s string) {
+	m.hcl_id = &s
+}
+
+// HclID returns the value of the "hcl_id" field in the mutation.
+func (m *ReplayPcapMutation) HclID() (r string, exists bool) {
+	v := m.hcl_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHclID returns the old "hcl_id" field's value of the ReplayPcap entity.
+// If the ReplayPcap object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ReplayPcapMutation) OldHclID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHclID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHclID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHclID: %w", err)
+	}
+	return oldValue.HclID, nil
+}
+
+// ResetHclID resets all changes to the "hcl_id" field.
+func (m *ReplayPcapMutation) ResetHclID() {
+	m.hcl_id = nil
+}
+
+// SetSourceType sets the "source_type" field.
+func (m *ReplayPcapMutation) SetSourceType(s string) {
+	m.source_type = &s
+}
+
+// SourceType returns the value of the "source_type" field in the mutation.
+func (m *ReplayPcapMutation) SourceType() (r string, exists bool) {
+	v := m.source_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSourceType returns the old "source_type" field's value of the ReplayPcap entity.
+// If the ReplayPcap object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ReplayPcapMutation) OldSourceType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSourceType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSourceType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSourceType: %w", err)
+	}
+	return oldValue.SourceType, nil
+}
+
+// ResetSourceType resets all changes to the "source_type" field.
+func (m *ReplayPcapMutation) ResetSourceType() {
+	m.source_type = nil
+}
+
+// SetSource sets the "source" field.
+func (m *ReplayPcapMutation) SetSource(s string) {
+	m.source = &s
+}
+
+// Source returns the value of the "source" field in the mutation.
+func (m *ReplayPcapMutation) Source() (r string, exists bool) {
+	v := m.source
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSource returns the old "source" field's value of the ReplayPcap entity.
+// If the ReplayPcap object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ReplayPcapMutation) OldSource(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSource is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSource requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSource: %w", err)
+	}
+	return oldValue.Source, nil
+}
+
+// ResetSource resets all changes to the "source" field.
+func (m *ReplayPcapMutation) ResetSource() {
+	m.source = nil
+}
+
+// SetTemplate sets the "template" field.
+func (m *ReplayPcapMutation) SetTemplate(b bool) {
+	m.template = &b
+}
+
+// Template returns the value of the "template" field in the mutation.
+func (m *ReplayPcapMutation) Template() (r bool, exists bool) {
+	v := m.template
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTemplate returns the old "template" field's value of the ReplayPcap entity.
+// If the ReplayPcap object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ReplayPcapMutation) OldTemplate(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTemplate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTemplate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTemplate: %w", err)
+	}
+	return oldValue.Template, nil
+}
+
+// ResetTemplate resets all changes to the "template" field.
+func (m *ReplayPcapMutation) ResetTemplate() {
+	m.template = nil
+}
+
+// SetDisabled sets the "disabled" field.
+func (m *ReplayPcapMutation) SetDisabled(b bool) {
+	m.disabled = &b
+}
+
+// Disabled returns the value of the "disabled" field in the mutation.
+func (m *ReplayPcapMutation) Disabled() (r bool, exists bool) {
+	v := m.disabled
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDisabled returns the old "disabled" field's value of the ReplayPcap entity.
+// If the ReplayPcap object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ReplayPcapMutation) OldDisabled(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDisabled is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDisabled requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDisabled: %w", err)
+	}
+	return oldValue.Disabled, nil
+}
+
+// ResetDisabled resets all changes to the "disabled" field.
+func (m *ReplayPcapMutation) ResetDisabled() {
+	m.disabled = nil
+}
+
+// SetAbsPath sets the "abs_path" field.
+func (m *ReplayPcapMutation) SetAbsPath(s string) {
+	m.abs_path = &s
+}
+
+// AbsPath returns the value of the "abs_path" field in the mutation.
+func (m *ReplayPcapMutation) AbsPath() (r string, exists bool) {
+	v := m.abs_path
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAbsPath returns the old "abs_path" field's value of the ReplayPcap entity.
+// If the ReplayPcap object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ReplayPcapMutation) OldAbsPath(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAbsPath is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAbsPath requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAbsPath: %w", err)
+	}
+	return oldValue.AbsPath, nil
+}
+
+// ResetAbsPath resets all changes to the "abs_path" field.
+func (m *ReplayPcapMutation) ResetAbsPath() {
+	m.abs_path = nil
+}
+
+// SetType sets the "type" field.
+func (m *ReplayPcapMutation) SetType(r replaypcap.Type) {
+	m._type = &r
+}
+
+// GetType returns the value of the "type" field in the mutation.
+func (m *ReplayPcapMutation) GetType() (r replaypcap.Type, exists bool) {
+	v := m._type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldType returns the old "type" field's value of the ReplayPcap entity.
+// If the ReplayPcap object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ReplayPcapMutation) OldType(ctx context.Context) (v replaypcap.Type, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldType: %w", err)
+	}
+	return oldValue.Type, nil
+}
+
+// ResetType resets all changes to the "type" field.
+func (m *ReplayPcapMutation) ResetType() {
+	m._type = nil
+}
+
+// SetTags sets the "tags" field.
+func (m *ReplayPcapMutation) SetTags(value map[string]string) {
+	m.tags = &value
+}
+
+// Tags returns the value of the "tags" field in the mutation.
+func (m *ReplayPcapMutation) Tags() (r map[string]string, exists bool) {
+	v := m.tags
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTags returns the old "tags" field's value of the ReplayPcap entity.
+// If the ReplayPcap object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ReplayPcapMutation) OldTags(ctx context.Context) (v map[string]string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTags is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTags requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTags: %w", err)
+	}
+	return oldValue.Tags, nil
+}
+
+// ResetTags resets all changes to the "tags" field.
+func (m *ReplayPcapMutation) ResetTags() {
+	m.tags = nil
+}
+
+// SetEnvironmentID sets the "Environment" edge to the Environment entity by id.
+func (m *ReplayPcapMutation) SetEnvironmentID(id uuid.UUID) {
+	m._Environment = &id
+}
+
+// ClearEnvironment clears the "Environment" edge to the Environment entity.
+func (m *ReplayPcapMutation) ClearEnvironment() {
+	m.cleared_Environment = true
+}
+
+// EnvironmentCleared reports if the "Environment" edge to the Environment entity was cleared.
+func (m *ReplayPcapMutation) EnvironmentCleared() bool {
+	return m.cleared_Environment
+}
+
+// EnvironmentID returns the "Environment" edge ID in the mutation.
+func (m *ReplayPcapMutation) EnvironmentID() (id uuid.UUID, exists bool) {
+	if m._Environment != nil {
+		return *m._Environment, true
+	}
+	return
+}
+
+// EnvironmentIDs returns the "Environment" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// EnvironmentID instead. It exists only for internal usage by the builders.
+func (m *ReplayPcapMutation) EnvironmentIDs() (ids []uuid.UUID) {
+	if id := m._Environment; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetEnvironment resets all changes to the "Environment" edge.
+func (m *ReplayPcapMutation) ResetEnvironment() {
+	m._Environment = nil
+	m.cleared_Environment = false
+}
+
+// Where appends a list predicates to the ReplayPcapMutation builder.
+func (m *ReplayPcapMutation) Where(ps ...predicate.ReplayPcap) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// Op returns the operation name.
+func (m *ReplayPcapMutation) Op() Op {
+	return m.op
+}
+
+// Type returns the node type of this mutation (ReplayPcap).
+func (m *ReplayPcapMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ReplayPcapMutation) Fields() []string {
+	fields := make([]string, 0, 8)
+	if m.hcl_id != nil {
+		fields = append(fields, replaypcap.FieldHclID)
+	}
+	if m.source_type != nil {
+		fields = append(fields, replaypcap.FieldSourceType)
+	}
+	if m.source != nil {
+		fields = append(fields, replaypcap.FieldSource)
+	}
+	if m.template != nil {
+		fields = append(fields, replaypcap.FieldTemplate)
+	}
+	if m.disabled != nil {
+		fields = append(fields, replaypcap.FieldDisabled)
+	}
+	if m.abs_path != nil {
+		fields = append(fields, replaypcap.FieldAbsPath)
+	}
+	if m._type != nil {
+		fields = append(fields, replaypcap.FieldType)
+	}
+	if m.tags != nil {
+		fields = append(fields, replaypcap.FieldTags)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ReplayPcapMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case replaypcap.FieldHclID:
+		return m.HclID()
+	case replaypcap.FieldSourceType:
+		return m.SourceType()
+	case replaypcap.FieldSource:
+		return m.Source()
+	case replaypcap.FieldTemplate:
+		return m.Template()
+	case replaypcap.FieldDisabled:
+		return m.Disabled()
+	case replaypcap.FieldAbsPath:
+		return m.AbsPath()
+	case replaypcap.FieldType:
+		return m.GetType()
+	case replaypcap.FieldTags:
+		return m.Tags()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ReplayPcapMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case replaypcap.FieldHclID:
+		return m.OldHclID(ctx)
+	case replaypcap.FieldSourceType:
+		return m.OldSourceType(ctx)
+	case replaypcap.FieldSource:
+		return m.OldSource(ctx)
+	case replaypcap.FieldTemplate:
+		return m.OldTemplate(ctx)
+	case replaypcap.FieldDisabled:
+		return m.OldDisabled(ctx)
+	case replaypcap.FieldAbsPath:
+		return m.OldAbsPath(ctx)
+	case replaypcap.FieldType:
+		return m.OldType(ctx)
+	case replaypcap.FieldTags:
+		return m.OldTags(ctx)
+	}
+	return nil, fmt.Errorf("unknown ReplayPcap field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ReplayPcapMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case replaypcap.FieldHclID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHclID(v)
+		return nil
+	case replaypcap.FieldSourceType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSourceType(v)
+		return nil
+	case replaypcap.FieldSource:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSource(v)
+		return nil
+	case replaypcap.FieldTemplate:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTemplate(v)
+		return nil
+	case replaypcap.FieldDisabled:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDisabled(v)
+		return nil
+	case replaypcap.FieldAbsPath:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAbsPath(v)
+		return nil
+	case replaypcap.FieldType:
+		v, ok := value.(replaypcap.Type)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetType(v)
+		return nil
+	case replaypcap.FieldTags:
+		v, ok := value.(map[string]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTags(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ReplayPcap field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ReplayPcapMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ReplayPcapMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ReplayPcapMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown ReplayPcap numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ReplayPcapMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ReplayPcapMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ReplayPcapMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown ReplayPcap nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ReplayPcapMutation) ResetField(name string) error {
+	switch name {
+	case replaypcap.FieldHclID:
+		m.ResetHclID()
+		return nil
+	case replaypcap.FieldSourceType:
+		m.ResetSourceType()
+		return nil
+	case replaypcap.FieldSource:
+		m.ResetSource()
+		return nil
+	case replaypcap.FieldTemplate:
+		m.ResetTemplate()
+		return nil
+	case replaypcap.FieldDisabled:
+		m.ResetDisabled()
+		return nil
+	case replaypcap.FieldAbsPath:
+		m.ResetAbsPath()
+		return nil
+	case replaypcap.FieldType:
+		m.ResetType()
+		return nil
+	case replaypcap.FieldTags:
+		m.ResetTags()
+		return nil
+	}
+	return fmt.Errorf("unknown ReplayPcap field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ReplayPcapMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m._Environment != nil {
+		edges = append(edges, replaypcap.EdgeEnvironment)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ReplayPcapMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case replaypcap.EdgeEnvironment:
+		if id := m._Environment; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ReplayPcapMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ReplayPcapMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ReplayPcapMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.cleared_Environment {
+		edges = append(edges, replaypcap.EdgeEnvironment)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ReplayPcapMutation) EdgeCleared(name string) bool {
+	switch name {
+	case replaypcap.EdgeEnvironment:
+		return m.cleared_Environment
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ReplayPcapMutation) ClearEdge(name string) error {
+	switch name {
+	case replaypcap.EdgeEnvironment:
+		m.ClearEnvironment()
+		return nil
+	}
+	return fmt.Errorf("unknown ReplayPcap unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ReplayPcapMutation) ResetEdge(name string) error {
+	switch name {
+	case replaypcap.EdgeEnvironment:
+		m.ResetEnvironment()
+		return nil
+	}
+	return fmt.Errorf("unknown ReplayPcap edge %s", name)
 }
 
 // RepoCommitMutation represents an operation that mutates the RepoCommit nodes in the graph.

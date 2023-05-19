@@ -284,6 +284,24 @@ func RequestTask(c pb.LaforgeClient) {
 			content := strings.ReplaceAll(taskArgs[1], "🔥", "\n")
 			taskerr := AppendFile(path, content)
 			RequestTaskStatusRequest("", taskerr, r.Id, c)
+		case pb.TaskReply_REPLAYPCAP:
+			taskArgs := strings.Split(r.GetArgs(), "💔")
+			filename := taskArgs[0]
+			replayType := taskArgs[1]
+			var taskerr error
+			if replayType == "BASIC" {
+				// TODO: Implement ReplayPcap function
+				taskerr = ReplayPcap(filename) // - pending implementation
+			} else if replayType == "ADVANCED" {
+				sourceIp := taskArgs[2]    // "x.x.x.x"
+				destAddress := taskArgs[3] // "host:port"
+				tls := taskArgs[4]         // "true" or "false"
+				// TODO: Implement ReplayPcap function
+				taskerr = ReplayPcap(filename) // - pending implementation
+			} else {
+				taskerr = fmt.Errorf("failed to replay pcap: unkown replay type \"%s\"", replayType)
+			}
+			RequestTaskStatusRequest("", taskerr, r.Id, c)
 		case pb.TaskReply_VALIDATOR: // new agent command type processing
 			taskArgs := strings.Split(r.GetArgs(), "💔")
 			validatorName := taskArgs[0]

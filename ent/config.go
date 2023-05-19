@@ -53,6 +53,7 @@ type hooks struct {
 	ProvisionedNetwork        []ent.Hook
 	ProvisioningScheduledStep []ent.Hook
 	ProvisioningStep          []ent.Hook
+	ReplayPcap                []ent.Hook
 	RepoCommit                []ent.Hook
 	Repository                []ent.Hook
 	ScheduledStep             []ent.Hook

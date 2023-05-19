@@ -34,6 +34,7 @@ import (
 	"github.com/gen0cide/laforge/ent/provisionednetwork"
 	"github.com/gen0cide/laforge/ent/provisioningscheduledstep"
 	"github.com/gen0cide/laforge/ent/provisioningstep"
+	"github.com/gen0cide/laforge/ent/replaypcap"
 	"github.com/gen0cide/laforge/ent/repocommit"
 	"github.com/gen0cide/laforge/ent/repository"
 	"github.com/gen0cide/laforge/ent/scheduledstep"
@@ -291,6 +292,12 @@ func init() {
 	provisioningstepDescID := provisioningstepFields[0].Descriptor()
 	// provisioningstep.DefaultID holds the default value on creation for the id field.
 	provisioningstep.DefaultID = provisioningstepDescID.Default.(func() uuid.UUID)
+	replaypcapFields := schema.ReplayPcap{}.Fields()
+	_ = replaypcapFields
+	// replaypcapDescID is the schema descriptor for id field.
+	replaypcapDescID := replaypcapFields[0].Descriptor()
+	// replaypcap.DefaultID holds the default value on creation for the id field.
+	replaypcap.DefaultID = replaypcapDescID.Default.(func() uuid.UUID)
 	repocommitFields := schema.RepoCommit{}.Fields()
 	_ = repocommitFields
 	// repocommitDescID is the schema descriptor for id field.

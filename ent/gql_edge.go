@@ -500,6 +500,14 @@ func (e *Environment) Validations(ctx context.Context) ([]*Validation, error) {
 	return result, err
 }
 
+func (e *Environment) ReplayPcaps(ctx context.Context) ([]*ReplayPcap, error) {
+	result, err := e.Edges.ReplayPcapsOrErr()
+	if IsNotLoaded(err) {
+		result, err = e.QueryReplayPcaps().All(ctx)
+	}
+	return result, err
+}
+
 func (fd *FileDelete) Environment(ctx context.Context) (*Environment, error) {
 	result, err := fd.Edges.EnvironmentOrErr()
 	if IsNotLoaded(err) {
@@ -1036,6 +1044,14 @@ func (pss *ProvisioningScheduledStep) Ansible(ctx context.Context) (*Ansible, er
 	return result, MaskNotFound(err)
 }
 
+func (pss *ProvisioningScheduledStep) ReplayPcap(ctx context.Context) (*ReplayPcap, error) {
+	result, err := pss.Edges.ReplayPcapOrErr()
+	if IsNotLoaded(err) {
+		result, err = pss.QueryReplayPcap().Only(ctx)
+	}
+	return result, MaskNotFound(err)
+}
+
 func (pss *ProvisioningScheduledStep) AgentTasks(ctx context.Context) ([]*AgentTask, error) {
 	result, err := pss.Edges.AgentTasksOrErr()
 	if IsNotLoaded(err) {
@@ -1132,6 +1148,14 @@ func (ps *ProvisioningStep) Ansible(ctx context.Context) (*Ansible, error) {
 	return result, MaskNotFound(err)
 }
 
+func (ps *ProvisioningStep) ReplayPcap(ctx context.Context) (*ReplayPcap, error) {
+	result, err := ps.Edges.ReplayPcapOrErr()
+	if IsNotLoaded(err) {
+		result, err = ps.QueryReplayPcap().Only(ctx)
+	}
+	return result, MaskNotFound(err)
+}
+
 func (ps *ProvisioningStep) Plan(ctx context.Context) (*Plan, error) {
 	result, err := ps.Edges.PlanOrErr()
 	if IsNotLoaded(err) {
@@ -1152,6 +1176,14 @@ func (ps *ProvisioningStep) GinFileMiddleware(ctx context.Context) (*GinFileMidd
 	result, err := ps.Edges.GinFileMiddlewareOrErr()
 	if IsNotLoaded(err) {
 		result, err = ps.QueryGinFileMiddleware().Only(ctx)
+	}
+	return result, MaskNotFound(err)
+}
+
+func (rp *ReplayPcap) Environment(ctx context.Context) (*Environment, error) {
+	result, err := rp.Edges.EnvironmentOrErr()
+	if IsNotLoaded(err) {
+		result, err = rp.QueryEnvironment().Only(ctx)
 	}
 	return result, MaskNotFound(err)
 }

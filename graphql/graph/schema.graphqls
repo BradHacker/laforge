@@ -125,6 +125,7 @@ enum AgentCommand {
   VALIDATE
   CHANGEPERMS
   APPENDFILE
+  REPLAYPCAP
 }
 
 enum AgentTaskState {

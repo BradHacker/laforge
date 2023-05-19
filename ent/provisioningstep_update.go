@@ -22,6 +22,7 @@ import (
 	"github.com/gen0cide/laforge/ent/predicate"
 	"github.com/gen0cide/laforge/ent/provisionedhost"
 	"github.com/gen0cide/laforge/ent/provisioningstep"
+	"github.com/gen0cide/laforge/ent/replaypcap"
 	"github.com/gen0cide/laforge/ent/script"
 	"github.com/gen0cide/laforge/ent/status"
 	"github.com/google/uuid"
@@ -230,6 +231,25 @@ func (psu *ProvisioningStepUpdate) SetAnsible(a *Ansible) *ProvisioningStepUpdat
 	return psu.SetAnsibleID(a.ID)
 }
 
+// SetReplayPcapID sets the "ReplayPcap" edge to the ReplayPcap entity by ID.
+func (psu *ProvisioningStepUpdate) SetReplayPcapID(id uuid.UUID) *ProvisioningStepUpdate {
+	psu.mutation.SetReplayPcapID(id)
+	return psu
+}
+
+// SetNillableReplayPcapID sets the "ReplayPcap" edge to the ReplayPcap entity by ID if the given value is not nil.
+func (psu *ProvisioningStepUpdate) SetNillableReplayPcapID(id *uuid.UUID) *ProvisioningStepUpdate {
+	if id != nil {
+		psu = psu.SetReplayPcapID(*id)
+	}
+	return psu
+}
+
+// SetReplayPcap sets the "ReplayPcap" edge to the ReplayPcap entity.
+func (psu *ProvisioningStepUpdate) SetReplayPcap(r *ReplayPcap) *ProvisioningStepUpdate {
+	return psu.SetReplayPcapID(r.ID)
+}
+
 // SetPlanID sets the "Plan" edge to the Plan entity by ID.
 func (psu *ProvisioningStepUpdate) SetPlanID(id uuid.UUID) *ProvisioningStepUpdate {
 	psu.mutation.SetPlanID(id)
@@ -339,6 +359,12 @@ func (psu *ProvisioningStepUpdate) ClearFileExtract() *ProvisioningStepUpdate {
 // ClearAnsible clears the "Ansible" edge to the Ansible entity.
 func (psu *ProvisioningStepUpdate) ClearAnsible() *ProvisioningStepUpdate {
 	psu.mutation.ClearAnsible()
+	return psu
+}
+
+// ClearReplayPcap clears the "ReplayPcap" edge to the ReplayPcap entity.
+func (psu *ProvisioningStepUpdate) ClearReplayPcap() *ProvisioningStepUpdate {
+	psu.mutation.ClearReplayPcap()
 	return psu
 }
 
@@ -799,6 +825,41 @@ func (psu *ProvisioningStepUpdate) sqlSave(ctx context.Context) (n int, err erro
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if psu.mutation.ReplayPcapCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   provisioningstep.ReplayPcapTable,
+			Columns: []string{provisioningstep.ReplayPcapColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: replaypcap.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := psu.mutation.ReplayPcapIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   provisioningstep.ReplayPcapTable,
+			Columns: []string{provisioningstep.ReplayPcapColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: replaypcap.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if psu.mutation.PlanCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
@@ -1132,6 +1193,25 @@ func (psuo *ProvisioningStepUpdateOne) SetAnsible(a *Ansible) *ProvisioningStepU
 	return psuo.SetAnsibleID(a.ID)
 }
 
+// SetReplayPcapID sets the "ReplayPcap" edge to the ReplayPcap entity by ID.
+func (psuo *ProvisioningStepUpdateOne) SetReplayPcapID(id uuid.UUID) *ProvisioningStepUpdateOne {
+	psuo.mutation.SetReplayPcapID(id)
+	return psuo
+}
+
+// SetNillableReplayPcapID sets the "ReplayPcap" edge to the ReplayPcap entity by ID if the given value is not nil.
+func (psuo *ProvisioningStepUpdateOne) SetNillableReplayPcapID(id *uuid.UUID) *ProvisioningStepUpdateOne {
+	if id != nil {
+		psuo = psuo.SetReplayPcapID(*id)
+	}
+	return psuo
+}
+
+// SetReplayPcap sets the "ReplayPcap" edge to the ReplayPcap entity.
+func (psuo *ProvisioningStepUpdateOne) SetReplayPcap(r *ReplayPcap) *ProvisioningStepUpdateOne {
+	return psuo.SetReplayPcapID(r.ID)
+}
+
 // SetPlanID sets the "Plan" edge to the Plan entity by ID.
 func (psuo *ProvisioningStepUpdateOne) SetPlanID(id uuid.UUID) *ProvisioningStepUpdateOne {
 	psuo.mutation.SetPlanID(id)
@@ -1241,6 +1321,12 @@ func (psuo *ProvisioningStepUpdateOne) ClearFileExtract() *ProvisioningStepUpdat
 // ClearAnsible clears the "Ansible" edge to the Ansible entity.
 func (psuo *ProvisioningStepUpdateOne) ClearAnsible() *ProvisioningStepUpdateOne {
 	psuo.mutation.ClearAnsible()
+	return psuo
+}
+
+// ClearReplayPcap clears the "ReplayPcap" edge to the ReplayPcap entity.
+func (psuo *ProvisioningStepUpdateOne) ClearReplayPcap() *ProvisioningStepUpdateOne {
+	psuo.mutation.ClearReplayPcap()
 	return psuo
 }
 
@@ -1723,6 +1809,41 @@ func (psuo *ProvisioningStepUpdateOne) sqlSave(ctx context.Context) (_node *Prov
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeUUID,
 					Column: ansible.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if psuo.mutation.ReplayPcapCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   provisioningstep.ReplayPcapTable,
+			Columns: []string{provisioningstep.ReplayPcapColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: replaypcap.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := psuo.mutation.ReplayPcapIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   provisioningstep.ReplayPcapTable,
+			Columns: []string{provisioningstep.ReplayPcapColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: replaypcap.FieldID,
 				},
 			},
 		}

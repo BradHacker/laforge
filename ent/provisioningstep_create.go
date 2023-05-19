@@ -20,6 +20,7 @@ import (
 	"github.com/gen0cide/laforge/ent/plan"
 	"github.com/gen0cide/laforge/ent/provisionedhost"
 	"github.com/gen0cide/laforge/ent/provisioningstep"
+	"github.com/gen0cide/laforge/ent/replaypcap"
 	"github.com/gen0cide/laforge/ent/script"
 	"github.com/gen0cide/laforge/ent/status"
 	"github.com/google/uuid"
@@ -227,6 +228,25 @@ func (psc *ProvisioningStepCreate) SetNillableAnsibleID(id *uuid.UUID) *Provisio
 // SetAnsible sets the "Ansible" edge to the Ansible entity.
 func (psc *ProvisioningStepCreate) SetAnsible(a *Ansible) *ProvisioningStepCreate {
 	return psc.SetAnsibleID(a.ID)
+}
+
+// SetReplayPcapID sets the "ReplayPcap" edge to the ReplayPcap entity by ID.
+func (psc *ProvisioningStepCreate) SetReplayPcapID(id uuid.UUID) *ProvisioningStepCreate {
+	psc.mutation.SetReplayPcapID(id)
+	return psc
+}
+
+// SetNillableReplayPcapID sets the "ReplayPcap" edge to the ReplayPcap entity by ID if the given value is not nil.
+func (psc *ProvisioningStepCreate) SetNillableReplayPcapID(id *uuid.UUID) *ProvisioningStepCreate {
+	if id != nil {
+		psc = psc.SetReplayPcapID(*id)
+	}
+	return psc
+}
+
+// SetReplayPcap sets the "ReplayPcap" edge to the ReplayPcap entity.
+func (psc *ProvisioningStepCreate) SetReplayPcap(r *ReplayPcap) *ProvisioningStepCreate {
+	return psc.SetReplayPcapID(r.ID)
 }
 
 // SetPlanID sets the "Plan" edge to the Plan entity by ID.
@@ -607,6 +627,26 @@ func (psc *ProvisioningStepCreate) createSpec() (*ProvisioningStep, *sqlgraph.Cr
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.provisioning_step_ansible = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := psc.mutation.ReplayPcapIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   provisioningstep.ReplayPcapTable,
+			Columns: []string{provisioningstep.ReplayPcapColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: replaypcap.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.provisioning_step_replay_pcap = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := psc.mutation.PlanIDs(); len(nodes) > 0 {

@@ -23,6 +23,7 @@ import (
 	"github.com/gen0cide/laforge/ent/predicate"
 	"github.com/gen0cide/laforge/ent/provisionedhost"
 	"github.com/gen0cide/laforge/ent/provisioningscheduledstep"
+	"github.com/gen0cide/laforge/ent/replaypcap"
 	"github.com/gen0cide/laforge/ent/scheduledstep"
 	"github.com/gen0cide/laforge/ent/script"
 	"github.com/gen0cide/laforge/ent/status"
@@ -48,6 +49,7 @@ type ProvisioningScheduledStepQuery struct {
 	withFileDownload      *FileDownloadQuery
 	withFileExtract       *FileExtractQuery
 	withAnsible           *AnsibleQuery
+	withReplayPcap        *ReplayPcapQuery
 	withAgentTasks        *AgentTaskQuery
 	withPlan              *PlanQuery
 	withGinFileMiddleware *GinFileMiddlewareQuery
@@ -301,6 +303,28 @@ func (pssq *ProvisioningScheduledStepQuery) QueryAnsible() *AnsibleQuery {
 			sqlgraph.From(provisioningscheduledstep.Table, provisioningscheduledstep.FieldID, selector),
 			sqlgraph.To(ansible.Table, ansible.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, provisioningscheduledstep.AnsibleTable, provisioningscheduledstep.AnsibleColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(pssq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryReplayPcap chains the current query on the "ReplayPcap" edge.
+func (pssq *ProvisioningScheduledStepQuery) QueryReplayPcap() *ReplayPcapQuery {
+	query := &ReplayPcapQuery{config: pssq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := pssq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := pssq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(provisioningscheduledstep.Table, provisioningscheduledstep.FieldID, selector),
+			sqlgraph.To(replaypcap.Table, replaypcap.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, provisioningscheduledstep.ReplayPcapTable, provisioningscheduledstep.ReplayPcapColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(pssq.driver.Dialect(), step)
 		return fromU, nil
@@ -565,6 +589,7 @@ func (pssq *ProvisioningScheduledStepQuery) Clone() *ProvisioningScheduledStepQu
 		withFileDownload:      pssq.withFileDownload.Clone(),
 		withFileExtract:       pssq.withFileExtract.Clone(),
 		withAnsible:           pssq.withAnsible.Clone(),
+		withReplayPcap:        pssq.withReplayPcap.Clone(),
 		withAgentTasks:        pssq.withAgentTasks.Clone(),
 		withPlan:              pssq.withPlan.Clone(),
 		withGinFileMiddleware: pssq.withGinFileMiddleware.Clone(),
@@ -685,6 +710,17 @@ func (pssq *ProvisioningScheduledStepQuery) WithAnsible(opts ...func(*AnsibleQue
 	return pssq
 }
 
+// WithReplayPcap tells the query-builder to eager-load the nodes that are connected to
+// the "ReplayPcap" edge. The optional arguments are used to configure the query builder of the edge.
+func (pssq *ProvisioningScheduledStepQuery) WithReplayPcap(opts ...func(*ReplayPcapQuery)) *ProvisioningScheduledStepQuery {
+	query := &ReplayPcapQuery{config: pssq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	pssq.withReplayPcap = query
+	return pssq
+}
+
 // WithAgentTasks tells the query-builder to eager-load the nodes that are connected to
 // the "AgentTasks" edge. The optional arguments are used to configure the query builder of the edge.
 func (pssq *ProvisioningScheduledStepQuery) WithAgentTasks(opts ...func(*AgentTaskQuery)) *ProvisioningScheduledStepQuery {
@@ -787,7 +823,7 @@ func (pssq *ProvisioningScheduledStepQuery) sqlAll(ctx context.Context, hooks ..
 		nodes       = []*ProvisioningScheduledStep{}
 		withFKs     = pssq.withFKs
 		_spec       = pssq.querySpec()
-		loadedTypes = [13]bool{
+		loadedTypes = [14]bool{
 			pssq.withStatus != nil,
 			pssq.withScheduledStep != nil,
 			pssq.withProvisionedHost != nil,
@@ -798,12 +834,13 @@ func (pssq *ProvisioningScheduledStepQuery) sqlAll(ctx context.Context, hooks ..
 			pssq.withFileDownload != nil,
 			pssq.withFileExtract != nil,
 			pssq.withAnsible != nil,
+			pssq.withReplayPcap != nil,
 			pssq.withAgentTasks != nil,
 			pssq.withPlan != nil,
 			pssq.withGinFileMiddleware != nil,
 		}
 	)
-	if pssq.withScheduledStep != nil || pssq.withProvisionedHost != nil || pssq.withScript != nil || pssq.withCommand != nil || pssq.withDNSRecord != nil || pssq.withFileDelete != nil || pssq.withFileDownload != nil || pssq.withFileExtract != nil || pssq.withAnsible != nil || pssq.withPlan != nil || pssq.withGinFileMiddleware != nil {
+	if pssq.withScheduledStep != nil || pssq.withProvisionedHost != nil || pssq.withScript != nil || pssq.withCommand != nil || pssq.withDNSRecord != nil || pssq.withFileDelete != nil || pssq.withFileDownload != nil || pssq.withFileExtract != nil || pssq.withAnsible != nil || pssq.withReplayPcap != nil || pssq.withPlan != nil || pssq.withGinFileMiddleware != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -884,6 +921,12 @@ func (pssq *ProvisioningScheduledStepQuery) sqlAll(ctx context.Context, hooks ..
 	if query := pssq.withAnsible; query != nil {
 		if err := pssq.loadAnsible(ctx, query, nodes, nil,
 			func(n *ProvisioningScheduledStep, e *Ansible) { n.Edges.Ansible = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := pssq.withReplayPcap; query != nil {
+		if err := pssq.loadReplayPcap(ctx, query, nodes, nil,
+			func(n *ProvisioningScheduledStep, e *ReplayPcap) { n.Edges.ReplayPcap = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -1191,6 +1234,35 @@ func (pssq *ProvisioningScheduledStepQuery) loadAnsible(ctx context.Context, que
 		nodes, ok := nodeids[n.ID]
 		if !ok {
 			return fmt.Errorf(`unexpected foreign-key "provisioning_scheduled_step_ansible" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (pssq *ProvisioningScheduledStepQuery) loadReplayPcap(ctx context.Context, query *ReplayPcapQuery, nodes []*ProvisioningScheduledStep, init func(*ProvisioningScheduledStep), assign func(*ProvisioningScheduledStep, *ReplayPcap)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*ProvisioningScheduledStep)
+	for i := range nodes {
+		if nodes[i].provisioning_scheduled_step_replay_pcap == nil {
+			continue
+		}
+		fk := *nodes[i].provisioning_scheduled_step_replay_pcap
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	query.Where(replaypcap.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "provisioning_scheduled_step_replay_pcap" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)

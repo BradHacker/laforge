@@ -386,6 +386,19 @@ func (f ProvisioningStepFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.V
 	return f(ctx, mv)
 }
 
+// The ReplayPcapFunc type is an adapter to allow the use of ordinary
+// function as ReplayPcap mutator.
+type ReplayPcapFunc func(context.Context, *ent.ReplayPcapMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ReplayPcapFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.ReplayPcapMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ReplayPcapMutation", m)
+	}
+	return f(ctx, mv)
+}
+
 // The RepoCommitFunc type is an adapter to allow the use of ordinary
 // function as RepoCommit mutator.
 type RepoCommitFunc func(context.Context, *ent.RepoCommitMutation) (ent.Value, error)

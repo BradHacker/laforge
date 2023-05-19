@@ -40,6 +40,7 @@ import (
 	"github.com/gen0cide/laforge/ent/provisionednetwork"
 	"github.com/gen0cide/laforge/ent/provisioningscheduledstep"
 	"github.com/gen0cide/laforge/ent/provisioningstep"
+	"github.com/gen0cide/laforge/ent/replaypcap"
 	"github.com/gen0cide/laforge/ent/repocommit"
 	"github.com/gen0cide/laforge/ent/repository"
 	"github.com/gen0cide/laforge/ent/scheduledstep"
@@ -120,6 +121,8 @@ type Client struct {
 	ProvisioningScheduledStep *ProvisioningScheduledStepClient
 	// ProvisioningStep is the client for interacting with the ProvisioningStep builders.
 	ProvisioningStep *ProvisioningStepClient
+	// ReplayPcap is the client for interacting with the ReplayPcap builders.
+	ReplayPcap *ReplayPcapClient
 	// RepoCommit is the client for interacting with the RepoCommit builders.
 	RepoCommit *RepoCommitClient
 	// Repository is the client for interacting with the Repository builders.
@@ -184,6 +187,7 @@ func (c *Client) init() {
 	c.ProvisionedNetwork = NewProvisionedNetworkClient(c.config)
 	c.ProvisioningScheduledStep = NewProvisioningScheduledStepClient(c.config)
 	c.ProvisioningStep = NewProvisioningStepClient(c.config)
+	c.ReplayPcap = NewReplayPcapClient(c.config)
 	c.RepoCommit = NewRepoCommitClient(c.config)
 	c.Repository = NewRepositoryClient(c.config)
 	c.ScheduledStep = NewScheduledStepClient(c.config)
@@ -257,6 +261,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		ProvisionedNetwork:        NewProvisionedNetworkClient(cfg),
 		ProvisioningScheduledStep: NewProvisioningScheduledStepClient(cfg),
 		ProvisioningStep:          NewProvisioningStepClient(cfg),
+		ReplayPcap:                NewReplayPcapClient(cfg),
 		RepoCommit:                NewRepoCommitClient(cfg),
 		Repository:                NewRepositoryClient(cfg),
 		ScheduledStep:             NewScheduledStepClient(cfg),
@@ -316,6 +321,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		ProvisionedNetwork:        NewProvisionedNetworkClient(cfg),
 		ProvisioningScheduledStep: NewProvisioningScheduledStepClient(cfg),
 		ProvisioningStep:          NewProvisioningStepClient(cfg),
+		ReplayPcap:                NewReplayPcapClient(cfg),
 		RepoCommit:                NewRepoCommitClient(cfg),
 		Repository:                NewRepositoryClient(cfg),
 		ScheduledStep:             NewScheduledStepClient(cfg),
@@ -384,6 +390,7 @@ func (c *Client) Use(hooks ...Hook) {
 	c.ProvisionedNetwork.Use(hooks...)
 	c.ProvisioningScheduledStep.Use(hooks...)
 	c.ProvisioningStep.Use(hooks...)
+	c.ReplayPcap.Use(hooks...)
 	c.RepoCommit.Use(hooks...)
 	c.Repository.Use(hooks...)
 	c.ScheduledStep.Use(hooks...)
@@ -2547,6 +2554,22 @@ func (c *EnvironmentClient) QueryValidations(e *Environment) *ValidationQuery {
 			sqlgraph.From(environment.Table, environment.FieldID, id),
 			sqlgraph.To(validation.Table, validation.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, environment.ValidationsTable, environment.ValidationsColumn),
+		)
+		fromV = sqlgraph.Neighbors(e.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryReplayPcaps queries the ReplayPcaps edge of a Environment.
+func (c *EnvironmentClient) QueryReplayPcaps(e *Environment) *ReplayPcapQuery {
+	query := &ReplayPcapQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := e.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(environment.Table, environment.FieldID, id),
+			sqlgraph.To(replaypcap.Table, replaypcap.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, environment.ReplayPcapsTable, environment.ReplayPcapsColumn),
 		)
 		fromV = sqlgraph.Neighbors(e.driver.Dialect(), step)
 		return fromV, nil
@@ -4976,6 +4999,22 @@ func (c *ProvisioningScheduledStepClient) QueryAnsible(pss *ProvisioningSchedule
 	return query
 }
 
+// QueryReplayPcap queries the ReplayPcap edge of a ProvisioningScheduledStep.
+func (c *ProvisioningScheduledStepClient) QueryReplayPcap(pss *ProvisioningScheduledStep) *ReplayPcapQuery {
+	query := &ReplayPcapQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := pss.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(provisioningscheduledstep.Table, provisioningscheduledstep.FieldID, id),
+			sqlgraph.To(replaypcap.Table, replaypcap.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, provisioningscheduledstep.ReplayPcapTable, provisioningscheduledstep.ReplayPcapColumn),
+		)
+		fromV = sqlgraph.Neighbors(pss.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryAgentTasks queries the AgentTasks edge of a ProvisioningScheduledStep.
 func (c *ProvisioningScheduledStepClient) QueryAgentTasks(pss *ProvisioningScheduledStep) *AgentTaskQuery {
 	query := &AgentTaskQuery{config: c.config}
@@ -5258,6 +5297,22 @@ func (c *ProvisioningStepClient) QueryAnsible(ps *ProvisioningStep) *AnsibleQuer
 	return query
 }
 
+// QueryReplayPcap queries the ReplayPcap edge of a ProvisioningStep.
+func (c *ProvisioningStepClient) QueryReplayPcap(ps *ProvisioningStep) *ReplayPcapQuery {
+	query := &ReplayPcapQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := ps.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(provisioningstep.Table, provisioningstep.FieldID, id),
+			sqlgraph.To(replaypcap.Table, replaypcap.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, provisioningstep.ReplayPcapTable, provisioningstep.ReplayPcapColumn),
+		)
+		fromV = sqlgraph.Neighbors(ps.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryPlan queries the Plan edge of a ProvisioningStep.
 func (c *ProvisioningStepClient) QueryPlan(ps *ProvisioningStep) *PlanQuery {
 	query := &PlanQuery{config: c.config}
@@ -5309,6 +5364,112 @@ func (c *ProvisioningStepClient) QueryGinFileMiddleware(ps *ProvisioningStep) *G
 // Hooks returns the client hooks.
 func (c *ProvisioningStepClient) Hooks() []Hook {
 	return c.hooks.ProvisioningStep
+}
+
+// ReplayPcapClient is a client for the ReplayPcap schema.
+type ReplayPcapClient struct {
+	config
+}
+
+// NewReplayPcapClient returns a client for the ReplayPcap from the given config.
+func NewReplayPcapClient(c config) *ReplayPcapClient {
+	return &ReplayPcapClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `replaypcap.Hooks(f(g(h())))`.
+func (c *ReplayPcapClient) Use(hooks ...Hook) {
+	c.hooks.ReplayPcap = append(c.hooks.ReplayPcap, hooks...)
+}
+
+// Create returns a builder for creating a ReplayPcap entity.
+func (c *ReplayPcapClient) Create() *ReplayPcapCreate {
+	mutation := newReplayPcapMutation(c.config, OpCreate)
+	return &ReplayPcapCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ReplayPcap entities.
+func (c *ReplayPcapClient) CreateBulk(builders ...*ReplayPcapCreate) *ReplayPcapCreateBulk {
+	return &ReplayPcapCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ReplayPcap.
+func (c *ReplayPcapClient) Update() *ReplayPcapUpdate {
+	mutation := newReplayPcapMutation(c.config, OpUpdate)
+	return &ReplayPcapUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ReplayPcapClient) UpdateOne(rp *ReplayPcap) *ReplayPcapUpdateOne {
+	mutation := newReplayPcapMutation(c.config, OpUpdateOne, withReplayPcap(rp))
+	return &ReplayPcapUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ReplayPcapClient) UpdateOneID(id uuid.UUID) *ReplayPcapUpdateOne {
+	mutation := newReplayPcapMutation(c.config, OpUpdateOne, withReplayPcapID(id))
+	return &ReplayPcapUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ReplayPcap.
+func (c *ReplayPcapClient) Delete() *ReplayPcapDelete {
+	mutation := newReplayPcapMutation(c.config, OpDelete)
+	return &ReplayPcapDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ReplayPcapClient) DeleteOne(rp *ReplayPcap) *ReplayPcapDeleteOne {
+	return c.DeleteOneID(rp.ID)
+}
+
+// DeleteOne returns a builder for deleting the given entity by its id.
+func (c *ReplayPcapClient) DeleteOneID(id uuid.UUID) *ReplayPcapDeleteOne {
+	builder := c.Delete().Where(replaypcap.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ReplayPcapDeleteOne{builder}
+}
+
+// Query returns a query builder for ReplayPcap.
+func (c *ReplayPcapClient) Query() *ReplayPcapQuery {
+	return &ReplayPcapQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a ReplayPcap entity by its id.
+func (c *ReplayPcapClient) Get(ctx context.Context, id uuid.UUID) (*ReplayPcap, error) {
+	return c.Query().Where(replaypcap.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ReplayPcapClient) GetX(ctx context.Context, id uuid.UUID) *ReplayPcap {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryEnvironment queries the Environment edge of a ReplayPcap.
+func (c *ReplayPcapClient) QueryEnvironment(rp *ReplayPcap) *EnvironmentQuery {
+	query := &EnvironmentQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := rp.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(replaypcap.Table, replaypcap.FieldID, id),
+			sqlgraph.To(environment.Table, environment.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, replaypcap.EnvironmentTable, replaypcap.EnvironmentColumn),
+		)
+		fromV = sqlgraph.Neighbors(rp.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ReplayPcapClient) Hooks() []Hook {
+	return c.hooks.ReplayPcap
 }
 
 // RepoCommitClient is a client for the RepoCommit schema.

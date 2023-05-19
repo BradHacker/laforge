@@ -75,6 +75,8 @@ const (
 	EdgeServerTasks = "ServerTasks"
 	// EdgeValidations holds the string denoting the validations edge name in mutations.
 	EdgeValidations = "Validations"
+	// EdgeReplayPcaps holds the string denoting the replaypcaps edge name in mutations.
+	EdgeReplayPcaps = "ReplayPcaps"
 	// Table holds the table name of the environment in the database.
 	Table = "environments"
 	// UsersTable is the table that holds the Users relation/edge. The primary key declared below.
@@ -216,6 +218,13 @@ const (
 	ValidationsInverseTable = "validations"
 	// ValidationsColumn is the table column denoting the Validations relation/edge.
 	ValidationsColumn = "environment_validations"
+	// ReplayPcapsTable is the table that holds the ReplayPcaps relation/edge.
+	ReplayPcapsTable = "replay_pcaps"
+	// ReplayPcapsInverseTable is the table name for the ReplayPcap entity.
+	// It exists in this package in order to avoid circular dependency with the "replaypcap" package.
+	ReplayPcapsInverseTable = "replay_pcaps"
+	// ReplayPcapsColumn is the table column denoting the ReplayPcaps relation/edge.
+	ReplayPcapsColumn = "environment_replay_pcaps"
 )
 
 // Columns holds all SQL columns for environment fields.

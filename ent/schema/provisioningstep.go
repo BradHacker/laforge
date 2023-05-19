@@ -27,6 +27,7 @@ func (ProvisioningStep) Fields() []ent.Field {
 				"FileDownload",
 				"FileExtract",
 				"Ansible",
+				"ReplayPCAP",
 			),
 		field.Int("step_number"),
 	}
@@ -55,6 +56,8 @@ func (ProvisioningStep) Edges() []ent.Edge {
 		edge.To("FileExtract", FileExtract.Type).
 			Unique(),
 		edge.To("Ansible", Ansible.Type).
+			Unique(),
+		edge.To("ReplayPcap", ReplayPcap.Type).
 			Unique(),
 		edge.From("Plan", Plan.Type).
 			Ref("ProvisioningStep").

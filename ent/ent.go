@@ -39,6 +39,7 @@ import (
 	"github.com/gen0cide/laforge/ent/provisionednetwork"
 	"github.com/gen0cide/laforge/ent/provisioningscheduledstep"
 	"github.com/gen0cide/laforge/ent/provisioningstep"
+	"github.com/gen0cide/laforge/ent/replaypcap"
 	"github.com/gen0cide/laforge/ent/repocommit"
 	"github.com/gen0cide/laforge/ent/repository"
 	"github.com/gen0cide/laforge/ent/scheduledstep"
@@ -99,6 +100,7 @@ func columnChecker(table string) func(string) error {
 		provisionednetwork.Table:        provisionednetwork.ValidColumn,
 		provisioningscheduledstep.Table: provisioningscheduledstep.ValidColumn,
 		provisioningstep.Table:          provisioningstep.ValidColumn,
+		replaypcap.Table:                replaypcap.ValidColumn,
 		repocommit.Table:                repocommit.ValidColumn,
 		repository.Table:                repository.ValidColumn,
 		scheduledstep.Table:             scheduledstep.ValidColumn,
