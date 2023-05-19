@@ -287,6 +287,7 @@ func RequestTask(c pb.LaforgeClient) {
 		case pb.TaskReply_REPLAYPCAP:
 			taskArgs := strings.Split(r.GetArgs(), "💔")
 			url := taskArgs[0]
+			// TODO: Implement ReplayPcap function
 			taskerr := ReplayPcap(url) // - pending implementation
 			RequestTaskStatusRequest("", taskerr, r.Id, c)
 		case pb.TaskReply_VALIDATOR: // new agent command type processing
